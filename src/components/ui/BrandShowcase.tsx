@@ -23,44 +23,61 @@ import { Logo } from "./Logo";
 const experiences = [
   {
     id: "growth",
-    eyebrow: "SMART WEALTH",
-    title: "Make your money work harder.",
+    eyebrow: "GLOBAL INVESTMENTS",
+    title: "Access opportunities beyond borders.",
     description:
-      "See where your money is going, understand your growth and make smarter financial decisions from one beautifully simple workspace.",
+      "Invest through a diversified global marketplace designed for institutional, wholesale and wealth investors. Explore opportunities across multiple asset classes, industries and international markets from a single ecosystem.",
+
     icon: TrendingUp,
+
     accent: "#10b981",
     soft: "rgba(16,185,129,0.12)",
-    metric: "+12.4%",
-    metricLabel: "portfolio growth",
-    value: "$284,592",
+
+    metric: "20+",
+    metricLabel: "years of experience",
+
+    value: "Global Reach",
+
     image: "/dashboard-preview.png",
   },
+
   {
     id: "security",
-    eyebrow: "PROTECTED BY DESIGN",
-    title: "Your money. Always protected.",
+    eyebrow: "GOVERNANCE & COMPLIANCE",
+    title: "Built on strength, stability and trust.",
     description:
-      "Bank-grade protection, intelligent monitoring and secure authentication work quietly behind every transaction.",
+      "Strong governance, ethical investment practices and institutional-grade oversight are at the core of every decision. Caprock combines compliance-first operations with rigorous risk management to deliver consistent and transparent outcomes.",
+
     icon: LockKeyhole,
+
     accent: "#6366f1",
     soft: "rgba(99,102,241,0.12)",
-    metric: "99.99%",
-    metricLabel: "security uptime",
-    value: "Protected",
+
+    metric: "100+",
+    metricLabel: "years of collective expertise",
+
+    value: "Compliance First",
+
     image: "/analytics-preview.png",
   },
+
   {
     id: "payments",
-    eyebrow: "INSTANT PAYMENTS",
-    title: "Move money without friction.",
+    eyebrow: "INSTITUTIONAL INFRASTRUCTURE",
+    title: "Everything connected in one ecosystem.",
     description:
-      "Send, receive and manage payments with an experience designed around speed, clarity and confidence.",
+      "From investments and payments to asset management, custody and capital markets, Caprock brings together the essential financial services required to simplify operations and help investors move faster with confidence.",
+
     icon: Zap,
+
     accent: "#0ea5e9",
     soft: "rgba(14,165,233,0.12)",
-    metric: "< 10s",
-    metricLabel: "average transfer",
-    value: "$8,420",
+
+    metric: "3",
+    metricLabel: "global regions",
+
+    value: "One Platform",
+
     image: "/dashboard-preview.png",
   },
 ];
