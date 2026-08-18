@@ -1,14 +1,29 @@
-import { motion, useMotionValue, useTransform, useSpring } from 'framer-motion'
-import { TrendingUp, Shield, Zap, ArrowUpRight } from 'lucide-react'
-import { Logo } from './Logo'
+import { motion, useMotionValue, useTransform, useSpring } from "framer-motion";
+import { TrendingUp, Shield, Zap, ArrowUpRight } from "lucide-react";
+import { Logo } from "./Logo";
 
 const features = [
-  { icon: TrendingUp, title: 'Smart Growth', desc: 'AI-powered portfolio insights', accent: 'from-emerald-400/20 to-emerald-600/5' },
-  { icon: Shield, title: 'Bank-Grade Security', desc: '256-bit encryption & 2FA', accent: 'from-caprock/20 to-caprock/5' },
-  { icon: Zap, title: 'Instant Transfers', desc: 'Move money in seconds', accent: 'from-sky-400/20 to-sky-600/5' },
-]
+  {
+    icon: TrendingUp,
+    title: "Smart Growth",
+    desc: "AI-powered portfolio insights",
+    accent: "from-emerald-400/20 to-emerald-600/5",
+  },
+  {
+    icon: Shield,
+    title: "Bank-Grade Security",
+    desc: "256-bit encryption & 2FA",
+    accent: "from-caprock/20 to-caprock/5",
+  },
+  {
+    icon: Zap,
+    title: "Instant Transfers",
+    desc: "Move money in seconds",
+    accent: "from-sky-400/20 to-sky-600/5",
+  },
+];
 
-const chartBars = [42, 58, 48, 72, 65, 88, 78, 95, 82, 100]
+const chartBars = [42, 58, 48, 72, 65, 88, 78, 95, 82, 100];
 
 function FloatingCard({
   children,
@@ -16,10 +31,10 @@ function FloatingCard({
   delay = 0,
   yRange = [-8, 8],
 }: {
-  children: React.ReactNode
-  className?: string
-  delay?: number
-  yRange?: [number, number]
+  children: React.ReactNode;
+  className?: string;
+  delay?: number;
+  yRange?: [number, number];
 }) {
   return (
     <motion.div
@@ -30,17 +45,26 @@ function FloatingCard({
     >
       <motion.div
         animate={{ y: yRange }}
-        transition={{ duration: 5 + delay, repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' }}
+        transition={{
+          duration: 5 + delay,
+          repeat: Infinity,
+          repeatType: "reverse",
+          ease: "easeInOut",
+        }}
       >
         {children}
       </motion.div>
     </motion.div>
-  )
+  );
 }
 
 function MiniChart() {
   return (
-    <svg viewBox="0 0 200 60" className="h-full w-full" preserveAspectRatio="none">
+    <svg
+      viewBox="0 0 200 60"
+      className="h-full w-full"
+      preserveAspectRatio="none"
+    >
       <defs>
         <linearGradient id="chartFill" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="#003478" stopOpacity="0.25" />
@@ -62,23 +86,29 @@ function MiniChart() {
         strokeLinecap="round"
         initial={{ pathLength: 0 }}
         animate={{ pathLength: 1 }}
-        transition={{ duration: 1.5, delay: 0.5, ease: 'easeOut' }}
+        transition={{ duration: 1.5, delay: 0.5, ease: "easeOut" }}
       />
     </svg>
-  )
+  );
 }
 
 export function BrandShowcase() {
-  const mouseX = useMotionValue(0)
-  const mouseY = useMotionValue(0)
-  const rotateX = useSpring(useTransform(mouseY, [-0.5, 0.5], [4, -4]), { stiffness: 120, damping: 20 })
-  const rotateY = useSpring(useTransform(mouseX, [-0.5, 0.5], [-4, 4]), { stiffness: 120, damping: 20 })
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+  const rotateX = useSpring(useTransform(mouseY, [-0.5, 0.5], [4, -4]), {
+    stiffness: 120,
+    damping: 20,
+  });
+  const rotateY = useSpring(useTransform(mouseX, [-0.5, 0.5], [-4, 4]), {
+    stiffness: 120,
+    damping: 20,
+  });
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect()
-    mouseX.set((e.clientX - rect.left) / rect.width - 0.5)
-    mouseY.set((e.clientY - rect.top) / rect.height - 0.5)
-  }
+    const rect = e.currentTarget.getBoundingClientRect();
+    mouseX.set((e.clientX - rect.left) / rect.width - 0.5);
+    mouseY.set((e.clientY - rect.top) / rect.height - 0.5);
+  };
 
   return (
     <div
@@ -86,33 +116,45 @@ export function BrandShowcase() {
       onMouseMove={handleMouseMove}
     >
       {/* Light premium background */}
-      <div className="absolute inset-0 mesh-gradient-light" />
+      <div
+        className="
+    absolute
+    inset-0
+    bg-[radial-gradient(circle_at_top_left,#dfe8ff_0%,#edf2ff_30%,#d6e4ff_60%,#bfd5ff_100%)]
+  "
+      />
+      <div
+        className="
+    absolute
+    inset-0
+    bg-[linear-gradient(rgba(255,255,255,0.5)_1px,transparent_1px),
+    linear-gradient(90deg,rgba(255,255,255,0.5)_1px,transparent_1px)]
+    bg-[size:40px_40px]
+  "
+      />{" "}
       <div className="absolute inset-0 grid-pattern-light opacity-60" />
-
       {/* Ambient orbs */}
       <motion.div
         className="absolute -left-24 top-1/4 h-96 w-96 rounded-full bg-caprock/8 blur-3xl"
         animate={{ scale: [1, 1.15, 1], opacity: [0.5, 0.8, 0.5] }}
-        transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
       />
       <motion.div
         className="absolute -right-16 bottom-1/4 h-72 w-72 rounded-full bg-sky-400/10 blur-3xl"
         animate={{ x: [0, -20, 0], y: [0, 15, 0] }}
-        transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
+        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
       />
-
       {/* Floating ring decoration */}
       <motion.div
         className="absolute right-[12%] top-[18%] h-32 w-32 rounded-full border border-caprock/10"
         animate={{ rotate: 360 }}
-        transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}
+        transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
       />
       <motion.div
         className="absolute right-[14%] top-[20%] h-24 w-24 rounded-full border border-dashed border-caprock/15"
         animate={{ rotate: -360 }}
-        transition={{ duration: 25, repeat: Infinity, ease: 'linear' }}
+        transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
       />
-
       <div className="relative z-10 flex h-full flex-col justify-between p-10 xl:p-14">
         <motion.div
           initial={{ opacity: 0, y: -12 }}
@@ -144,7 +186,7 @@ export function BrandShowcase() {
               transition={{ duration: 0.8, delay: 0.25 }}
               className="font-display text-4xl xl:text-5xl font-bold leading-[1.08] tracking-tight text-ink"
             >
-              Wealth reimagined for the{' '}
+              Wealth reimagined for the{" "}
               <span className="text-gradient-light">modern era</span>
             </motion.h1>
 
@@ -154,7 +196,8 @@ export function BrandShowcase() {
               transition={{ duration: 0.8, delay: 0.4 }}
               className="mt-5 text-base xl:text-lg text-muted leading-relaxed"
             >
-              Grow, protect, and manage your financial future with institutional-grade tools — beautifully simple.
+              Grow, protect, and manage your financial future with
+              institutional-grade tools — beautifully simple.
             </motion.p>
           </div>
 
@@ -167,8 +210,12 @@ export function BrandShowcase() {
               <div className="premium-card w-[280px] overflow-hidden rounded-2xl p-5 shadow-premium">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs font-medium text-muted">Portfolio value</p>
-                    <p className="font-display text-2xl font-bold text-ink">$284,592</p>
+                    <p className="text-xs font-medium text-muted">
+                      Portfolio value
+                    </p>
+                    <p className="font-display text-2xl font-bold text-ink">
+                      $284,592
+                    </p>
                   </div>
                   <div className="flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-600">
                     <ArrowUpRight className="h-3 w-3" />
@@ -192,7 +239,11 @@ export function BrandShowcase() {
               </div>
             </FloatingCard>
 
-            <FloatingCard delay={0.7} className="absolute -left-16 top-24" yRange={[6, -8]}>
+            <FloatingCard
+              delay={0.7}
+              className="absolute -left-16 top-24"
+              yRange={[6, -8]}
+            >
               <div className="premium-card flex items-center gap-3 rounded-xl px-4 py-3 shadow-premium-sm">
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-caprock text-white">
                   <Shield className="h-4 w-4" />
@@ -204,10 +255,18 @@ export function BrandShowcase() {
               </div>
             </FloatingCard>
 
-            <FloatingCard delay={0.9} className="absolute -right-4 bottom-0" yRange={[-6, 10]}>
+            <FloatingCard
+              delay={0.9}
+              className="absolute -right-4 bottom-0"
+              yRange={[-6, 10]}
+            >
               <div className="premium-card rounded-xl px-4 py-3 shadow-premium-sm">
-                <p className="text-[10px] font-medium uppercase tracking-wider text-muted">Monthly gain</p>
-                <p className="font-display text-lg font-bold text-emerald-600">+$4,218</p>
+                <p className="text-[10px] font-medium uppercase tracking-wider text-muted">
+                  Monthly gain
+                </p>
+                <p className="font-display text-lg font-bold text-emerald-600">
+                  +$4,218
+                </p>
               </div>
             </FloatingCard>
           </motion.div>
@@ -222,8 +281,12 @@ export function BrandShowcase() {
             <div className="premium-card overflow-hidden rounded-2xl p-5 shadow-premium">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-medium text-muted">Portfolio value</p>
-                  <p className="font-display text-xl font-bold text-ink">$284,592</p>
+                  <p className="text-xs font-medium text-muted">
+                    Portfolio value
+                  </p>
+                  <p className="font-display text-xl font-bold text-ink">
+                    $284,592
+                  </p>
                 </div>
                 <div className="flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-600">
                   <ArrowUpRight className="h-3 w-3" />
@@ -256,13 +319,55 @@ export function BrandShowcase() {
                 <feature.icon className="h-5 w-5" />
               </motion.div>
               <div>
-                <p className="text-sm font-semibold text-ink">{feature.title}</p>
-                <p className="text-xs text-muted leading-relaxed">{feature.desc}</p>
+                <p className="text-sm font-semibold text-ink">
+                  {feature.title}
+                </p>
+                <p className="text-xs text-muted leading-relaxed">
+                  {feature.desc}
+                </p>
               </div>
             </motion.div>
           ))}
         </div>
       </div>
+      <div className="absolute right-10 top-1/2 hidden xl:block">
+        <motion.img
+          src="/dashboard-preview.png"
+          animate={{
+            y: [-10, 10, -10],
+            rotate: [-2, 2, -2],
+          }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+          }}
+          className="
+      w-80
+      rounded-3xl
+      shadow-2xl
+    "
+        />
+
+        <motion.img
+          src="/analytics-preview.png"
+          animate={{
+            y: [10, -10, 10],
+            rotate: [3, -3, 3],
+          }}
+          transition={{
+            duration: 10,
+            repeat: Infinity,
+          }}
+          className="
+      absolute
+      -left-24
+      top-40
+      w-60
+      rounded-3xl
+      shadow-xl
+    "
+        />
+      </div>
     </div>
-  )
+  );
 }
