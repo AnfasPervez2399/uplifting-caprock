@@ -1,373 +1,702 @@
-import { motion, useMotionValue, useTransform, useSpring } from "framer-motion";
-import { TrendingUp, Shield, Zap, ArrowUpRight } from "lucide-react";
+import { useEffect, useState } from "react";
+import {
+  ArrowUpRight,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  CreditCard,
+  LockKeyhole,
+  Sparkles,
+  TrendingUp,
+  Wallet,
+  Zap,
+} from "lucide-react";
+import {
+  AnimatePresence,
+  motion,
+  useMotionValue,
+  useSpring,
+  useTransform,
+} from "framer-motion";
 import { Logo } from "./Logo";
 
-const features = [
+const experiences = [
   {
+    id: "growth",
+    eyebrow: "SMART WEALTH",
+    title: "Make your money work harder.",
+    description:
+      "See where your money is going, understand your growth and make smarter financial decisions from one beautifully simple workspace.",
     icon: TrendingUp,
-    title: "Smart Growth",
-    desc: "AI-powered portfolio insights",
-    accent: "from-emerald-400/20 to-emerald-600/5",
+    accent: "#10b981",
+    soft: "rgba(16,185,129,0.12)",
+    metric: "+12.4%",
+    metricLabel: "portfolio growth",
+    value: "$284,592",
+    image: "/dashboard-preview.png",
   },
   {
-    icon: Shield,
-    title: "Bank-Grade Security",
-    desc: "256-bit encryption & 2FA",
-    accent: "from-caprock/20 to-caprock/5",
+    id: "security",
+    eyebrow: "PROTECTED BY DESIGN",
+    title: "Your money. Always protected.",
+    description:
+      "Bank-grade protection, intelligent monitoring and secure authentication work quietly behind every transaction.",
+    icon: LockKeyhole,
+    accent: "#6366f1",
+    soft: "rgba(99,102,241,0.12)",
+    metric: "99.99%",
+    metricLabel: "security uptime",
+    value: "Protected",
+    image: "/analytics-preview.png",
   },
   {
+    id: "payments",
+    eyebrow: "INSTANT PAYMENTS",
+    title: "Move money without friction.",
+    description:
+      "Send, receive and manage payments with an experience designed around speed, clarity and confidence.",
     icon: Zap,
-    title: "Instant Transfers",
-    desc: "Move money in seconds",
-    accent: "from-sky-400/20 to-sky-600/5",
+    accent: "#0ea5e9",
+    soft: "rgba(14,165,233,0.12)",
+    metric: "< 10s",
+    metricLabel: "average transfer",
+    value: "$8,420",
+    image: "/dashboard-preview.png",
   },
 ];
 
-const chartBars = [42, 58, 48, 72, 65, 88, 78, 95, 82, 100];
+const transactions = [
+  {
+    name: "Salary Deposit",
+    type: "Income",
+    amount: "+$6,420",
+    icon: ArrowUpRight,
+  },
+  {
+    name: "Apple Store",
+    type: "Card payment",
+    amount: "-$249",
+    icon: CreditCard,
+  },
+  {
+    name: "Investment",
+    type: "Portfolio",
+    amount: "+$1,240",
+    icon: TrendingUp,
+  },
+];
 
-function FloatingCard({
-  children,
+function FloatingOrb({
   className,
   delay = 0,
-  yRange = [-8, 8],
 }: {
-  children: React.ReactNode;
-  className?: string;
+  className: string;
   delay?: number;
-  yRange?: [number, number];
 }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 24, scale: 0.96 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.7, delay, ease: [0.22, 1, 0.36, 1] }}
-      className={className}
-    >
-      <motion.div
-        animate={{ y: yRange }}
-        transition={{
-          duration: 5 + delay,
-          repeat: Infinity,
-          repeatType: "reverse",
-          ease: "easeInOut",
-        }}
-      >
-        {children}
-      </motion.div>
-    </motion.div>
+      className={`absolute rounded-full blur-3xl ${className}`}
+      animate={{
+        scale: [1, 1.15, 1],
+        opacity: [0.35, 0.6, 0.35],
+      }}
+      transition={{
+        duration: 7,
+        delay,
+        repeat: Infinity,
+        ease: "easeInOut",
+      }}
+    />
   );
 }
 
-function MiniChart() {
+function MiniSparkline({ accent }: { accent: string }) {
   return (
     <svg
-      viewBox="0 0 200 60"
+      viewBox="0 0 220 70"
       className="h-full w-full"
       preserveAspectRatio="none"
     >
       <defs>
-        <linearGradient id="chartFill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#003478" stopOpacity="0.25" />
-          <stop offset="100%" stopColor="#003478" stopOpacity="0" />
+        <linearGradient id="sparkFill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={accent} stopOpacity="0.22" />
+          <stop offset="100%" stopColor={accent} stopOpacity="0" />
         </linearGradient>
       </defs>
+
       <motion.path
-        d="M0,50 L20,42 L40,48 L60,35 L80,40 L100,22 L120,28 L140,15 L160,20 L180,8 L200,12 L200,60 L0,60 Z"
-        fill="url(#chartFill)"
+        d="M0 57 C18 51 25 54 40 42 C56 30 62 45 78 35 C94 25 104 32 120 21 C138 10 147 24 160 17 C178 7 190 15 220 4 V70 H0Z"
+        fill="url(#sparkFill)"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 1, delay: 0.8 }}
+        transition={{ duration: 0.8 }}
       />
+
       <motion.path
-        d="M0,50 L20,42 L40,48 L60,35 L80,40 L100,22 L120,28 L140,15 L160,20 L180,8 L200,12"
+        d="M0 57 C18 51 25 54 40 42 C56 30 62 45 78 35 C94 25 104 32 120 21 C138 10 147 24 160 17 C178 7 190 15 220 4"
         fill="none"
-        stroke="#003478"
-        strokeWidth="2.5"
+        stroke={accent}
+        strokeWidth="3"
         strokeLinecap="round"
         initial={{ pathLength: 0 }}
         animate={{ pathLength: 1 }}
-        transition={{ duration: 1.5, delay: 0.5, ease: "easeOut" }}
+        transition={{
+          duration: 1.5,
+          ease: "easeOut",
+        }}
       />
     </svg>
   );
 }
 
+function FinancePreview({ active }: { active: (typeof experiences)[number] }) {
+  const Icon = active.icon;
+
+  return (
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={active.id}
+        initial={{ opacity: 0, scale: 0.94, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.96, y: -15 }}
+        transition={{
+          duration: 0.55,
+          ease: [0.22, 1, 0.36, 1],
+        }}
+        className="relative"
+      >
+        {/* Main dashboard */}
+        <div className="relative overflow-hidden rounded-[28px] border border-white/80 bg-white/90 p-5 shadow-[0_30px_90px_rgba(15,23,42,0.16)] backdrop-blur-2xl sm:p-6">
+          {/* Dashboard top */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <motion.div
+                animate={{
+                  rotate: [0, -5, 5, 0],
+                }}
+                transition={{
+                  duration: 4,
+                  repeat: Infinity,
+                }}
+                className="flex h-11 w-11 items-center justify-center rounded-2xl"
+                style={{
+                  background: active.soft,
+                  color: active.accent,
+                }}
+              >
+                <Icon className="h-5 w-5" />
+              </motion.div>
+
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">
+                  Caprock
+                </p>
+                <p className="text-sm font-semibold text-slate-900">
+                  Financial overview
+                </p>
+              </div>
+            </div>
+
+            <div className="flex h-8 items-center gap-1 rounded-full bg-slate-100 px-3">
+              <span
+                className="h-1.5 w-1.5 rounded-full"
+                style={{ backgroundColor: active.accent }}
+              />
+              <span className="text-[10px] font-semibold text-slate-500">
+                LIVE
+              </span>
+            </div>
+          </div>
+
+          {/* Main balance */}
+          <div className="mt-8">
+            <div className="flex items-end justify-between gap-4">
+              <div>
+                <p className="text-xs font-medium text-slate-400">
+                  Total balance
+                </p>
+
+                <AnimatePresence mode="wait">
+                  <motion.p
+                    key={active.value}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-1 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl"
+                  >
+                    {active.value}
+                  </motion.p>
+                </AnimatePresence>
+              </div>
+
+              <div
+                className="flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-bold"
+                style={{
+                  color: active.accent,
+                  backgroundColor: active.soft,
+                }}
+              >
+                <ArrowUpRight className="h-3.5 w-3.5" />
+                {active.metric}
+              </div>
+            </div>
+          </div>
+
+          {/* Chart */}
+          <div className="mt-7 h-32">
+            <MiniSparkline accent={active.accent} />
+          </div>
+
+          {/* Chart labels */}
+          <div className="mt-1 flex justify-between text-[9px] font-medium text-slate-400">
+            <span>JAN</span>
+            <span>MAR</span>
+            <span>MAY</span>
+            <span>JUL</span>
+            <span>AUG</span>
+          </div>
+
+          {/* Transactions */}
+          <div className="mt-7 border-t border-slate-100 pt-5">
+            <div className="mb-3 flex items-center justify-between">
+              <p className="text-xs font-bold text-slate-900">
+                Recent activity
+              </p>
+              <button className="text-[10px] font-semibold text-slate-400 transition hover:text-slate-900">
+                View all
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              {transactions.map((transaction, index) => {
+                const TransactionIcon = transaction.icon;
+
+                return (
+                  <motion.div
+                    key={transaction.name}
+                    initial={{ opacity: 0, x: -12 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{
+                      delay: index * 0.08,
+                    }}
+                    className="flex items-center justify-between rounded-2xl px-2 py-2 transition hover:bg-slate-50"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-slate-500">
+                        <TransactionIcon className="h-3.5 w-3.5" />
+                      </div>
+
+                      <div>
+                        <p className="text-[11px] font-semibold text-slate-800">
+                          {transaction.name}
+                        </p>
+                        <p className="text-[9px] text-slate-400">
+                          {transaction.type}
+                        </p>
+                      </div>
+                    </div>
+
+                    <p
+                      className={`text-[11px] font-bold ${
+                        transaction.amount.startsWith("+")
+                          ? "text-emerald-500"
+                          : "text-slate-800"
+                      }`}
+                    >
+                      {transaction.amount}
+                    </p>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Floating status chip */}
+        <motion.div
+          animate={{
+            y: [-5, 5, -5],
+            rotate: [-1, 1, -1],
+          }}
+          transition={{
+            duration: 5,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+          className="absolute -right-3 top-20 hidden rounded-2xl border border-white/80 bg-white/95 px-4 py-3 shadow-xl backdrop-blur-xl sm:block"
+        >
+          <div className="flex items-center gap-2">
+            <div
+              className="flex h-8 w-8 items-center justify-center rounded-xl"
+              style={{
+                backgroundColor: active.soft,
+                color: active.accent,
+              }}
+            >
+              <Check className="h-4 w-4" />
+            </div>
+
+            <div>
+              <p className="text-[10px] font-bold text-slate-900">Protected</p>
+              <p className="text-[9px] text-slate-400">Always monitored</p>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Floating insight */}
+        <motion.div
+          animate={{
+            y: [5, -5, 5],
+          }}
+          transition={{
+            duration: 6,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+          className="absolute -bottom-5 -left-4 hidden rounded-2xl border border-white/80 bg-white/95 px-4 py-3 shadow-xl backdrop-blur-xl md:block"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-amber-500">
+              <Sparkles className="h-4 w-4" />
+            </div>
+
+            <div>
+              <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">
+                Smart insight
+              </p>
+              <p className="mt-0.5 text-[10px] font-bold text-slate-900">
+                Spending is down 8.2%
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
 export function BrandShowcase() {
+  const [activeIndex, setActiveIndex] = useState(0);
+
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
-  const rotateX = useSpring(useTransform(mouseY, [-0.5, 0.5], [4, -4]), {
-    stiffness: 120,
-    damping: 20,
-  });
-  const rotateY = useSpring(useTransform(mouseX, [-0.5, 0.5], [-4, 4]), {
-    stiffness: 120,
+
+  const rotateX = useSpring(useTransform(mouseY, [-0.5, 0.5], [3, -3]), {
+    stiffness: 100,
     damping: 20,
   });
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    mouseX.set((e.clientX - rect.left) / rect.width - 0.5);
-    mouseY.set((e.clientY - rect.top) / rect.height - 0.5);
+  const rotateY = useSpring(useTransform(mouseX, [-0.5, 0.5], [-3, 3]), {
+    stiffness: 100,
+    damping: 20,
+  });
+
+  const active = experiences[activeIndex];
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveIndex((current) => (current + 1) % experiences.length);
+    }, 6500);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+
+    mouseX.set((event.clientX - rect.left) / rect.width - 0.5);
+
+    mouseY.set((event.clientY - rect.top) / rect.height - 0.5);
+  };
+
+  const next = () => {
+    setActiveIndex((current) => (current + 1) % experiences.length);
+  };
+
+  const previous = () => {
+    setActiveIndex(
+      (current) => (current - 1 + experiences.length) % experiences.length,
+    );
   };
 
   return (
-    <div
-      className="relative hidden lg:flex lg:w-[52%] xl:w-[55%] flex-col overflow-hidden"
+    <section
       onMouseMove={handleMouseMove}
+      className="relative hidden min-h-screen overflow-hidden bg-[#f5f8ff] lg:flex lg:w-[52%] xl:w-[55%]"
     >
-      {/* Light premium background */}
-      <div
-        className="
-    absolute
-    inset-0
-    bg-[radial-gradient(circle_at_top_left,#dfe8ff_0%,#edf2ff_30%,#d6e4ff_60%,#bfd5ff_100%)]
-  "
+      {/* Background */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_15%,rgba(99,102,241,0.13),transparent_32%),radial-gradient(circle_at_85%_80%,rgba(14,165,233,0.12),transparent_30%),linear-gradient(135deg,#f8faff_0%,#eef4ff_52%,#f8fbff_100%)]" />
+
+      <div className="absolute inset-0 bg-[linear-gradient(rgba(15,23,42,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(15,23,42,0.025)_1px,transparent_1px)] bg-[size:42px_42px]" />
+
+      <FloatingOrb className="-left-32 top-1/3 h-80 w-80 bg-indigo-300/20" />
+
+      <FloatingOrb
+        className="-right-32 bottom-20 h-96 w-96 bg-sky-300/20"
+        delay={2}
       />
-      <div
-        className="
-    absolute
-    inset-0
-    bg-[linear-gradient(rgba(255,255,255,0.5)_1px,transparent_1px),
-    linear-gradient(90deg,rgba(255,255,255,0.5)_1px,transparent_1px)]
-    bg-[size:40px_40px]
-  "
-      />{" "}
-      <div className="absolute inset-0 grid-pattern-light opacity-60" />
-      {/* Ambient orbs */}
+
+      {/* Decorative orbit */}
       <motion.div
-        className="absolute -left-24 top-1/4 h-96 w-96 rounded-full bg-caprock/8 blur-3xl"
-        animate={{ scale: [1, 1.15, 1], opacity: [0.5, 0.8, 0.5] }}
-        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-      />
-      <motion.div
-        className="absolute -right-16 bottom-1/4 h-72 w-72 rounded-full bg-sky-400/10 blur-3xl"
-        animate={{ x: [0, -20, 0], y: [0, 15, 0] }}
-        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-      />
-      {/* Floating ring decoration */}
-      <motion.div
-        className="absolute right-[12%] top-[18%] h-32 w-32 rounded-full border border-caprock/10"
+        className="absolute right-[8%] top-[10%] h-48 w-48 rounded-full border border-indigo-200/40"
         animate={{ rotate: 360 }}
-        transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+        transition={{
+          duration: 35,
+          repeat: Infinity,
+          ease: "linear",
+        }}
       />
+
       <motion.div
-        className="absolute right-[14%] top-[20%] h-24 w-24 rounded-full border border-dashed border-caprock/15"
+        className="absolute right-[11%] top-[13%] h-36 w-36 rounded-full border border-dashed border-indigo-200/40"
         animate={{ rotate: -360 }}
-        transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+        transition={{
+          duration: 25,
+          repeat: Infinity,
+          ease: "linear",
+        }}
       />
-      <div className="relative z-10 flex h-full flex-col justify-between p-10 xl:p-14">
+
+      <div className="relative z-10 flex w-full flex-col px-8 py-8 xl:px-12 xl:py-10">
+        {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: -12 }}
+          initial={{ opacity: 0, y: -15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
+          className="flex items-center justify-between"
         >
           <Logo size="lg" variant="dark" />
+
+          <div className="hidden items-center gap-2 rounded-full border border-white/80 bg-white/60 px-3 py-2 shadow-sm backdrop-blur-md xl:flex">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+            </span>
+
+            <span className="text-[10px] font-bold text-slate-600">
+              50,000+ members
+            </span>
+          </div>
         </motion.div>
 
-        <div className="relative flex flex-1 flex-col justify-center py-8">
-          {/* Hero copy */}
-          <div className="relative z-20 max-w-lg">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.15 }}
-              className="mb-4 inline-flex items-center gap-2 rounded-full border border-caprock/15 bg-white/70 px-4 py-1.5 text-xs font-semibold text-caprock shadow-sm backdrop-blur-sm"
-            >
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-              </span>
-              Trusted by 50,000+ investors
-            </motion.div>
-
-            <motion.h1
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.25 }}
-              className="font-display text-4xl xl:text-5xl font-bold leading-[1.08] tracking-tight text-ink"
-            >
-              Wealth reimagined for the{" "}
-              <span className="text-gradient-light">modern era</span>
-            </motion.h1>
-
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-              className="mt-5 text-base xl:text-lg text-muted leading-relaxed"
-            >
-              Grow, protect, and manage your financial future with
-              institutional-grade tools — beautifully simple.
-            </motion.p>
-          </div>
-
-          {/* 3D floating dashboard preview */}
-          <motion.div
-            style={{ rotateX, rotateY, perspective: 1200 }}
-            className="pointer-events-none absolute right-0 top-1/2 z-10 hidden xl:block -translate-y-1/2 translate-x-4"
-          >
-            <FloatingCard delay={0.5} className="relative" yRange={[-10, 6]}>
-              <div className="premium-card w-[280px] overflow-hidden rounded-2xl p-5 shadow-premium">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-medium text-muted">
-                      Portfolio value
-                    </p>
-                    <p className="font-display text-2xl font-bold text-ink">
-                      $284,592
-                    </p>
+        {/* Main */}
+        <div className="flex flex-1 items-center py-8">
+          <div className="grid w-full items-center gap-10 xl:grid-cols-[0.8fr_1.2fr] xl:gap-14">
+            {/* LEFT CONTENT */}
+            <div className="max-w-md">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={active.id}
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.45 }}
+                >
+                  <div
+                    className="mb-5 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[10px] font-bold tracking-[0.16em]"
+                    style={{
+                      color: active.accent,
+                      borderColor: `${active.accent}30`,
+                      backgroundColor: active.soft,
+                    }}
+                  >
+                    <active.icon className="h-3.5 w-3.5" />
+                    {active.eyebrow}
                   </div>
-                  <div className="flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-600">
-                    <ArrowUpRight className="h-3 w-3" />
-                    +12.4%
-                  </div>
-                </div>
-                <div className="mt-4 h-14">
-                  <MiniChart />
-                </div>
-                <div className="mt-3 flex gap-2">
-                  {chartBars.slice(0, 6).map((h, i) => (
-                    <motion.div
-                      key={i}
-                      className="flex-1 rounded-sm bg-caprock/15"
-                      initial={{ height: 0 }}
-                      animate={{ height: `${h * 0.22}px` }}
-                      transition={{ duration: 0.5, delay: 0.9 + i * 0.06 }}
-                    />
+
+                  <h1 className="font-display text-4xl font-bold leading-[1.04] tracking-[-0.04em] text-slate-950 xl:text-[52px]">
+                    {active.title}
+                  </h1>
+
+                  <p className="mt-5 max-w-sm text-sm leading-6 text-slate-500 xl:text-base">
+                    {active.description}
+                  </p>
+                </motion.div>
+              </AnimatePresence>
+
+              {/* Interactive navigation */}
+              <div className="mt-8 space-y-2">
+                {experiences.map((item, index) => {
+                  const Icon = item.icon;
+                  const isActive = index === activeIndex;
+
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => setActiveIndex(index)}
+                      className="group relative flex w-full items-center gap-3 rounded-2xl p-3 text-left transition"
+                    >
+                      {isActive && (
+                        <motion.div
+                          layoutId="activeFeature"
+                          className="absolute inset-0 rounded-2xl border border-white bg-white/75 shadow-sm backdrop-blur-md"
+                          transition={{
+                            type: "spring",
+                            stiffness: 400,
+                            damping: 30,
+                          }}
+                        />
+                      )}
+
+                      <div className="relative z-10 flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-sm">
+                        <Icon
+                          className="h-4 w-4"
+                          style={{
+                            color: isActive ? item.accent : "#94a3b8",
+                          }}
+                        />
+                      </div>
+
+                      <div className="relative z-10 flex-1">
+                        <p
+                          className={`text-xs font-bold ${
+                            isActive ? "text-slate-900" : "text-slate-500"
+                          }`}
+                        >
+                          {item.eyebrow}
+                        </p>
+
+                        <p className="mt-0.5 text-[10px] text-slate-400">
+                          {item.metricLabel}
+                        </p>
+                      </div>
+
+                      <ChevronRight
+                        className={`relative z-10 h-4 w-4 transition ${
+                          isActive
+                            ? "translate-x-0 text-slate-700"
+                            : "-translate-x-1 text-slate-300"
+                        }`}
+                      />
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Slider controls */}
+              <div className="mt-7 flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={previous}
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:-translate-y-0.5 hover:text-slate-900"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={next}
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:-translate-y-0.5 hover:text-slate-900"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+
+                <div className="ml-2 flex gap-1.5">
+                  {experiences.map((item, index) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => setActiveIndex(index)}
+                      className="h-1.5 overflow-hidden rounded-full bg-slate-200"
+                      style={{
+                        width: index === activeIndex ? 32 : 8,
+                      }}
+                    >
+                      {index === activeIndex && (
+                        <motion.div
+                          key={activeIndex}
+                          className="h-full rounded-full"
+                          style={{
+                            backgroundColor: active.accent,
+                          }}
+                          initial={{ width: 0 }}
+                          animate={{ width: "100%" }}
+                          transition={{
+                            duration: 6.5,
+                            ease: "linear",
+                          }}
+                        />
+                      )}
+                    </button>
                   ))}
                 </div>
               </div>
-            </FloatingCard>
-
-            <FloatingCard
-              delay={0.7}
-              className="absolute -left-16 top-24"
-              yRange={[6, -8]}
-            >
-              <div className="premium-card flex items-center gap-3 rounded-xl px-4 py-3 shadow-premium-sm">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-caprock text-white">
-                  <Shield className="h-4 w-4" />
-                </div>
-                <div>
-                  <p className="text-xs font-semibold text-ink">Secured</p>
-                  <p className="text-[10px] text-muted">256-bit encrypted</p>
-                </div>
-              </div>
-            </FloatingCard>
-
-            <FloatingCard
-              delay={0.9}
-              className="absolute -right-4 bottom-0"
-              yRange={[-6, 10]}
-            >
-              <div className="premium-card rounded-xl px-4 py-3 shadow-premium-sm">
-                <p className="text-[10px] font-medium uppercase tracking-wider text-muted">
-                  Monthly gain
-                </p>
-                <p className="font-display text-lg font-bold text-emerald-600">
-                  +$4,218
-                </p>
-              </div>
-            </FloatingCard>
-          </motion.div>
-
-          {/* Mobile/tablet inline preview card */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.55 }}
-            className="relative z-10 mt-8 xl:hidden"
-          >
-            <div className="premium-card overflow-hidden rounded-2xl p-5 shadow-premium">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-medium text-muted">
-                    Portfolio value
-                  </p>
-                  <p className="font-display text-xl font-bold text-ink">
-                    $284,592
-                  </p>
-                </div>
-                <div className="flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-600">
-                  <ArrowUpRight className="h-3 w-3" />
-                  +12.4%
-                </div>
-              </div>
-              <div className="mt-3 h-12">
-                <MiniChart />
-              </div>
             </div>
-          </motion.div>
-        </div>
 
-        {/* Feature cards */}
-        <div className="relative z-20 grid gap-3 sm:grid-cols-3">
-          {features.map((feature, i) => (
+            {/* RIGHT VISUAL */}
             <motion.div
-              key={feature.title}
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.65 + i * 0.12 }}
-              whileHover={{ y: -4, scale: 1.02 }}
-              className="group premium-card flex items-start gap-3 rounded-2xl p-4 shadow-premium-sm transition-shadow hover:shadow-premium"
+              style={{
+                rotateX,
+                rotateY,
+                perspective: 1400,
+              }}
+              className="relative mx-auto w-full max-w-[480px]"
             >
+              {/* Ambient glow */}
               <motion.div
-                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${feature.accent} text-caprock ring-1 ring-caprock/10`}
-                whileHover={{ rotate: [0, -8, 8, 0] }}
-                transition={{ duration: 0.5 }}
-              >
-                <feature.icon className="h-5 w-5" />
-              </motion.div>
-              <div>
-                <p className="text-sm font-semibold text-ink">
-                  {feature.title}
-                </p>
-                <p className="text-xs text-muted leading-relaxed">
-                  {feature.desc}
-                </p>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-      <div className="absolute right-10 top-1/2 hidden xl:block">
-        <motion.img
-          src="/dashboard-preview.png"
-          animate={{
-            y: [-10, 10, -10],
-            rotate: [-2, 2, -2],
-          }}
-          transition={{
-            duration: 8,
-            repeat: Infinity,
-          }}
-          className="
-      w-80
-      rounded-3xl
-      shadow-2xl
-    "
-        />
+                key={active.id}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="absolute inset-10 rounded-full blur-3xl"
+                style={{
+                  backgroundColor: active.soft,
+                }}
+              />
 
-        <motion.img
-          src="/analytics-preview.png"
-          animate={{
-            y: [10, -10, 10],
-            rotate: [3, -3, 3],
-          }}
-          transition={{
-            duration: 10,
-            repeat: Infinity,
-          }}
-          className="
-      absolute
-      -left-24
-      top-40
-      w-60
-      rounded-3xl
-      shadow-xl
-    "
-        />
+              <FinancePreview active={active} />
+
+              {/* Side stat */}
+              <motion.div
+                key={`${active.id}-stat`}
+                initial={{ opacity: 0, x: 15 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="absolute -right-2 bottom-20 hidden rounded-2xl border border-white/80 bg-white/90 px-4 py-3 shadow-lg backdrop-blur-xl xl:block"
+              >
+                <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">
+                  {active.metricLabel}
+                </p>
+
+                <p
+                  className="mt-1 text-lg font-bold"
+                  style={{ color: active.accent }}
+                >
+                  {active.metric}
+                </p>
+              </motion.div>
+            </motion.div>
+          </div>
+        </div>
+
+        {/* Bottom trust strip */}
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8 }}
+          className="flex items-center justify-between border-t border-slate-200/70 pt-5"
+        >
+          <div className="flex items-center gap-2">
+            <div className="flex -space-x-2">
+              {["A", "M", "S", "J"].map((letter, index) => (
+                <div
+                  key={letter}
+                  className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-[#f5f8ff] bg-white text-[9px] font-bold text-slate-500 shadow-sm"
+                >
+                  {letter}
+                </div>
+              ))}
+            </div>
+
+            <p className="text-[10px] font-medium text-slate-400">
+              Trusted by modern investors
+            </p>
+          </div>
+
+          <div className="hidden items-center gap-2 text-[10px] font-semibold text-slate-400 sm:flex">
+            <Wallet className="h-3.5 w-3.5" />
+            Built for your financial future
+          </div>
+        </motion.div>
       </div>
-    </div>
+    </section>
   );
 }
