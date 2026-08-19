@@ -438,14 +438,12 @@ export function BrandShowcase() {
   return (
     <section
       onMouseMove={handleMouseMove}
-      className="relative hidden min-h-screen overflow-hidden bg-[#f5f8ff] lg:flex lg:w-[52%] xl:w-[55%]"
+      className="relative hidden min-h-screen overflow-hidden bg-[#003478] lg:flex lg:w-[52%] xl:w-[55%]"
     >
       {/* Background */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_15%,rgba(99,102,241,0.13),transparent_32%),radial-gradient(circle_at_85%_80%,rgba(14,165,233,0.12),transparent_30%),linear-gradient(135deg,#f8faff_0%,#eef4ff_52%,#f8fbff_100%)]" />
 
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(15,23,42,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(15,23,42,0.025)_1px,transparent_1px)] bg-[size:42px_42px]" />
-
-      <FloatingOrb className="-left-32 top-1/3 h-80 w-80 bg-indigo-300/20" />
+      <FloatingOrb className="-left-32 top-1/3 h-80 w-80 bg-[#003478]/20" />
 
       <FloatingOrb
         className="-right-32 bottom-20 h-96 w-96 bg-sky-300/20"
