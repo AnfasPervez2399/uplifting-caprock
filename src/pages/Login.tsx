@@ -37,7 +37,9 @@ function HeaderVisual({ reduceMotion }: { reduceMotion: boolean | null }) {
       aria-labelledby="header-visual-title"
       className="h-[64px] w-[112px] shrink-0"
     >
-      <title id="header-visual-title">Secure portfolio overview</title>
+      <title id="header-visual-title">
+        Organized and verified financial documents
+      </title>
 
       <rect
         x="0.75"
@@ -50,54 +52,104 @@ function HeaderVisual({ reduceMotion }: { reduceMotion: boolean | null }) {
         strokeWidth="1.5"
       />
 
-      <path
-        d="M15 19H48"
-        stroke="#cbd5e1"
-        strokeWidth="4"
-        strokeLinecap="round"
-      />
-      <path
-        d="M15 28H35"
-        stroke="#e2e8f0"
-        strokeWidth="3"
-        strokeLinecap="round"
-      />
-
-      <g fill="#dbe3ee">
-        <rect x="15" y="50" width="8" height="9" rx="2" />
-        <rect x="30" y="43" width="8" height="16" rx="2" />
-        <rect x="45" y="47" width="8" height="12" rx="2" />
-        <rect x="60" y="37" width="8" height="22" rx="2" />
-        <rect x="75" y="40" width="8" height="19" rx="2" />
-        <rect x="90" y="29" width="8" height="30" rx="2" />
-        <rect x="105" y="24" width="8" height="35" rx="2" />
-      </g>
-
-      <motion.path
-        d="M15 53C27 51 31 42 41 44C53 47 57 36 68 38C79 40 84 31 94 32C103 33 107 25 114 21"
-        fill="none"
-        stroke="#003478"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        initial={reduceMotion ? false : { pathLength: 0, opacity: 0.35 }}
-        animate={{ pathLength: 1, opacity: 1 }}
-        transition={{ duration: 0.7, delay: 0.18, ease: EASE }}
-      />
+      {/* Supporting documents */}
+      <motion.g
+        initial={reduceMotion ? false : { opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.42, delay: 0.1, ease: EASE }}
+      >
+        <rect
+          x="21"
+          y="12"
+          width="39"
+          height="43"
+          rx="7"
+          fill="white"
+          stroke="#cbd5e1"
+          strokeWidth="1.5"
+          transform="rotate(-6 40.5 33.5)"
+        />
+        <circle cx="33" cy="24" r="4" fill="#dbeafe" />
+        <path
+          d="M41 22H51"
+          stroke="#94a3b8"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+        />
+        <path
+          d="M29 34H50"
+          stroke="#cbd5e1"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+        />
+        <path
+          d="M29 41H45"
+          stroke="#e2e8f0"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+        />
+      </motion.g>
 
       <motion.g
-        initial={reduceMotion ? false : { opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.25, delay: 0.72, ease: EASE }}
+        initial={reduceMotion ? false : { opacity: 0, y: 7 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.42, delay: 0.2, ease: EASE }}
       >
-        <circle cx="114" cy="21" r="6" fill="#003478" />
-        <path
-          d="M111.5 21L113.2 22.7L116.6 19.3"
-          fill="none"
-          stroke="white"
+        <rect
+          x="55"
+          y="10"
+          width="42"
+          height="45"
+          rx="7"
+          fill="white"
+          stroke="#bfdbfe"
           strokeWidth="1.5"
+          transform="rotate(6 76 32.5)"
+        />
+        <rect x="66" y="21" width="9" height="9" rx="3" fill="#003478" />
+        <path
+          d="M81 23H91"
+          stroke="#94a3b8"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+        />
+        <path
+          d="M66 37H88"
+          stroke="#cbd5e1"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+        />
+        <path
+          d="M66 44H82"
+          stroke="#e2e8f0"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+        />
+      </motion.g>
+
+      {/* One organized portfolio folder */}
+      <motion.g
+        initial={reduceMotion ? false : { opacity: 0, y: 7 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, delay: 0.38, ease: EASE }}
+      >
+        <path
+          d="M17 34C17 31.8 18.8 30 21 30H42L48 35H105C108.3 35 111 37.7 111 41V57C111 60.3 108.3 63 105 63H23C19.7 63 17 60.3 17 57V34Z"
+          fill="#003478"
+        />
+        <path d="M18 40H110" stroke="#60a5fa" strokeWidth="1.5" opacity="0.7" />
+
+        <circle cx="96" cy="51" r="8" fill="white" />
+        <motion.path
+          d="M92.5 51L95.2 53.7L100.2 48.3"
+          fill="none"
+          stroke="#003478"
+          strokeWidth="1.8"
           strokeLinecap="round"
           strokeLinejoin="round"
+          initial={reduceMotion ? false : { pathLength: 0 }}
+          animate={{ pathLength: 1 }}
+          transition={{ duration: 0.32, delay: 0.78, ease: EASE }}
         />
       </motion.g>
     </svg>
@@ -166,7 +218,7 @@ export function Login() {
       variants={container}
       initial={reduceMotion ? false : "hidden"}
       animate="visible"
-      className="mx-auto w-full max-w-[420px] px-5 py-8 sm:px-0 sm:py-10"
+      className="mx-auto w-full max-w-[420px] px-5 py-4 sm:px-0 sm:py-10"
     >
       <motion.header variants={item} className="mb-9">
         <div className="mb-9 flex items-start justify-between gap-5">
