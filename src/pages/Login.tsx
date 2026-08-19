@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ArrowRight, Check, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Check, Eye, EyeOff, Loader2, LogIn } from "lucide-react";
 
 type Status = "idle" | "loading" | "success";
 type Errors = Partial<Record<"email" | "password", string>>;
@@ -257,40 +257,53 @@ export function Login() {
           type="submit"
           disabled={status !== "idle"}
           whileHover={
-            !reduceMotion && status === "idle" ? { y: -1 } : undefined
+            !reduceMotion && status === "idle" ? { y: -2 } : undefined
           }
           whileTap={
-            !reduceMotion && status === "idle" ? { scale: 0.99 } : undefined
+            !reduceMotion && status === "idle" ? { scale: 0.985 } : undefined
           }
-          transition={{ duration: 0.15 }}
-          className="group flex h-12 w-full items-center justify-center rounded-lg bg-[#003478] px-4 text-sm font-semibold text-white transition-colors hover:bg-[#00295f] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003478]/25 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-400"
+          transition={{ duration: 0.18, ease: EASE }}
+          className="group cursor-pointer relative h-14 w-full overflow-hidden rounded-xl bg-[#003478] text-white shadow-[0_6px_16px_-10px_rgba(0,52,120,0.75)] transition-[background-color,box-shadow] duration-200 hover:bg-[#002d69] hover:shadow-[0_12px_24px_-12px_rgba(0,52,120,0.65)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003478]/25 focus-visible:ring-offset-2 disabled:cursor-wait disabled:bg-[#003478] disabled:opacity-90"
         >
-          <AnimatePresence mode="wait" initial={false}>
+          <AnimatePresence initial={false}>
             <motion.span
               key={status}
-              initial={reduceMotion ? false : { opacity: 0, y: 4 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -4 }}
-              transition={{ duration: 0.16 }}
-              className="flex items-center justify-center gap-2"
+              initial={reduceMotion ? false : { opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.14 }}
+              className="absolute inset-0 flex items-center justify-between gap-4 pl-5 pr-2"
               aria-live="polite"
             >
-              {status === "loading" ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Signing in…
-                </>
-              ) : status === "success" ? (
-                <>
-                  <Check className="h-4 w-4" />
-                  Signed in
-                </>
-              ) : (
-                <>
-                  Sign in
-                  <ArrowRight className="h-4 w-4 transition-transform duration-150 group-hover:translate-x-0.5" />
-                </>
-              )}
+              <span className="text-[15px] font-semibold tracking-[-0.015em]">
+                {status === "loading"
+                  ? "Verifying account"
+                  : status === "success"
+                    ? "Access granted"
+                    : "Continue"}
+              </span>
+
+              <span
+                aria-hidden="true"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-white/10 text-white transition-[width,background-color,color,transform] duration-300 ease-out group-hover:w-12 group-hover:bg-white group-hover:text-[#003478] group-disabled:!w-10 group-disabled:!bg-white/10 group-disabled:!text-white"
+              >
+                {status === "loading" ? (
+                  <Loader2 className="h-[18px] w-[18px] animate-spin" />
+                ) : status === "success" ? (
+                  <motion.span
+                    initial={reduceMotion ? false : { scale: 0.75 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", stiffness: 420, damping: 24 }}
+                  >
+                    <Check className="h-[18px] w-[18px]" strokeWidth={2.4} />
+                  </motion.span>
+                ) : (
+                  <LogIn
+                    className="h-[18px] w-[18px] transition-transform duration-300 ease-out group-hover:translate-x-0.5"
+                    strokeWidth={2.2}
+                  />
+                )}
+              </span>
             </motion.span>
           </AnimatePresence>
         </motion.button>
