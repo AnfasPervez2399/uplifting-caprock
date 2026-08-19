@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Check, Eye, EyeOff, Loader2, LogIn } from "lucide-react";
+import { Check, Eye, EyeOff, Loader2, LogIn, ArrowUpRight } from "lucide-react";
 
 type Status = "idle" | "loading" | "success";
 type Errors = Partial<Record<"email" | "password", string>>;
@@ -38,7 +38,7 @@ function HeaderVisual({ reduceMotion }: { reduceMotion: boolean | null }) {
       className="h-[64px] w-[112px] shrink-0"
     >
       <title id="header-visual-title">
-        Organized and verified financial documents
+        Transactions between cash accounts and investment funds
       </title>
 
       <rect
@@ -52,105 +52,113 @@ function HeaderVisual({ reduceMotion }: { reduceMotion: boolean | null }) {
         strokeWidth="1.5"
       />
 
-      {/* Supporting documents */}
+      {/* Cash account */}
       <motion.g
-        initial={reduceMotion ? false : { opacity: 0, y: 6 }}
-        animate={{ opacity: 1, y: 0 }}
+        initial={reduceMotion ? false : { opacity: 0, x: -5 }}
+        animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.42, delay: 0.1, ease: EASE }}
       >
+        <rect x="9" y="18" width="38" height="41" rx="8" fill="#e2e8f0" />
         <rect
-          x="21"
-          y="12"
-          width="39"
-          height="43"
-          rx="7"
+          x="13"
+          y="13"
+          width="38"
+          height="42"
+          rx="8"
           fill="white"
           stroke="#cbd5e1"
           strokeWidth="1.5"
-          transform="rotate(-6 40.5 33.5)"
         />
-        <circle cx="33" cy="24" r="4" fill="#dbeafe" />
-        <path
-          d="M41 22H51"
-          stroke="#94a3b8"
-          strokeWidth="2.5"
-          strokeLinecap="round"
+        <text
+          x="21"
+          y="24"
+          fill="#64748b"
+          fontFamily="Arial, Helvetica, sans-serif"
+          fontSize="6"
+          fontWeight="700"
+          letterSpacing="0.7"
+        >
+          CASH
+        </text>
+        <rect
+          x="20"
+          y="31"
+          width="24"
+          height="14"
+          rx="3"
+          fill="#eff6ff"
+          stroke="#93c5fd"
         />
+        <circle cx="32" cy="38" r="3.5" fill="#003478" />
         <path
-          d="M29 34H50"
-          stroke="#cbd5e1"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-        />
-        <path
-          d="M29 41H45"
-          stroke="#e2e8f0"
-          strokeWidth="2.5"
+          d="M23 35H26M38 41H41"
+          stroke="#60a5fa"
+          strokeWidth="1.5"
           strokeLinecap="round"
         />
       </motion.g>
 
+      {/* Investment fund */}
       <motion.g
-        initial={reduceMotion ? false : { opacity: 0, y: 7 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.42, delay: 0.2, ease: EASE }}
+        initial={reduceMotion ? false : { opacity: 0, x: 5 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.42, delay: 0.22, ease: EASE }}
       >
+        <rect x="81" y="18" width="38" height="41" rx="8" fill="#dbeafe" />
         <rect
-          x="55"
-          y="10"
-          width="42"
-          height="45"
-          rx="7"
+          x="77"
+          y="13"
+          width="38"
+          height="42"
+          rx="8"
           fill="white"
           stroke="#bfdbfe"
           strokeWidth="1.5"
-          transform="rotate(6 76 32.5)"
         />
-        <rect x="66" y="21" width="9" height="9" rx="3" fill="#003478" />
-        <path
-          d="M81 23H91"
-          stroke="#94a3b8"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-        />
-        <path
-          d="M66 37H88"
-          stroke="#cbd5e1"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-        />
-        <path
-          d="M66 44H82"
-          stroke="#e2e8f0"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-        />
+        <text
+          x="84"
+          y="24"
+          fill="#64748b"
+          fontFamily="Arial, Helvetica, sans-serif"
+          fontSize="6"
+          fontWeight="700"
+          letterSpacing="0.7"
+        >
+          FUNDS
+        </text>
+        <path d="M84 38H108L105.5 45H86.5L84 38Z" fill="#003478" />
+        <circle cx="89" cy="34" r="3.2" fill="#bfdbfe" />
+        <circle cx="96" cy="32" r="3.8" fill="#60a5fa" />
+        <circle cx="104" cy="34" r="3.2" fill="#dbeafe" />
       </motion.g>
 
-      {/* One organized portfolio folder */}
-      <motion.g
-        initial={reduceMotion ? false : { opacity: 0, y: 7 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.45, delay: 0.38, ease: EASE }}
-      >
-        <path
-          d="M17 34C17 31.8 18.8 30 21 30H42L48 35H105C108.3 35 111 37.7 111 41V57C111 60.3 108.3 63 105 63H23C19.7 63 17 60.3 17 57V34Z"
-          fill="#003478"
-        />
-        <path d="M18 40H110" stroke="#60a5fa" strokeWidth="1.5" opacity="0.7" />
+      {/* Transaction rail */}
+      <motion.path
+        d="M52 31H72M68.5 27.5L72 31L68.5 34.5M76 41H56M59.5 37.5L56 41L59.5 44.5"
+        fill="none"
+        stroke="#003478"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        initial={reduceMotion ? false : { pathLength: 0, opacity: 0 }}
+        animate={{ pathLength: 1, opacity: 1 }}
+        transition={{ duration: 0.5, delay: 0.45, ease: EASE }}
+      />
 
-        <circle cx="96" cy="51" r="8" fill="white" />
-        <motion.path
-          d="M92.5 51L95.2 53.7L100.2 48.3"
-          fill="none"
+      <motion.g
+        initial={reduceMotion ? false : { opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.28, delay: 0.72, ease: EASE }}
+      >
+        <circle
+          cx="64"
+          cy="36"
+          r="6"
+          fill="white"
           stroke="#003478"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          initial={reduceMotion ? false : { pathLength: 0 }}
-          animate={{ pathLength: 1 }}
-          transition={{ duration: 0.32, delay: 0.78, ease: EASE }}
+          strokeWidth="1.5"
         />
+        <circle cx="64" cy="36" r="2" fill="#003478" />
       </motion.g>
     </svg>
   );
@@ -396,7 +404,7 @@ export function Login() {
             !reduceMotion && status === "idle" ? { scale: 0.985 } : undefined
           }
           transition={{ duration: 0.18, ease: EASE }}
-          className="group relative h-14 w-full overflow-hidden rounded-xl bg-[#003478] text-white shadow-[0_6px_16px_-10px_rgba(0,52,120,0.75)] transition-[background-color,box-shadow] duration-200 hover:bg-[#002d69] hover:shadow-[0_12px_24px_-12px_rgba(0,52,120,0.65)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003478]/25 focus-visible:ring-offset-2 disabled:cursor-wait disabled:bg-[#003478] disabled:opacity-90"
+          className="group  cursor-pointer relative h-14 w-full overflow-hidden rounded-xl bg-[#003478] text-white shadow-[0_6px_16px_-10px_rgba(0,52,120,0.75)] transition-[background-color,box-shadow] duration-200 hover:bg-[#002d69] hover:shadow-[0_12px_24px_-12px_rgba(0,52,120,0.65)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003478]/25 focus-visible:ring-offset-2 disabled:cursor-wait disabled:bg-[#003478] disabled:opacity-90"
         >
           <AnimatePresence initial={false}>
             <motion.span
@@ -413,7 +421,7 @@ export function Login() {
                   ? "Verifying account"
                   : status === "success"
                     ? "Access granted"
-                    : "Sign in to Caprock"}
+                    : "Continue"}
               </span>
 
               <span
@@ -441,8 +449,60 @@ export function Login() {
           </AnimatePresence>
         </motion.button>
       </motion.form>
+      <motion.div
+        initial={{
+          opacity: 0,
+        }}
+        animate={{
+          opacity: 1,
+        }}
+        transition={{
+          delay: 0.55,
+        }}
+        className="
+          mt-8
+          flex items-center
+          justify-between
+          border-t border-black/[0.08]
+          pt-6
+        "
+      >
+        <p className="text-[12px] text-black/40">New to Caprock?</p>
 
-      <motion.p
+        <Link
+          to="/signup"
+          className="
+            group flex items-center gap-1.5
+            text-[12px]
+            font-bold
+            text-black
+          "
+        >
+          Create an account
+          <span
+            className="
+              flex h-6 w-6
+              items-center justify-center
+              rounded-full
+              border border-black/10
+              transition-all duration-300
+              group-hover:border-[#003478]
+              group-hover:bg-[#003478]
+              group-hover:text-white
+            "
+          >
+            <ArrowUpRight
+              className="
+                h-3 w-3
+                transition-transform
+                group-hover:translate-x-[1px]
+                group-hover:-translate-y-[1px]
+              "
+            />
+          </span>
+        </Link>
+      </motion.div>
+      {/* <motion.p
         variants={item}
         className="mt-8 border-t border-slate-200 pt-6 text-center text-sm text-slate-500"
       >
@@ -453,7 +513,7 @@ export function Login() {
         >
           Create an account
         </Link>
-      </motion.p>
+      </motion.p> */}
     </motion.section>
   );
 }
