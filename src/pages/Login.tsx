@@ -111,23 +111,6 @@ function PremiumField({
               placeholder:text-black/25
             "
           />
-
-          {/* Focus indicator */}
-          <AnimatePresence>
-            {focused && (
-              <motion.span
-                initial={{ opacity: 0, scale: 0 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0 }}
-                className="
-                  ml-2 h-2 w-2
-                  rounded-full
-                  bg-[#003478]
-                  shadow-[0_0_0_4px_rgba(0,52,120,0.08)]
-                "
-              />
-            )}
-          </AnimatePresence>
         </div>
       </div>
     </motion.div>
@@ -446,83 +429,106 @@ export function Login() {
       className="w-full"
     >
       {/* Header */}
-      <div className="mb-9">
-        <motion.div
-          initial={{
-            opacity: 0,
-            x: -8,
-          }}
-          animate={{
-            opacity: 1,
-            x: 0,
-          }}
-          transition={{
-            delay: 0.1,
-          }}
-          className="mb-6 flex items-center gap-2"
-        >
-          <span
-            className="
-              flex h-7 w-7
-              items-center justify-center
-              rounded-[9px]
-              bg-[#003478]
-              text-white
-            "
-          >
-            <Sparkles className="h-[13px] w-[13px]" />
-          </span>
+      {/* -------------------------------------------------------------------------- */}
+      {/* Login intro                                                                */}
+      {/* -------------------------------------------------------------------------- */}
 
-          <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-black/45">
-            Secure access
-          </span>
+      <div className="mb-8">
+        {/* Custom Caprock access mark */}
+        <motion.div
+          initial={{ opacity: 0, x: -6 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.45 }}
+          className="mb-7 flex items-center gap-3"
+        >
+          <div
+            className="
+        relative flex h-8 w-8
+        items-center justify-center
+        rounded-[10px]
+        border border-black/[0.09]
+        bg-white
+      "
+          >
+            {/* C-shaped mark */}
+            <motion.div
+              initial={{ rotate: -25, opacity: 0 }}
+              animate={{ rotate: 0, opacity: 1 }}
+              transition={{
+                duration: 0.6,
+                ease: [0.22, 1, 0.36, 1],
+              }}
+              className="
+          relative h-[15px] w-[15px]
+          rounded-full
+          border-[2px]
+          border-[#003478]
+          border-r-transparent
+        "
+            />
+
+            {/* Entry point */}
+            <motion.span
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{
+                delay: 0.25,
+                duration: 0.3,
+              }}
+              className="
+          absolute right-[7px]
+          h-[4px] w-[4px]
+          rounded-full
+          bg-[#003478]
+        "
+            />
+          </div>
+
+          <div className="flex flex-col">
+            <span className="text-[11px] font-semibold tracking-[0.12em] text-black">
+              CAPROCK
+            </span>
+
+            <span className="mt-[1px] text-[9px] font-medium tracking-[0.12em] text-black/30">
+              ACCOUNT ACCESS
+            </span>
+          </div>
         </motion.div>
 
-        <motion.h1
-          initial={{
-            opacity: 0,
-            y: 12,
-          }}
-          animate={{
-            opacity: 1,
-            y: 0,
-          }}
+        {/* Heading */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{
-            delay: 0.15,
-            duration: 0.5,
+            delay: 0.12,
+            duration: 0.45,
+            ease: [0.22, 1, 0.36, 1],
           }}
-          className="
-            text-[clamp(2.5rem,5vw,3.8rem)]
-            font-semibold
-            leading-[0.92]
-            tracking-[-0.06em]
-            text-black
-          "
         >
-          Welcome
-          <br />
-          <span className="text-black/35">back.</span>
-        </motion.h1>
+          <h1
+            className="
+        text-[clamp(1.9rem,3vw,2.25rem)]
+        font-semibold
+        leading-[1.05]
+        tracking-[-0.035em]
+        text-black
+      "
+          >
+            Welcome back
+          </h1>
 
-        <motion.p
-          initial={{
-            opacity: 0,
-          }}
-          animate={{
-            opacity: 1,
-          }}
-          transition={{
-            delay: 0.3,
-          }}
-          className="
-            mt-5 max-w-[380px]
-            text-[14px]
-            leading-6
-            text-black/45
-          "
-        >
-          Your portfolio is waiting. Sign in to pick up where you left off.
-        </motion.p>
+          <p
+            className="
+        mt-3
+        max-w-[360px]
+        text-[13px]
+        leading-[1.7]
+        text-black/45
+      "
+          >
+            Sign in to access your portfolio and continue where you left off.
+          </p>
+        </motion.div>
       </div>
 
       {/* Form */}
