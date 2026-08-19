@@ -29,6 +29,81 @@ const item = {
 const wait = (ms: number) =>
   new Promise<void>((resolve) => window.setTimeout(resolve, ms));
 
+function HeaderVisual({ reduceMotion }: { reduceMotion: boolean | null }) {
+  return (
+    <svg
+      viewBox="0 0 128 72"
+      role="img"
+      aria-labelledby="header-visual-title"
+      className="h-[64px] w-[112px] shrink-0"
+    >
+      <title id="header-visual-title">Secure portfolio overview</title>
+
+      <rect
+        x="0.75"
+        y="0.75"
+        width="126.5"
+        height="70.5"
+        rx="13"
+        fill="#f8fafc"
+        stroke="#e2e8f0"
+        strokeWidth="1.5"
+      />
+
+      <path
+        d="M15 19H48"
+        stroke="#cbd5e1"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
+      <path
+        d="M15 28H35"
+        stroke="#e2e8f0"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+
+      <g fill="#dbe3ee">
+        <rect x="15" y="50" width="8" height="9" rx="2" />
+        <rect x="30" y="43" width="8" height="16" rx="2" />
+        <rect x="45" y="47" width="8" height="12" rx="2" />
+        <rect x="60" y="37" width="8" height="22" rx="2" />
+        <rect x="75" y="40" width="8" height="19" rx="2" />
+        <rect x="90" y="29" width="8" height="30" rx="2" />
+        <rect x="105" y="24" width="8" height="35" rx="2" />
+      </g>
+
+      <motion.path
+        d="M15 53C27 51 31 42 41 44C53 47 57 36 68 38C79 40 84 31 94 32C103 33 107 25 114 21"
+        fill="none"
+        stroke="#003478"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        initial={reduceMotion ? false : { pathLength: 0, opacity: 0.35 }}
+        animate={{ pathLength: 1, opacity: 1 }}
+        transition={{ duration: 0.7, delay: 0.18, ease: EASE }}
+      />
+
+      <motion.g
+        initial={reduceMotion ? false : { opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.25, delay: 0.72, ease: EASE }}
+      >
+        <circle cx="114" cy="21" r="6" fill="#003478" />
+        <path
+          d="M111.5 21L113.2 22.7L116.6 19.3"
+          fill="none"
+          stroke="white"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </motion.g>
+    </svg>
+  );
+}
+
 export function Login() {
   const navigate = useNavigate();
   const reduceMotion = useReducedMotion();
@@ -94,18 +169,24 @@ export function Login() {
       className="mx-auto w-full max-w-[420px] px-5 py-8 sm:px-0 sm:py-10"
     >
       <motion.header variants={item} className="mb-9">
-        <Link
-          to="/"
-          aria-label="Caprock home"
-          className="mb-10 inline-flex items-center gap-2.5 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003478]/20 focus-visible:ring-offset-4"
-        >
-          <span className="grid h-8 w-8 place-items-center rounded-lg bg-[#003478]">
-            <span className="h-3.5 w-3.5 rounded-full border-2 border-white border-r-transparent" />
-          </span>
-          <span className="text-sm font-bold tracking-[0.14em] text-slate-950">
-            CAPROCK
-          </span>
-        </Link>
+        <div className="mb-9 flex items-start justify-between gap-5">
+          <Link
+            to="/"
+            aria-label="Caprock home"
+            className="inline-flex items-center gap-2.5 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003478]/20 focus-visible:ring-offset-4"
+          >
+            <img
+              src="/blue-logo.svg"
+              alt="Caprock"
+              className="h-10 w-auto max-w-[140px] object-contain object-left sm:max-w-[168px]"
+            />
+            <span className="text-sm font-bold tracking-[0.14em] text-slate-950">
+              CAPROCK
+            </span>
+          </Link>
+
+          <HeaderVisual reduceMotion={reduceMotion} />
+        </div>
 
         <h1 className="text-3xl font-semibold tracking-[-0.035em] text-slate-950 sm:text-[34px]">
           Welcome back
@@ -263,7 +344,7 @@ export function Login() {
             !reduceMotion && status === "idle" ? { scale: 0.985 } : undefined
           }
           transition={{ duration: 0.18, ease: EASE }}
-          className="group cursor-pointer relative h-14 w-full overflow-hidden rounded-xl bg-[#003478] text-white shadow-[0_6px_16px_-10px_rgba(0,52,120,0.75)] transition-[background-color,box-shadow] duration-200 hover:bg-[#002d69] hover:shadow-[0_12px_24px_-12px_rgba(0,52,120,0.65)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003478]/25 focus-visible:ring-offset-2 disabled:cursor-wait disabled:bg-[#003478] disabled:opacity-90"
+          className="group relative h-14 w-full overflow-hidden rounded-xl bg-[#003478] text-white shadow-[0_6px_16px_-10px_rgba(0,52,120,0.75)] transition-[background-color,box-shadow] duration-200 hover:bg-[#002d69] hover:shadow-[0_12px_24px_-12px_rgba(0,52,120,0.65)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003478]/25 focus-visible:ring-offset-2 disabled:cursor-wait disabled:bg-[#003478] disabled:opacity-90"
         >
           <AnimatePresence initial={false}>
             <motion.span
@@ -280,7 +361,7 @@ export function Login() {
                   ? "Verifying account"
                   : status === "success"
                     ? "Access granted"
-                    : "Continue"}
+                    : "Sign in to Caprock"}
               </span>
 
               <span
