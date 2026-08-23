@@ -27,14 +27,19 @@ import {
   PencilLine,
   Phone,
   Save,
+  Search,
   Send,
   ShieldCheck,
   UploadCloud,
+  UserPlus,
   UserRound,
+  UsersRound,
   WalletCards,
   X,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { CustomSelect } from "../components/ui/CustomSelect";
+import type { SelectOption } from "../components/ui/CustomSelect";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 const wait = (ms: number) =>
@@ -62,8 +67,32 @@ type UploadedDocument = {
   size: number;
 };
 
+type ApplicationType =
+  | "individual"
+  | "joint-spouse"
+  | "joint-same-address"
+  | "joint-different-address"
+  | "sole-trader"
+  | "";
+
+type JointApplicant = {
+  id: string;
+  method: "client-id" | "new-invite";
+  clientId: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  address: string;
+  city: string;
+  state: string;
+  postcode: string;
+  country: string;
+  confirmed: boolean;
+};
+
 type FormState = {
   personal: {
+    applicationType: ApplicationType;
     firstName: string;
     lastName: string;
     dateOfBirth: string;
@@ -76,6 +105,7 @@ type FormState = {
     postcode: string;
     country: string;
   };
+  jointApplicants: JointApplicant[];
   business: {
     legalName: string;
     tradingName: string;
@@ -122,7 +152,7 @@ type FormState = {
   };
 };
 
-const steps: Step[] = [
+const allSteps: Step[] = [
   {
     id: "personal",
     label: "Personal information",
@@ -176,6 +206,7 @@ const steps: Step[] = [
 
 const initialForm: FormState = {
   personal: {
+    applicationType: "",
     firstName: "",
     lastName: "",
     dateOfBirth: "",
@@ -188,6 +219,7 @@ const initialForm: FormState = {
     postcode: "",
     country: "",
   },
+  jointApplicants: [],
   business: {
     legalName: "",
     tradingName: "",
@@ -229,6 +261,118 @@ const initialForm: FormState = {
     terms: false,
   },
 };
+
+const APPLICATION_TYPE_OPTIONS: SelectOption[] = [
+  {
+    value: "individual",
+    label: "1 · Individual",
+    description: "An account held by one person",
+  },
+  {
+    value: "joint-spouse",
+    label: "2 · Husband and wife joint account · same address",
+    description: "Husband and wife with the same residential address",
+  },
+  {
+    value: "joint-same-address",
+    label: "3 · Different surnames · same address",
+    description: "Applicants with the same residential address",
+  },
+  {
+    value: "joint-different-address",
+    label: "4 · Joint account with different addresses",
+    description: "Applicants have separate residential addresses",
+  },
+  {
+    value: "sole-trader",
+    label: "5 · Sole trader",
+    description: "An individual operating a registered business",
+  },
+];
+
+const createJointApplicant = (): JointApplicant => ({
+  id: `joint-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+  method: "client-id",
+  clientId: "",
+  firstName: "",
+  lastName: "",
+  email: "",
+  address: "",
+  city: "",
+  state: "",
+  postcode: "",
+  country: "",
+  confirmed: false,
+});
+
+const COUNTRY_OPTIONS: SelectOption[] = [
+  { value: "Australia", label: "Australia" },
+  { value: "New Zealand", label: "New Zealand" },
+  { value: "United States", label: "United States" },
+  { value: "United Kingdom", label: "United Kingdom" },
+  { value: "Singapore", label: "Singapore" },
+  { value: "Hong Kong", label: "Hong Kong" },
+  { value: "Canada", label: "Canada" },
+  { value: "United Arab Emirates", label: "United Arab Emirates" },
+  { value: "Other", label: "Other" },
+];
+
+const ENTITY_OPTIONS: SelectOption[] = [
+  { value: "Sole trader", label: "Sole trader" },
+  { value: "Private company", label: "Private company" },
+  { value: "Public company", label: "Public company" },
+  { value: "Partnership", label: "Partnership" },
+  { value: "Trust", label: "Trust" },
+  { value: "Foundation", label: "Foundation" },
+  { value: "Family office", label: "Family office" },
+];
+
+const INDUSTRY_OPTIONS: SelectOption[] = [
+  { value: "Financial services", label: "Financial services" },
+  { value: "Professional services", label: "Professional services" },
+  { value: "Technology", label: "Technology" },
+  { value: "Property and construction", label: "Property and construction" },
+  { value: "Healthcare", label: "Healthcare" },
+  { value: "Manufacturing", label: "Manufacturing" },
+  { value: "Other", label: "Other" },
+];
+
+const CURRENCY_OPTIONS: SelectOption[] = [
+  {
+    value: "AUD",
+    label: "AUD · Australian Dollar",
+    description: "Australian Dollar",
+  },
+  {
+    value: "USD",
+    label: "USD · US Dollar",
+    description: "United States Dollar",
+  },
+  { value: "EUR", label: "EUR · Euro", description: "Euro" },
+  { value: "GBP", label: "GBP · British Pound", description: "Pound Sterling" },
+  {
+    value: "SGD",
+    label: "SGD · Singapore Dollar",
+    description: "Singapore Dollar",
+  },
+];
+
+const BALANCE_OPTIONS: SelectOption[] = [
+  { value: "Under $100,000", label: "Under $100,000" },
+  { value: "$100,000 – $500,000", label: "$100,000 – $500,000" },
+  { value: "$500,000 – $2 million", label: "$500,000 – $2 million" },
+  { value: "$2 million – $10 million", label: "$2 million – $10 million" },
+  { value: "Over $10 million", label: "Over $10 million" },
+];
+
+const FUNDING_OPTIONS: SelectOption[] = [
+  { value: "Business operating income", label: "Business operating income" },
+  { value: "Investment proceeds", label: "Investment proceeds" },
+  { value: "Asset sale", label: "Asset sale" },
+  { value: "Capital contribution", label: "Capital contribution" },
+  { value: "Distribution or dividend", label: "Distribution or dividend" },
+  { value: "Other", label: "Other" },
+];
 
 const inputClass = (hasError = false) =>
   `h-12 w-full rounded-xl border bg-white px-3.5 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 ${
@@ -446,6 +590,10 @@ export function Onboarding() {
   const [currentStep, setCurrentStep] = useState(0);
   const [direction, setDirection] = useState(1);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [jointDraft, setJointDraft] = useState<JointApplicant | null>(null);
+  const [jointLookupStatus, setJointLookupStatus] = useState<
+    "idle" | "searching" | "found"
+  >("idle");
   const [verifying, setVerifying] = useState(false);
   const [linkingBank, setLinkingBank] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">(
@@ -454,8 +602,28 @@ export function Onboarding() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
-  const activeStep = steps[currentStep] ?? steps[0];
-  const progress = ((currentStep + 1) / steps.length) * 100;
+  const isJointApplication = [
+    "joint-spouse",
+    "joint-same-address",
+    "joint-different-address",
+  ].includes(form.personal.applicationType);
+  const usesPrimaryAddress = ["joint-spouse", "joint-same-address"].includes(
+    form.personal.applicationType,
+  );
+  const isSoleTrader = form.personal.applicationType === "sole-trader";
+  const visibleSteps = useMemo(
+    () => allSteps.filter((step) => step.id !== "business" || isSoleTrader),
+    [isSoleTrader],
+  );
+  const requiredSteps = visibleSteps.filter((step) => step.id !== "review");
+  const activeStep = visibleSteps[currentStep] ?? visibleSteps[0];
+  const progress = ((currentStep + 1) / visibleSteps.length) * 100;
+  const stepIndex = (id: StepId) =>
+    visibleSteps.findIndex((step) => step.id === id);
+  const selectedApplicationType =
+    APPLICATION_TYPE_OPTIONS.find(
+      (option) => option.value === form.personal.applicationType,
+    )?.label ?? "Not selected";
 
   const updateSection = <K extends keyof FormState>(
     section: K,
@@ -469,21 +637,49 @@ export function Onboarding() {
     setSaveStatus("idle");
   };
 
-  const isStepComplete = (index: number) => {
-    switch (index) {
-      case 0:
+  const updateJointDraft = (patch: Partial<JointApplicant>) => {
+    setJointDraft((current) =>
+      current ? { ...current, ...patch, confirmed: false } : current,
+    );
+    setJointLookupStatus("idle");
+    setErrors({});
+    setSaveStatus("idle");
+  };
+
+  const isJointApplicantComplete = (applicant: JointApplicant) =>
+    applicant.method === "client-id"
+      ? Boolean(applicant.clientId.trim()) && applicant.confirmed
+      : Boolean(applicant.firstName.trim()) &&
+        Boolean(applicant.lastName.trim()) &&
+        /^\S+@\S+\.\S+$/.test(applicant.email) &&
+        (usesPrimaryAddress ||
+          (Boolean(applicant.address.trim()) &&
+            Boolean(applicant.city.trim()) &&
+            Boolean(applicant.state) &&
+            Boolean(applicant.postcode.trim()) &&
+            Boolean(applicant.country))) &&
+        applicant.confirmed;
+
+  const isStepComplete = (stepId: StepId) => {
+    switch (stepId) {
+      case "personal":
         return Boolean(
+          form.personal.applicationType &&
           form.personal.firstName &&
           form.personal.lastName &&
           form.personal.dateOfBirth &&
-          form.personal.email &&
+          /^\S+@\S+\.\S+$/.test(form.personal.email) &&
           form.personal.phone &&
           form.personal.address &&
           form.personal.city &&
+          form.personal.state &&
           form.personal.postcode &&
-          form.personal.country,
+          form.personal.country &&
+          (!isJointApplication ||
+            (form.jointApplicants.length > 0 &&
+              form.jointApplicants.every(isJointApplicantComplete))),
         );
-      case 1:
+      case "business":
         return Boolean(
           form.business.legalName &&
           form.business.entityType &&
@@ -493,11 +689,11 @@ export function Onboarding() {
           form.business.role &&
           form.business.ownership,
         );
-      case 2:
+      case "identity":
         return form.identity.verified;
-      case 3:
+      case "bank":
         return form.bank.linked;
-      case 4:
+      case "cash":
         return Boolean(
           form.cash.purpose &&
           form.cash.currency &&
@@ -505,13 +701,13 @@ export function Onboarding() {
           form.cash.expectedBalance &&
           form.cash.fundingSource,
         );
-      case 5:
+      case "documents":
         return Boolean(
           form.documents.proofOfAddress &&
-          form.documents.businessRegistration &&
+          (!isSoleTrader || form.documents.businessRegistration) &&
           form.documents.sourceOfFunds,
         );
-      case 6:
+      case "review":
         return submitted;
       default:
         return false;
@@ -519,21 +715,26 @@ export function Onboarding() {
   };
 
   const completedSections = useMemo(
-    () => steps.slice(0, 6).filter((_, index) => isStepComplete(index)).length,
-    [form],
+    () => requiredSteps.filter((step) => isStepComplete(step.id)).length,
+    [form, requiredSteps, isJointApplication, usesPrimaryAddress, isSoleTrader],
   );
 
   const goToStep = (index: number) => {
-    setDirection(index >= currentStep ? 1 : -1);
-    setCurrentStep(index);
+    const safeIndex = Math.max(0, Math.min(index, visibleSteps.length - 1));
+    setDirection(safeIndex >= currentStep ? 1 : -1);
+    setCurrentStep(safeIndex);
     setErrors({});
+    setJointDraft(null);
     window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" });
   };
 
-  const validateStep = (index: number) => {
+  const validateStep = (stepId: StepId) => {
     const nextErrors: Record<string, string> = {};
 
-    if (index === 0) {
+    if (stepId === "personal") {
+      if (!form.personal.applicationType) {
+        nextErrors.applicationType = "Select an application type.";
+      }
       if (!form.personal.firstName)
         nextErrors.firstName = "First name is required.";
       if (!form.personal.lastName)
@@ -541,18 +742,34 @@ export function Onboarding() {
       if (!form.personal.dateOfBirth)
         nextErrors.dateOfBirth = "Date of birth is required.";
       if (!form.personal.email) nextErrors.email = "Email address is required.";
-      else if (!/^\S+@\S+\.\S+$/.test(form.personal.email))
+      else if (!/^\S+@\S+\.\S+$/.test(form.personal.email)) {
         nextErrors.email = "Enter a valid email address.";
+      }
       if (!form.personal.phone) nextErrors.phone = "Phone number is required.";
       if (!form.personal.address)
         nextErrors.address = "Residential address is required.";
       if (!form.personal.city) nextErrors.city = "City is required.";
+      if (!form.personal.state)
+        nextErrors.state = "State or region is required.";
       if (!form.personal.postcode)
         nextErrors.postcode = "Postcode is required.";
       if (!form.personal.country) nextErrors.country = "Country is required.";
+      if (isJointApplication && form.jointApplicants.length === 0) {
+        nextErrors.jointApplicant = "Add at least one joint applicant.";
+      } else if (
+        isJointApplication &&
+        !form.jointApplicants.every(isJointApplicantComplete)
+      ) {
+        nextErrors.jointApplicant =
+          "Complete every joint applicant before continuing.";
+      }
+      if (isJointApplication && jointDraft) {
+        nextErrors.jointDraft =
+          "Save or cancel the applicant currently being edited.";
+      }
     }
 
-    if (index === 1) {
+    if (stepId === "business") {
       if (!form.business.legalName)
         nextErrors.legalName = "Legal business name is required.";
       if (!form.business.entityType)
@@ -568,15 +785,15 @@ export function Onboarding() {
         nextErrors.ownership = "Ownership percentage is required.";
     }
 
-    if (index === 2 && !form.identity.verified) {
+    if (stepId === "identity" && !form.identity.verified) {
       nextErrors.identity = "Complete the identity check before continuing.";
     }
 
-    if (index === 3 && !form.bank.linked) {
+    if (stepId === "bank" && !form.bank.linked) {
       nextErrors.bank = "Link and verify a bank account before continuing.";
     }
 
-    if (index === 4) {
+    if (stepId === "cash") {
       if (!form.cash.purpose) nextErrors.purpose = "Choose an account purpose.";
       if (!form.cash.currency) nextErrors.currency = "Select a base currency.";
       if (!form.cash.nickname)
@@ -587,16 +804,17 @@ export function Onboarding() {
         nextErrors.fundingSource = "Select a funding source.";
     }
 
-    if (index === 5) {
+    if (stepId === "documents") {
       if (!form.documents.proofOfAddress)
         nextErrors.proofOfAddress = "Proof of address is required.";
-      if (!form.documents.businessRegistration)
+      if (isSoleTrader && !form.documents.businessRegistration) {
         nextErrors.businessRegistration = "Business registration is required.";
+      }
       if (!form.documents.sourceOfFunds)
         nextErrors.sourceOfFunds = "Source-of-funds evidence is required.";
     }
 
-    if (index === 6) {
+    if (stepId === "review") {
       if (!form.agreements.accuracy)
         nextErrors.accuracy = "Confirm that the information is accurate.";
       if (!form.agreements.terms)
@@ -608,8 +826,156 @@ export function Onboarding() {
   };
 
   const handleContinue = () => {
-    if (!validateStep(currentStep)) return;
-    if (currentStep < steps.length - 1) goToStep(currentStep + 1);
+    if (!validateStep(activeStep.id)) return;
+    if (currentStep < visibleSteps.length - 1) goToStep(currentStep + 1);
+  };
+
+  const handleApplicationTypeChange = (value: string) => {
+    const applicationType = value as ApplicationType;
+    const remainsJoint = [
+      "joint-spouse",
+      "joint-same-address",
+      "joint-different-address",
+    ].includes(applicationType);
+    setForm((current) => ({
+      ...current,
+      personal: { ...current.personal, applicationType },
+      jointApplicants: remainsJoint ? current.jointApplicants : [],
+      business:
+        applicationType === "sole-trader"
+          ? {
+              ...current.business,
+              entityType: current.business.entityType || "Sole trader",
+            }
+          : current.business,
+    }));
+    setJointDraft(null);
+    setJointLookupStatus("idle");
+    setErrors({});
+    setSaveStatus("idle");
+  };
+
+  const beginJointApplicant = () => {
+    const applicant = createJointApplicant();
+    if (usesPrimaryAddress) {
+      Object.assign(applicant, {
+        address: form.personal.address,
+        city: form.personal.city,
+        state: form.personal.state,
+        postcode: form.personal.postcode,
+        country: form.personal.country,
+      });
+    }
+    setJointDraft(applicant);
+    setJointLookupStatus("idle");
+    setErrors({});
+  };
+
+  const editJointApplicant = (applicant: JointApplicant) => {
+    setJointDraft({ ...applicant });
+    setJointLookupStatus(applicant.method === "client-id" ? "found" : "idle");
+    setErrors({});
+  };
+
+  const removeJointApplicant = (id: string) => {
+    setForm((current) => ({
+      ...current,
+      jointApplicants: current.jointApplicants.filter((item) => item.id !== id),
+    }));
+    if (jointDraft?.id === id) setJointDraft(null);
+    setErrors({});
+    setSaveStatus("idle");
+  };
+
+  const handleFindJointClient = async () => {
+    if (!jointDraft?.clientId.trim()) {
+      setErrors({ jointClientId: "Enter the existing client ID." });
+      return;
+    }
+    setErrors({});
+    setJointLookupStatus("searching");
+    await wait(850);
+    setJointDraft((current) =>
+      current
+        ? {
+            ...current,
+            firstName: current.firstName || "Existing",
+            lastName: current.lastName || "Caprock client",
+            email: current.email || "Email verified on file",
+            confirmed: true,
+          }
+        : current,
+    );
+    setJointLookupStatus("found");
+  };
+
+  const handleSaveJointApplicant = () => {
+    if (!jointDraft) return;
+    const nextErrors: Record<string, string> = {};
+    if (jointDraft.method === "client-id") {
+      if (!jointDraft.clientId.trim()) {
+        nextErrors.jointClientId = "Enter the existing client ID.";
+      } else if (jointLookupStatus !== "found" || !jointDraft.confirmed) {
+        nextErrors.jointDraft =
+          "Find and verify this client before adding them.";
+      }
+    } else {
+      if (!jointDraft.firstName)
+        nextErrors.jointFirstName = "First name is required.";
+      if (!jointDraft.lastName)
+        nextErrors.jointLastName = "Last name is required.";
+      if (!jointDraft.email)
+        nextErrors.jointEmail = "Email address is required.";
+      else if (!/^\S+@\S+\.\S+$/.test(jointDraft.email)) {
+        nextErrors.jointEmail = "Enter a valid email address.";
+      }
+      if (!usesPrimaryAddress) {
+        if (!jointDraft.address)
+          nextErrors.jointAddress = "Residential address is required.";
+        if (!jointDraft.city) nextErrors.jointCity = "City is required.";
+        if (!jointDraft.state)
+          nextErrors.jointState = "State or region is required.";
+        if (!jointDraft.postcode)
+          nextErrors.jointPostcode = "Postcode is required.";
+        if (!jointDraft.country)
+          nextErrors.jointCountry = "Country is required.";
+      }
+    }
+    if (Object.keys(nextErrors).length) {
+      setErrors(nextErrors);
+      return;
+    }
+
+    const savedApplicant: JointApplicant = {
+      ...jointDraft,
+      ...(usesPrimaryAddress && jointDraft.method === "new-invite"
+        ? {
+            address: form.personal.address,
+            city: form.personal.city,
+            state: form.personal.state,
+            postcode: form.personal.postcode,
+            country: form.personal.country,
+          }
+        : {}),
+      confirmed: true,
+    };
+    setForm((current) => {
+      const exists = current.jointApplicants.some(
+        (applicant) => applicant.id === savedApplicant.id,
+      );
+      return {
+        ...current,
+        jointApplicants: exists
+          ? current.jointApplicants.map((applicant) =>
+              applicant.id === savedApplicant.id ? savedApplicant : applicant,
+            )
+          : [...current.jointApplicants, savedApplicant],
+      };
+    });
+    setJointDraft(null);
+    setJointLookupStatus("idle");
+    setErrors({});
+    setSaveStatus("idle");
   };
 
   const handleIdentityVerification = async () => {
@@ -666,14 +1032,15 @@ export function Onboarding() {
   };
 
   const handleSubmit = async () => {
-    for (let index = 0; index < 6; index += 1) {
-      if (!isStepComplete(index)) {
+    for (const step of requiredSteps) {
+      if (!isStepComplete(step.id)) {
+        const index = visibleSteps.findIndex((item) => item.id === step.id);
         goToStep(index);
-        window.setTimeout(() => validateStep(index), 0);
+        window.setTimeout(() => validateStep(step.id), 0);
         return;
       }
     }
-    if (!validateStep(6)) return;
+    if (!validateStep("review")) return;
 
     setSubmitting(true);
     await wait(1400);
@@ -810,7 +1177,7 @@ export function Onboarding() {
           <div className="flex items-center justify-between gap-4">
             <div className="min-w-0">
               <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#003478]">
-                Step {currentStep + 1} of {steps.length}
+                Step {currentStep + 1} of {visibleSteps.length}
               </p>
               <p className="mt-1 truncate text-sm font-semibold text-slate-900">
                 {activeStep.label}
@@ -828,7 +1195,7 @@ export function Onboarding() {
             />
           </div>
           <div className="mt-3 flex gap-1.5" aria-label="Application steps">
-            {steps.map((step, index) => (
+            {visibleSteps.map((step, index) => (
               <button
                 key={step.id}
                 type="button"
@@ -853,7 +1220,8 @@ export function Onboarding() {
                       Account application
                     </p>
                     <p className="mt-1.5 text-sm font-semibold text-slate-900">
-                      {completedSections} of 6 sections complete
+                      {completedSections} of {requiredSteps.length} sections
+                      complete
                     </p>
                   </div>
                   <div className="grid h-11 w-11 place-items-center rounded-2xl bg-white text-xs font-bold text-[#003478] shadow-sm ring-1 ring-slate-200/70">
@@ -873,10 +1241,10 @@ export function Onboarding() {
               </div>
 
               <nav className="p-3" aria-label="Onboarding progress">
-                {steps.map((step, index) => {
+                {visibleSteps.map((step, index) => {
                   const Icon = step.icon;
                   const active = index === currentStep;
-                  const complete = isStepComplete(index);
+                  const complete = isStepComplete(step.id);
                   return (
                     <button
                       key={step.id}
@@ -956,15 +1324,32 @@ export function Onboarding() {
                     }
                     transition={{ duration: 0.34, ease: EASE }}
                   >
-                    {currentStep === 0 ? (
+                    {activeStep.id === "personal" ? (
                       <>
                         <SectionIntro
-                          eyebrow="Step 1 · Personal information"
-                          title="Tell us about yourself."
-                          description="Enter your legal details exactly as they appear on your identity documents."
+                          eyebrow={`Step ${currentStep + 1} · Personal information`}
+                          title="Start with your application type."
+                          description="Choose how this account will be held, then enter your legal details exactly as they appear on your identity documents."
                           icon={UserRound}
                         />
                         <div className="grid gap-5 sm:grid-cols-2">
+                          <div className="sm:col-span-2">
+                            <Field
+                              label="Application type"
+                              htmlFor="applicationType"
+                              error={errors.applicationType}
+                              hint="Your choice controls which information and application stages are required."
+                            >
+                              <CustomSelect
+                                id="applicationType"
+                                value={form.personal.applicationType}
+                                options={APPLICATION_TYPE_OPTIONS}
+                                onChange={handleApplicationTypeChange}
+                                placeholder="Select application type"
+                                error={Boolean(errors.applicationType)}
+                              />
+                            </Field>
+                          </div>
                           <Field
                             label="Legal first name"
                             htmlFor="firstName"
@@ -973,9 +1358,9 @@ export function Onboarding() {
                             <input
                               id="firstName"
                               value={form.personal.firstName}
-                              onChange={(e) =>
+                              onChange={(event) =>
                                 updateSection("personal", {
-                                  firstName: e.target.value,
+                                  firstName: event.target.value,
                                 })
                               }
                               className={inputClass(Boolean(errors.firstName))}
@@ -990,9 +1375,9 @@ export function Onboarding() {
                             <input
                               id="lastName"
                               value={form.personal.lastName}
-                              onChange={(e) =>
+                              onChange={(event) =>
                                 updateSection("personal", {
-                                  lastName: e.target.value,
+                                  lastName: event.target.value,
                                 })
                               }
                               className={inputClass(Boolean(errors.lastName))}
@@ -1008,9 +1393,9 @@ export function Onboarding() {
                               id="dateOfBirth"
                               type="date"
                               value={form.personal.dateOfBirth}
-                              onChange={(e) =>
+                              onChange={(event) =>
                                 updateSection("personal", {
-                                  dateOfBirth: e.target.value,
+                                  dateOfBirth: event.target.value,
                                 })
                               }
                               className={inputClass(
@@ -1019,16 +1404,16 @@ export function Onboarding() {
                             />
                           </Field>
                           <Field label="Citizenship" htmlFor="citizenship">
-                            <input
+                            <CustomSelect
                               id="citizenship"
                               value={form.personal.citizenship}
-                              onChange={(e) =>
+                              options={COUNTRY_OPTIONS}
+                              onChange={(value) =>
                                 updateSection("personal", {
-                                  citizenship: e.target.value,
+                                  citizenship: value,
                                 })
                               }
-                              placeholder="e.g. Australian"
-                              className={inputClass()}
+                              placeholder="Select citizenship"
                             />
                           </Field>
                           <Field
@@ -1042,9 +1427,9 @@ export function Onboarding() {
                                 id="personalEmail"
                                 type="email"
                                 value={form.personal.email}
-                                onChange={(e) =>
+                                onChange={(event) =>
                                   updateSection("personal", {
-                                    email: e.target.value,
+                                    email: event.target.value,
                                   })
                                 }
                                 className={`${inputClass(Boolean(errors.email))} pl-10`}
@@ -1064,9 +1449,9 @@ export function Onboarding() {
                                 id="phone"
                                 type="tel"
                                 value={form.personal.phone}
-                                onChange={(e) =>
+                                onChange={(event) =>
                                   updateSection("personal", {
-                                    phone: e.target.value,
+                                    phone: event.target.value,
                                   })
                                 }
                                 className={`${inputClass(Boolean(errors.phone))} pl-10`}
@@ -1086,9 +1471,9 @@ export function Onboarding() {
                                 <input
                                   id="address"
                                   value={form.personal.address}
-                                  onChange={(e) =>
+                                  onChange={(event) =>
                                     updateSection("personal", {
-                                      address: e.target.value,
+                                      address: event.target.value,
                                     })
                                   }
                                   className={`${inputClass(Boolean(errors.address))} pl-10`}
@@ -1106,25 +1491,29 @@ export function Onboarding() {
                             <input
                               id="city"
                               value={form.personal.city}
-                              onChange={(e) =>
+                              onChange={(event) =>
                                 updateSection("personal", {
-                                  city: e.target.value,
+                                  city: event.target.value,
                                 })
                               }
                               className={inputClass(Boolean(errors.city))}
                               autoComplete="address-level2"
                             />
                           </Field>
-                          <Field label="State or region" htmlFor="state">
+                          <Field
+                            label="State or region"
+                            htmlFor="state"
+                            error={errors.state}
+                          >
                             <input
                               id="state"
                               value={form.personal.state}
-                              onChange={(e) =>
+                              onChange={(event) =>
                                 updateSection("personal", {
-                                  state: e.target.value,
+                                  state: event.target.value,
                                 })
                               }
-                              className={inputClass()}
+                              className={inputClass(Boolean(errors.state))}
                               autoComplete="address-level1"
                             />
                           </Field>
@@ -1136,9 +1525,9 @@ export function Onboarding() {
                             <input
                               id="postcode"
                               value={form.personal.postcode}
-                              onChange={(e) =>
+                              onChange={(event) =>
                                 updateSection("personal", {
-                                  postcode: e.target.value,
+                                  postcode: event.target.value,
                                 })
                               }
                               className={inputClass(Boolean(errors.postcode))}
@@ -1150,34 +1539,597 @@ export function Onboarding() {
                             htmlFor="country"
                             error={errors.country}
                           >
-                            <select
+                            <CustomSelect
                               id="country"
                               value={form.personal.country}
-                              onChange={(e) =>
-                                updateSection("personal", {
-                                  country: e.target.value,
-                                })
+                              options={COUNTRY_OPTIONS}
+                              onChange={(value) =>
+                                updateSection("personal", { country: value })
                               }
-                              className={inputClass(Boolean(errors.country))}
-                              autoComplete="country-name"
-                            >
-                              <option value="">Select country</option>
-                              <option>Australia</option>
-                              <option>New Zealand</option>
-                              <option>United States</option>
-                              <option>United Kingdom</option>
-                              <option>Singapore</option>
-                              <option>Other</option>
-                            </select>
+                              placeholder="Select country"
+                              error={Boolean(errors.country)}
+                            />
                           </Field>
                         </div>
+
+                        <AnimatePresence initial={false}>
+                          {isJointApplication ? (
+                            <motion.section
+                              initial={
+                                reduceMotion ? false : { opacity: 0, y: 10 }
+                              }
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={
+                                reduceMotion ? undefined : { opacity: 0, y: -8 }
+                              }
+                              transition={{ duration: 0.32, ease: EASE }}
+                              className="mt-8 border-t border-slate-100 pt-8"
+                            >
+                              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                                <div className="flex min-w-0 items-start gap-3.5">
+                                  <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[rgba(0,52,120,0.07)] text-[#003478]">
+                                    <UsersRound className="h-5 w-5" />
+                                  </div>
+                                  <div>
+                                    <div className="flex flex-wrap items-center gap-2">
+                                      <h2 className="text-base font-semibold text-slate-950">
+                                        Joint applicants
+                                      </h2>
+                                      <span className="rounded-full bg-[#dce7f2] px-2 py-1 text-[10px] font-bold text-slate-800">
+                                        {form.jointApplicants.length} added
+                                      </span>
+                                    </div>
+                                    <p className="mt-1 max-w-xl text-xs leading-5 text-slate-500">
+                                      Add every person who will jointly own this
+                                      account. Use a Caprock client ID or
+                                      prepare a secure invitation for a new
+                                      client.
+                                    </p>
+                                  </div>
+                                </div>
+                                {!jointDraft ? (
+                                  <button
+                                    type="button"
+                                    onClick={beginJointApplicant}
+                                    className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#003478] px-4 text-xs font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                                  >
+                                    <UserPlus className="h-4 w-4" /> Add
+                                    applicant
+                                  </button>
+                                ) : null}
+                              </div>
+
+                              {form.jointApplicants.length > 0 ? (
+                                <div className="mt-5 grid gap-3">
+                                  {form.jointApplicants.map(
+                                    (applicant, index) => (
+                                      <motion.article
+                                        layout
+                                        key={applicant.id}
+                                        className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between"
+                                      >
+                                        <div className="flex min-w-0 items-center gap-3.5">
+                                          <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[rgba(0,52,120,0.075)] text-sm font-bold text-[#003478]">
+                                            {index + 2}
+                                          </div>
+                                          <div className="min-w-0">
+                                            <div className="flex items-center gap-2">
+                                              <p className="truncate text-sm font-semibold text-slate-900">
+                                                {applicant.method ===
+                                                "client-id"
+                                                  ? "Verified Caprock client"
+                                                  : `${applicant.firstName} ${applicant.lastName}`}
+                                              </p>
+                                              <CheckCircle2 className="h-4 w-4 shrink-0 text-[#003478]" />
+                                            </div>
+                                            <p className="mt-1 truncate text-xs text-slate-500">
+                                              {applicant.method === "client-id"
+                                                ? `Client ID · ${applicant.clientId}`
+                                                : applicant.email}
+                                            </p>
+                                            {applicant.method ===
+                                            "new-invite" ? (
+                                              <p className="mt-1 truncate text-[11px] text-slate-400">
+                                                {usesPrimaryAddress
+                                                  ? "Same address as primary applicant"
+                                                  : [
+                                                      applicant.address,
+                                                      applicant.city,
+                                                      applicant.state,
+                                                      applicant.postcode,
+                                                    ]
+                                                      .filter(Boolean)
+                                                      .join(", ")}
+                                              </p>
+                                            ) : null}
+                                          </div>
+                                        </div>
+                                        <div className="flex shrink-0 items-center gap-1 self-end sm:self-auto">
+                                          <button
+                                            type="button"
+                                            onClick={() =>
+                                              editJointApplicant(applicant)
+                                            }
+                                            disabled={Boolean(jointDraft)}
+                                            className="grid h-9 w-9 place-items-center rounded-xl text-slate-400 transition hover:bg-slate-100 hover:text-[#003478] disabled:cursor-not-allowed disabled:opacity-40"
+                                            aria-label={`Edit joint applicant ${index + 1}`}
+                                          >
+                                            <PencilLine className="h-4 w-4" />
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() =>
+                                              removeJointApplicant(applicant.id)
+                                            }
+                                            className="grid h-9 w-9 place-items-center rounded-xl text-slate-400 transition hover:bg-red-50 hover:text-red-600"
+                                            aria-label={`Remove joint applicant ${index + 1}`}
+                                          >
+                                            <X className="h-4 w-4" />
+                                          </button>
+                                        </div>
+                                      </motion.article>
+                                    ),
+                                  )}
+                                </div>
+                              ) : (
+                                <div className="mt-5 rounded-2xl border border-dashed border-slate-300 bg-[#f8fafb] px-5 py-6 text-center">
+                                  <UsersRound className="mx-auto h-5 w-5 text-slate-400" />
+                                  <p className="mt-2 text-xs font-semibold text-slate-700">
+                                    No joint applicants added yet
+                                  </p>
+                                  <p className="mt-1 text-[11px] text-slate-400">
+                                    At least one additional applicant is
+                                    required.
+                                  </p>
+                                </div>
+                              )}
+
+                              <AnimatePresence initial={false}>
+                                {jointDraft ? (
+                                  <motion.div
+                                    initial={
+                                      reduceMotion
+                                        ? false
+                                        : { opacity: 0, height: 0 }
+                                    }
+                                    animate={{ opacity: 1, height: "auto" }}
+                                    exit={
+                                      reduceMotion
+                                        ? undefined
+                                        : { opacity: 0, height: 0 }
+                                    }
+                                    transition={{ duration: 0.34, ease: EASE }}
+                                    className="overflow-visible"
+                                  >
+                                    <div className="mt-5 rounded-[22px] border border-[rgba(0,52,120,0.16)] bg-[#f7f9fb] p-4 sm:p-5">
+                                      <div className="mb-5 flex items-center justify-between gap-4">
+                                        <div>
+                                          <p className="text-sm font-semibold text-slate-950">
+                                            {form.jointApplicants.some(
+                                              (item) =>
+                                                item.id === jointDraft.id,
+                                            )
+                                              ? "Edit joint applicant"
+                                              : "Add a joint applicant"}
+                                          </p>
+                                          <p className="mt-1 text-xs text-slate-500">
+                                            Choose how to add this person to the
+                                            application.
+                                          </p>
+                                        </div>
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setJointDraft(null);
+                                            setJointLookupStatus("idle");
+                                            setErrors({});
+                                          }}
+                                          className="grid h-9 w-9 place-items-center rounded-xl text-slate-400 transition hover:bg-white hover:text-slate-700"
+                                          aria-label="Cancel applicant"
+                                        >
+                                          <X className="h-4 w-4" />
+                                        </button>
+                                      </div>
+
+                                      <div className="grid gap-3 sm:grid-cols-2">
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            jointDraft.method !== "client-id" &&
+                                            updateJointDraft({
+                                              method: "client-id",
+                                              clientId: "",
+                                              firstName: "",
+                                              lastName: "",
+                                              email: "",
+                                            })
+                                          }
+                                          className={`rounded-2xl border p-4 text-left transition ${jointDraft.method === "client-id" ? "border-[#003478] bg-white ring-2 ring-[#003478]/[0.06]" : "border-slate-200 bg-white/70 hover:border-slate-300"}`}
+                                        >
+                                          <div className="flex items-center gap-3">
+                                            <div
+                                              className={`grid h-10 w-10 place-items-center rounded-xl ${jointDraft.method === "client-id" ? "bg-[#003478] text-white" : "bg-slate-100 text-slate-500"}`}
+                                            >
+                                              <Search className="h-4 w-4" />
+                                            </div>
+                                            <div>
+                                              <p className="text-sm font-semibold text-slate-900">
+                                                Existing client
+                                              </p>
+                                              <p className="mt-0.5 text-xs text-slate-400">
+                                                Find by Caprock client ID
+                                              </p>
+                                            </div>
+                                          </div>
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            jointDraft.method !==
+                                              "new-invite" &&
+                                            updateJointDraft({
+                                              method: "new-invite",
+                                              clientId: "",
+                                            })
+                                          }
+                                          className={`rounded-2xl border p-4 text-left transition ${jointDraft.method === "new-invite" ? "border-[#003478] bg-white ring-2 ring-[#003478]/[0.06]" : "border-slate-200 bg-white/70 hover:border-slate-300"}`}
+                                        >
+                                          <div className="flex items-center gap-3">
+                                            <div
+                                              className={`grid h-10 w-10 place-items-center rounded-xl ${jointDraft.method === "new-invite" ? "bg-[#003478] text-white" : "bg-slate-100 text-slate-500"}`}
+                                            >
+                                              <Mail className="h-4 w-4" />
+                                            </div>
+                                            <div>
+                                              <p className="text-sm font-semibold text-slate-900">
+                                                New client
+                                              </p>
+                                              <p className="mt-0.5 text-xs text-slate-400">
+                                                Prepare a secure invitation
+                                              </p>
+                                            </div>
+                                          </div>
+                                        </button>
+                                      </div>
+
+                                      {jointDraft.method === "client-id" ? (
+                                        <div className="mt-5">
+                                          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                                            <div className="min-w-0 flex-1">
+                                              <Field
+                                                label="Caprock client ID"
+                                                htmlFor="jointClientId"
+                                                error={errors.jointClientId}
+                                              >
+                                                <input
+                                                  id="jointClientId"
+                                                  value={jointDraft.clientId}
+                                                  onChange={(event) =>
+                                                    updateJointDraft({
+                                                      clientId:
+                                                        event.target.value,
+                                                    })
+                                                  }
+                                                  className={inputClass(
+                                                    Boolean(
+                                                      errors.jointClientId,
+                                                    ),
+                                                  )}
+                                                  placeholder="e.g. CAP-102847"
+                                                />
+                                              </Field>
+                                            </div>
+                                            <button
+                                              type="button"
+                                              onClick={handleFindJointClient}
+                                              disabled={
+                                                jointLookupStatus ===
+                                                "searching"
+                                              }
+                                              className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-[#003478]/30 hover:text-[#003478] disabled:cursor-wait"
+                                            >
+                                              {jointLookupStatus ===
+                                              "searching" ? (
+                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                              ) : (
+                                                <Search className="h-4 w-4" />
+                                              )}
+                                              {jointLookupStatus === "searching"
+                                                ? "Searching"
+                                                : "Find client"}
+                                            </button>
+                                          </div>
+                                          {jointLookupStatus === "found" ? (
+                                            <motion.div
+                                              initial={
+                                                reduceMotion
+                                                  ? false
+                                                  : { opacity: 0, y: 6 }
+                                              }
+                                              animate={{ opacity: 1, y: 0 }}
+                                              className="mt-4 flex items-center gap-3 rounded-2xl border border-[rgba(0,52,120,0.13)] bg-white p-4"
+                                            >
+                                              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[rgba(0,52,120,0.08)] text-[#003478]">
+                                                <BadgeCheck className="h-5 w-5" />
+                                              </div>
+                                              <div>
+                                                <p className="text-sm font-semibold text-slate-900">
+                                                  Eligible client record located
+                                                </p>
+                                                <p className="mt-0.5 text-xs text-slate-500">
+                                                  Client ID{" "}
+                                                  {jointDraft.clientId} is
+                                                  verified and ready to add.
+                                                </p>
+                                              </div>
+                                            </motion.div>
+                                          ) : null}
+                                        </div>
+                                      ) : (
+                                        <div className="mt-5">
+                                          <div className="mb-5 flex items-start gap-3 rounded-2xl bg-white p-4 ring-1 ring-slate-200/70">
+                                            <Mail className="mt-0.5 h-4 w-4 shrink-0 text-[#003478]" />
+                                            <p className="text-xs leading-5 text-slate-500">
+                                              We’ll email this applicant a
+                                              secure invitation after the
+                                              application is submitted.
+                                            </p>
+                                          </div>
+                                          <div className="grid gap-5 sm:grid-cols-2">
+                                            <Field
+                                              label="Legal first name"
+                                              htmlFor="jointFirstName"
+                                              error={errors.jointFirstName}
+                                            >
+                                              <input
+                                                id="jointFirstName"
+                                                value={jointDraft.firstName}
+                                                onChange={(event) =>
+                                                  updateJointDraft({
+                                                    firstName:
+                                                      event.target.value,
+                                                  })
+                                                }
+                                                className={inputClass(
+                                                  Boolean(
+                                                    errors.jointFirstName,
+                                                  ),
+                                                )}
+                                              />
+                                            </Field>
+                                            <Field
+                                              label="Legal last name"
+                                              htmlFor="jointLastName"
+                                              error={errors.jointLastName}
+                                            >
+                                              <input
+                                                id="jointLastName"
+                                                value={jointDraft.lastName}
+                                                onChange={(event) =>
+                                                  updateJointDraft({
+                                                    lastName:
+                                                      event.target.value,
+                                                  })
+                                                }
+                                                className={inputClass(
+                                                  Boolean(errors.jointLastName),
+                                                )}
+                                              />
+                                            </Field>
+                                            <div className="sm:col-span-2">
+                                              <Field
+                                                label="Email address"
+                                                htmlFor="jointEmail"
+                                                error={errors.jointEmail}
+                                              >
+                                                <input
+                                                  id="jointEmail"
+                                                  type="email"
+                                                  value={jointDraft.email}
+                                                  onChange={(event) =>
+                                                    updateJointDraft({
+                                                      email: event.target.value,
+                                                    })
+                                                  }
+                                                  className={inputClass(
+                                                    Boolean(errors.jointEmail),
+                                                  )}
+                                                  placeholder="joint.applicant@example.com"
+                                                />
+                                              </Field>
+                                            </div>
+                                            {usesPrimaryAddress ? (
+                                              <div className="sm:col-span-2 rounded-2xl border border-slate-200 bg-white p-4">
+                                                <div className="flex items-start gap-3">
+                                                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#003478]" />
+                                                  <div>
+                                                    <p className="text-xs font-semibold text-slate-800">
+                                                      Same residential address
+                                                      as the primary applicant
+                                                    </p>
+                                                    <p className="mt-1 text-xs leading-5 text-slate-500">
+                                                      {[
+                                                        form.personal.address,
+                                                        form.personal.city,
+                                                        form.personal.state,
+                                                        form.personal.postcode,
+                                                        form.personal.country,
+                                                      ]
+                                                        .filter(Boolean)
+                                                        .join(", ") ||
+                                                        "Complete the primary residential address above."}
+                                                    </p>
+                                                  </div>
+                                                </div>
+                                              </div>
+                                            ) : (
+                                              <>
+                                                <div className="sm:col-span-2">
+                                                  <Field
+                                                    label="Residential address"
+                                                    htmlFor="jointAddress"
+                                                    error={errors.jointAddress}
+                                                  >
+                                                    <input
+                                                      id="jointAddress"
+                                                      value={jointDraft.address}
+                                                      onChange={(event) =>
+                                                        updateJointDraft({
+                                                          address:
+                                                            event.target.value,
+                                                        })
+                                                      }
+                                                      className={inputClass(
+                                                        Boolean(
+                                                          errors.jointAddress,
+                                                        ),
+                                                      )}
+                                                      placeholder="Street address"
+                                                    />
+                                                  </Field>
+                                                </div>
+                                                <Field
+                                                  label="City"
+                                                  htmlFor="jointCity"
+                                                  error={errors.jointCity}
+                                                >
+                                                  <input
+                                                    id="jointCity"
+                                                    value={jointDraft.city}
+                                                    onChange={(event) =>
+                                                      updateJointDraft({
+                                                        city: event.target
+                                                          .value,
+                                                      })
+                                                    }
+                                                    className={inputClass(
+                                                      Boolean(errors.jointCity),
+                                                    )}
+                                                  />
+                                                </Field>
+                                                <Field
+                                                  label="State or region"
+                                                  htmlFor="jointState"
+                                                  error={errors.jointState}
+                                                >
+                                                  <input
+                                                    id="jointState"
+                                                    value={jointDraft.state}
+                                                    onChange={(event) =>
+                                                      updateJointDraft({
+                                                        state:
+                                                          event.target.value,
+                                                      })
+                                                    }
+                                                    className={inputClass(
+                                                      Boolean(
+                                                        errors.jointState,
+                                                      ),
+                                                    )}
+                                                  />
+                                                </Field>
+                                                <Field
+                                                  label="Postcode"
+                                                  htmlFor="jointPostcode"
+                                                  error={errors.jointPostcode}
+                                                >
+                                                  <input
+                                                    id="jointPostcode"
+                                                    value={jointDraft.postcode}
+                                                    onChange={(event) =>
+                                                      updateJointDraft({
+                                                        postcode:
+                                                          event.target.value,
+                                                      })
+                                                    }
+                                                    className={inputClass(
+                                                      Boolean(
+                                                        errors.jointPostcode,
+                                                      ),
+                                                    )}
+                                                  />
+                                                </Field>
+                                                <Field
+                                                  label="Country of residence"
+                                                  htmlFor="jointCountry"
+                                                  error={errors.jointCountry}
+                                                >
+                                                  <CustomSelect
+                                                    id="jointCountry"
+                                                    value={jointDraft.country}
+                                                    options={COUNTRY_OPTIONS}
+                                                    onChange={(value) =>
+                                                      updateJointDraft({
+                                                        country: value,
+                                                      })
+                                                    }
+                                                    placeholder="Select country"
+                                                    error={Boolean(
+                                                      errors.jointCountry,
+                                                    )}
+                                                  />
+                                                </Field>
+                                              </>
+                                            )}
+                                          </div>
+                                        </div>
+                                      )}
+
+                                      {errors.jointDraft ? (
+                                        <p className="mt-4 text-xs font-medium text-red-600">
+                                          {errors.jointDraft}
+                                        </p>
+                                      ) : null}
+                                      <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setJointDraft(null);
+                                            setJointLookupStatus("idle");
+                                            setErrors({});
+                                          }}
+                                          className="inline-flex h-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-600 transition hover:border-slate-300"
+                                        >
+                                          Cancel
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={handleSaveJointApplicant}
+                                          className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#003478] px-4 text-xs font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                                        >
+                                          <Check className="h-4 w-4" />
+                                          {form.jointApplicants.some(
+                                            (item) => item.id === jointDraft.id,
+                                          )
+                                            ? "Save changes"
+                                            : "Add applicant"}
+                                        </button>
+                                      </div>
+                                    </div>
+                                  </motion.div>
+                                ) : null}
+                              </AnimatePresence>
+
+                              {errors.jointApplicant ? (
+                                <p className="mt-4 text-xs font-medium text-red-600">
+                                  {errors.jointApplicant}
+                                </p>
+                              ) : null}
+                              {errors.jointDraft && !jointDraft ? (
+                                <p className="mt-4 text-xs font-medium text-red-600">
+                                  {errors.jointDraft}
+                                </p>
+                              ) : null}
+                            </motion.section>
+                          ) : null}
+                        </AnimatePresence>
                       </>
                     ) : null}
 
-                    {currentStep === 1 ? (
+                    {activeStep.id === "business" ? (
                       <>
                         <SectionIntro
-                          eyebrow="Step 2 · Business information"
+                          eyebrow={`Step ${currentStep + 1} · Business information`}
                           title="Tell us about the business."
                           description="We use this information to understand the entity, ownership structure and regulatory obligations."
                           icon={BriefcaseBusiness}
@@ -1226,24 +2178,16 @@ export function Onboarding() {
                             htmlFor="entityType"
                             error={errors.entityType}
                           >
-                            <select
+                            <CustomSelect
                               id="entityType"
                               value={form.business.entityType}
-                              onChange={(e) =>
-                                updateSection("business", {
-                                  entityType: e.target.value,
-                                })
+                              options={ENTITY_OPTIONS}
+                              onChange={(value) =>
+                                updateSection("business", { entityType: value })
                               }
-                              className={inputClass(Boolean(errors.entityType))}
-                            >
-                              <option value="">Select entity type</option>
-                              <option>Private company</option>
-                              <option>Public company</option>
-                              <option>Partnership</option>
-                              <option>Trust</option>
-                              <option>Foundation</option>
-                              <option>Family office</option>
-                            </select>
+                              placeholder="Select entity type"
+                              error={Boolean(errors.entityType)}
+                            />
                           </Field>
                           <Field
                             label="Registration number"
@@ -1269,16 +2213,15 @@ export function Onboarding() {
                             htmlFor="taxCountry"
                             error={errors.taxCountry}
                           >
-                            <input
+                            <CustomSelect
                               id="taxCountry"
                               value={form.business.taxCountry}
-                              onChange={(e) =>
-                                updateSection("business", {
-                                  taxCountry: e.target.value,
-                                })
+                              options={COUNTRY_OPTIONS}
+                              onChange={(value) =>
+                                updateSection("business", { taxCountry: value })
                               }
-                              className={inputClass(Boolean(errors.taxCountry))}
-                              placeholder="Country"
+                              placeholder="Select tax country"
+                              error={Boolean(errors.taxCountry)}
                             />
                           </Field>
                           <Field
@@ -1286,25 +2229,16 @@ export function Onboarding() {
                             htmlFor="industry"
                             error={errors.industry}
                           >
-                            <select
+                            <CustomSelect
                               id="industry"
                               value={form.business.industry}
-                              onChange={(e) =>
-                                updateSection("business", {
-                                  industry: e.target.value,
-                                })
+                              options={INDUSTRY_OPTIONS}
+                              onChange={(value) =>
+                                updateSection("business", { industry: value })
                               }
-                              className={inputClass(Boolean(errors.industry))}
-                            >
-                              <option value="">Select industry</option>
-                              <option>Financial services</option>
-                              <option>Professional services</option>
-                              <option>Technology</option>
-                              <option>Property and construction</option>
-                              <option>Healthcare</option>
-                              <option>Manufacturing</option>
-                              <option>Other</option>
-                            </select>
+                              placeholder="Select industry"
+                              error={Boolean(errors.industry)}
+                            />
                           </Field>
                           <Field label="Company website" htmlFor="website">
                             <div className="relative">
@@ -1404,10 +2338,10 @@ export function Onboarding() {
                       </>
                     ) : null}
 
-                    {currentStep === 2 ? (
+                    {activeStep.id === "identity" ? (
                       <>
                         <SectionIntro
-                          eyebrow="Step 3 · Prove it’s you"
+                          eyebrow={`Step ${currentStep + 1} · Prove it’s you`}
                           title="Complete a secure identity check."
                           description="Verify an eligible identity document. Your details are encrypted and used only for identity and compliance checks."
                           icon={Fingerprint}
@@ -1608,10 +2542,10 @@ export function Onboarding() {
                       </>
                     ) : null}
 
-                    {currentStep === 3 ? (
+                    {activeStep.id === "bank" ? (
                       <>
                         <SectionIntro
-                          eyebrow="Step 4 · Link bank account"
+                          eyebrow={`Step ${currentStep + 1} · Link bank account`}
                           title="Connect a funding account."
                           description="Link an account held in the same legal name. This will be used for approved deposits and withdrawals."
                           icon={Landmark}
@@ -1838,10 +2772,10 @@ export function Onboarding() {
                       </>
                     ) : null}
 
-                    {currentStep === 4 ? (
+                    {activeStep.id === "cash" ? (
                       <>
                         <SectionIntro
-                          eyebrow="Step 5 · Cash account"
+                          eyebrow={`Step ${currentStep + 1} · Cash account`}
                           title="Configure your cash account."
                           description="Choose how the account will be used and provide an expected funding profile."
                           icon={CircleDollarSign}
@@ -1913,27 +2847,16 @@ export function Onboarding() {
                               htmlFor="currency"
                               error={errors.currency}
                             >
-                              <select
+                              <CustomSelect
                                 id="currency"
                                 value={form.cash.currency}
-                                onChange={(e) =>
-                                  updateSection("cash", {
-                                    currency: e.target.value,
-                                  })
+                                options={CURRENCY_OPTIONS}
+                                onChange={(value) =>
+                                  updateSection("cash", { currency: value })
                                 }
-                                className={inputClass(Boolean(errors.currency))}
-                              >
-                                <option value="">Select currency</option>
-                                <option value="AUD">
-                                  AUD · Australian Dollar
-                                </option>
-                                <option value="USD">USD · US Dollar</option>
-                                <option value="EUR">EUR · Euro</option>
-                                <option value="GBP">GBP · British Pound</option>
-                                <option value="SGD">
-                                  SGD · Singapore Dollar
-                                </option>
-                              </select>
+                                placeholder="Select currency"
+                                error={Boolean(errors.currency)}
+                              />
                             </Field>
                             <Field
                               label="Account nickname"
@@ -1957,51 +2880,36 @@ export function Onboarding() {
                               htmlFor="expectedBalance"
                               error={errors.expectedBalance}
                             >
-                              <select
+                              <CustomSelect
                                 id="expectedBalance"
                                 value={form.cash.expectedBalance}
-                                onChange={(e) =>
+                                options={BALANCE_OPTIONS}
+                                onChange={(value) =>
                                   updateSection("cash", {
-                                    expectedBalance: e.target.value,
+                                    expectedBalance: value,
                                   })
                                 }
-                                className={inputClass(
-                                  Boolean(errors.expectedBalance),
-                                )}
-                              >
-                                <option value="">Select range</option>
-                                <option>Under $100,000</option>
-                                <option>$100,000 – $500,000</option>
-                                <option>$500,000 – $2 million</option>
-                                <option>$2 million – $10 million</option>
-                                <option>Over $10 million</option>
-                              </select>
+                                placeholder="Select range"
+                                error={Boolean(errors.expectedBalance)}
+                              />
                             </Field>
                             <Field
                               label="Primary funding source"
                               htmlFor="fundingSource"
                               error={errors.fundingSource}
                             >
-                              <select
+                              <CustomSelect
                                 id="fundingSource"
                                 value={form.cash.fundingSource}
-                                onChange={(e) =>
+                                options={FUNDING_OPTIONS}
+                                onChange={(value) =>
                                   updateSection("cash", {
-                                    fundingSource: e.target.value,
+                                    fundingSource: value,
                                   })
                                 }
-                                className={inputClass(
-                                  Boolean(errors.fundingSource),
-                                )}
-                              >
-                                <option value="">Select source</option>
-                                <option>Business operating income</option>
-                                <option>Investment proceeds</option>
-                                <option>Asset sale</option>
-                                <option>Capital contribution</option>
-                                <option>Distribution or dividend</option>
-                                <option>Other</option>
-                              </select>
+                                placeholder="Select source"
+                                error={Boolean(errors.fundingSource)}
+                              />
                             </Field>
                           </div>
                           <div className="rounded-2xl border border-slate-200 bg-[#f7f9fb] p-4">
@@ -2022,10 +2930,10 @@ export function Onboarding() {
                       </>
                     ) : null}
 
-                    {currentStep === 5 ? (
+                    {activeStep.id === "documents" ? (
                       <>
                         <SectionIntro
-                          eyebrow="Step 6 · Proof documents"
+                          eyebrow={`Step ${currentStep + 1} · Proof documents`}
                           title="Upload supporting documents."
                           description="Provide clear, current documents. PDF, PNG and JPG files up to 10 MB are accepted."
                           icon={FileCheck2}
@@ -2040,15 +2948,17 @@ export function Onboarding() {
                               updateDocument("proofOfAddress", file)
                             }
                           />
-                          <DocumentUpload
-                            id="business-registration"
-                            title="Business registration"
-                            description="Certificate of incorporation, company extract, trust deed or equivalent formation document."
-                            value={form.documents.businessRegistration}
-                            onChange={(file) =>
-                              updateDocument("businessRegistration", file)
-                            }
-                          />
+                          {isSoleTrader ? (
+                            <DocumentUpload
+                              id="business-registration"
+                              title="Business registration"
+                              description="Business name registration, ABN record or equivalent sole-trader registration document."
+                              value={form.documents.businessRegistration}
+                              onChange={(file) =>
+                                updateDocument("businessRegistration", file)
+                              }
+                            />
+                          ) : null}
                           <DocumentUpload
                             id="source-funds"
                             title="Source of funds"
@@ -2061,7 +2971,7 @@ export function Onboarding() {
                         </div>
                         {Object.keys(errors).length ? (
                           <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs font-medium text-red-700">
-                            Please upload all three required documents before
+                            Please upload all required documents before
                             continuing.
                           </div>
                         ) : null}
@@ -2076,7 +2986,7 @@ export function Onboarding() {
                       </>
                     ) : null}
 
-                    {currentStep === 6 ? (
+                    {activeStep.id === "review" ? (
                       <>
                         <SectionIntro
                           eyebrow="Final step · Review and submit"
@@ -2091,19 +3001,23 @@ export function Onboarding() {
                                 Application readiness
                               </p>
                               <p className="mt-1 text-xs text-slate-500">
-                                {completedSections} of 6 required sections
-                                complete
+                                {completedSections} of {requiredSteps.length}{" "}
+                                required sections complete
                               </p>
                             </div>
                             <span className="text-lg font-semibold tracking-[-0.04em] text-[#003478]">
-                              {Math.round((completedSections / 6) * 100)}%
+                              {Math.round(
+                                (completedSections / requiredSteps.length) *
+                                  100,
+                              )}
+                              %
                             </span>
                           </div>
                           <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white">
                             <motion.div
                               className="h-full rounded-full bg-[#003478]"
                               animate={{
-                                width: `${(completedSections / 6) * 100}%`,
+                                width: `${(completedSections / requiredSteps.length) * 100}%`,
                               }}
                             />
                           </div>
@@ -2112,11 +3026,15 @@ export function Onboarding() {
                           <ReviewSection
                             title="Personal information"
                             icon={UserRound}
-                            complete={isStepComplete(0)}
-                            onEdit={() => goToStep(0)}
+                            complete={isStepComplete("personal")}
+                            onEdit={() => goToStep(stepIndex("personal"))}
                             rows={[
                               {
-                                label: "Name",
+                                label: "Application type",
+                                value: selectedApplicationType,
+                              },
+                              {
+                                label: "Primary applicant",
                                 value:
                                   `${form.personal.firstName} ${form.personal.lastName}`.trim(),
                               },
@@ -2129,43 +3047,62 @@ export function Onboarding() {
                                 label: "Residence",
                                 value: [
                                   form.personal.city,
+                                  form.personal.state,
                                   form.personal.country,
                                 ]
                                   .filter(Boolean)
                                   .join(", "),
                               },
                               {
-                                label: "Date of birth",
-                                value: form.personal.dateOfBirth,
+                                label: "Joint applicants",
+                                value: isJointApplication
+                                  ? `${form.jointApplicants.length} applicant${form.jointApplicants.length === 1 ? "" : "s"} added`
+                                  : "Not applicable",
                               },
                             ]}
                           />
-                          <ReviewSection
-                            title="Business information"
-                            icon={BriefcaseBusiness}
-                            complete={isStepComplete(1)}
-                            onEdit={() => goToStep(1)}
-                            rows={[
-                              {
-                                label: "Legal entity",
-                                value: form.business.legalName,
-                              },
-                              {
-                                label: "Entity type",
-                                value: form.business.entityType,
-                              },
-                              {
-                                label: "Registration",
-                                value: form.business.registrationNumber,
-                              },
-                              { label: "Your role", value: form.business.role },
-                            ]}
-                          />
+                          {isSoleTrader ? (
+                            <ReviewSection
+                              title="Business information"
+                              icon={BriefcaseBusiness}
+                              complete={isStepComplete("business")}
+                              onEdit={() => goToStep(stepIndex("business"))}
+                              rows={[
+                                {
+                                  label: "Legal business name",
+                                  value: form.business.legalName,
+                                },
+                                {
+                                  label: "Entity type",
+                                  value: form.business.entityType,
+                                },
+                                {
+                                  label: "Registration",
+                                  value: form.business.registrationNumber,
+                                },
+                                {
+                                  label: "Your role",
+                                  value: form.business.role,
+                                },
+                              ]}
+                            />
+                          ) : null}
                           <ReviewSection
                             title="Identity and bank"
                             icon={BadgeCheck}
-                            complete={isStepComplete(2) && isStepComplete(3)}
-                            onEdit={() => goToStep(isStepComplete(2) ? 3 : 2)}
+                            complete={
+                              isStepComplete("identity") &&
+                              isStepComplete("bank")
+                            }
+                            onEdit={() =>
+                              goToStep(
+                                stepIndex(
+                                  isStepComplete("identity")
+                                    ? "bank"
+                                    : "identity",
+                                ),
+                              )
+                            }
                             rows={[
                               {
                                 label: "Identity",
@@ -2192,16 +3129,25 @@ export function Onboarding() {
                           <ReviewSection
                             title="Cash account and documents"
                             icon={WalletCards}
-                            complete={isStepComplete(4) && isStepComplete(5)}
-                            onEdit={() => goToStep(isStepComplete(4) ? 5 : 4)}
+                            complete={
+                              isStepComplete("cash") &&
+                              isStepComplete("documents")
+                            }
+                            onEdit={() =>
+                              goToStep(
+                                stepIndex(
+                                  isStepComplete("cash") ? "documents" : "cash",
+                                ),
+                              )
+                            }
                             rows={[
                               { label: "Account", value: form.cash.nickname },
                               { label: "Currency", value: form.cash.currency },
                               { label: "Purpose", value: form.cash.purpose },
                               {
                                 label: "Documents",
-                                value: isStepComplete(5)
-                                  ? "3 files ready"
+                                value: isStepComplete("documents")
+                                  ? `${isSoleTrader ? 3 : 2} files ready`
                                   : "Files required",
                               },
                             ]}
@@ -2268,7 +3214,7 @@ export function Onboarding() {
                   {currentStep === 0 ? "Back to sign in" : "Previous"}
                 </button>
 
-                {currentStep === steps.length - 1 ? (
+                {currentStep === visibleSteps.length - 1 ? (
                   <motion.button
                     type="button"
                     onClick={handleSubmit}
