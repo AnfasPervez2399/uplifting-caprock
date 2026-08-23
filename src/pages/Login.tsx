@@ -218,7 +218,7 @@ export function Login() {
     await wait(1000);
     setStatus("success");
     await wait(450);
-    navigate("/dashboard");
+    navigate("/onboarding");
   };
 
   return (
