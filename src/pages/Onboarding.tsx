@@ -1,8 +1,5 @@
-import { useMemo, useState } from "react";
-import type { ChangeEvent, ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
+  AlertCircle,
   ArrowLeft,
   ArrowRight,
   BadgeCheck,
@@ -11,368 +8,388 @@ import {
   Building2,
   Check,
   CheckCircle2,
-  CircleDollarSign,
+  CircleUserRound,
   Clock3,
   FileCheck2,
   FileText,
   Fingerprint,
-  Globe2,
-  IdCard,
+  HelpCircle,
   Landmark,
-  Link2,
   Loader2,
   LockKeyhole,
   Mail,
-  MapPin,
+  Menu,
   PencilLine,
   Phone,
+  Plus,
   Save,
-  Search,
   Send,
   ShieldCheck,
+  Trash2,
   UploadCloud,
   UserPlus,
-  UserRound,
-  UsersRound,
-  WalletCards,
+  Users,
   X,
+  type LucideIcon,
 } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
-import { CustomSelect } from "../components/ui/CustomSelect";
-import type { SelectOption } from "../components/ui/CustomSelect";
-
-const EASE = [0.22, 1, 0.36, 1] as const;
-const wait = (ms: number) =>
-  new Promise<void>((resolve) => window.setTimeout(resolve, ms));
+import {
+  type ChangeEvent,
+  type ReactNode,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import { CustomSelect, type SelectOption } from "../components/ui/CustomSelect";
 
 type StepId =
   | "personal"
   | "business"
-  | "identity"
   | "bank"
-  | "cash"
+  | "signature"
   | "documents"
   | "review";
-
-type Step = {
-  id: StepId;
-  label: string;
-  shortLabel: string;
-  description: string;
-  icon: LucideIcon;
-};
-
-type UploadedDocument = {
-  name: string;
-  size: number;
-};
-
 type ApplicationType =
   | "individual"
-  | "joint-spouse"
-  | "joint-same-address"
+  | "joint-same"
+  | "joint-different-name"
   | "joint-different-address"
   | "sole-trader"
   | "";
+type AssessmentNature = "australian" | "foreign" | "";
+type YesNo = "yes" | "no" | "";
+type JointMethod = "existing" | "new";
+type ProofField =
+  | "licenceFront"
+  | "licenceBack"
+  | "photoId"
+  | "passport"
+  | "utilityBill";
 
-type JointApplicant = {
+interface StepDefinition {
+  id: StepId;
+  shortLabel: string;
+  label: string;
+  description: string;
+  icon: LucideIcon;
+}
+
+interface UploadedDocument {
+  name: string;
+  size: number;
+  type: string;
+  uploadedAt: string;
+}
+
+interface PersonalState {
+  applicationType: ApplicationType;
+  referenceNumber: string;
+  advisorReferenceNumber: string;
+  profilePicture?: UploadedDocument;
+  firstName: string;
+  middleName: string;
+  lastName: string;
+  formerNames: string;
+  dateOfBirth: string;
+  residentialAddress: string;
+  investmentCurrency: string;
+  expectedInvestment: string;
+  applicantCountry: string;
+}
+
+interface JointApplicant {
   id: string;
-  method: "client-id" | "new-invite";
+  method: JointMethod;
   clientId: string;
   firstName: string;
+  middleName: string;
   lastName: string;
+  formerNames: string;
   email: string;
-  address: string;
-  city: string;
-  state: string;
-  postcode: string;
-  country: string;
+  dateOfBirth: string;
+  residentialAddress: string;
   confirmed: boolean;
-};
+}
 
-type FormState = {
-  personal: {
-    applicationType: ApplicationType;
-    firstName: string;
-    lastName: string;
-    dateOfBirth: string;
-    citizenship: string;
-    email: string;
-    phone: string;
-    address: string;
-    city: string;
-    state: string;
-    postcode: string;
-    country: string;
-  };
+interface JointApplicantDraft {
+  method: JointMethod;
+  clientId: string;
+  firstName: string;
+  middleName: string;
+  lastName: string;
+  formerNames: string;
+  email: string;
+  dateOfBirth: string;
+  residentialAddress: string;
+}
+
+interface BusinessState {
+  assessmentNature: AssessmentNature;
+  businessName: string;
+  principalBusinessAddress: string;
+  abn: string;
+  usCitizen: YesNo;
+  socialSecurityNumber: string;
+  usTaxResident: YesNo;
+  taxIdentificationNumber: string;
+  investorClassification: string;
+  businessActivity: string;
+  businessActivityOther: string;
+  sourceOfFunds: string;
+  intendedTransactions: string;
+  beneficialOwnership: string;
+}
+
+interface BankAccount {
+  id: string;
+  bankName: string;
+  swiftCode: string;
+  bankAddress: string;
+  bsb: string;
+  accountNumber: string;
+  currency: string;
+  verificationDocument?: UploadedDocument;
+}
+
+interface SignatureState {
+  name: string;
+  email: string;
+  phone: string;
+  dateOfBirth: string;
+}
+
+interface ApplicantDocuments {
+  licenceFront?: UploadedDocument;
+  licenceBack?: UploadedDocument;
+  photoId?: UploadedDocument;
+  passport?: UploadedDocument;
+  utilityBill?: UploadedDocument;
+}
+
+interface FormState {
+  personal: PersonalState;
   jointApplicants: JointApplicant[];
-  business: {
-    legalName: string;
-    tradingName: string;
-    entityType: string;
-    registrationNumber: string;
-    taxCountry: string;
-    industry: string;
-    website: string;
-    role: string;
-    ownership: string;
-    address: string;
-    city: string;
-    postcode: string;
-  };
-  identity: {
-    documentType: string;
-    documentNumber: string;
-    issuingCountry: string;
-    consent: boolean;
-    verified: boolean;
-  };
-  bank: {
-    method: "instant" | "manual";
-    institution: string;
-    accountName: string;
-    last4: string;
-    linked: boolean;
-  };
-  cash: {
-    purpose: string;
-    currency: string;
-    nickname: string;
-    expectedBalance: string;
-    fundingSource: string;
-  };
-  documents: {
-    proofOfAddress?: UploadedDocument;
-    businessRegistration?: UploadedDocument;
-    sourceOfFunds?: UploadedDocument;
-  };
+  business: BusinessState;
+  bankAccounts: BankAccount[];
+  signature: SignatureState;
+  documents: Record<string, ApplicantDocuments>;
   agreements: {
-    accuracy: boolean;
-    terms: boolean;
+    accurate: boolean;
+    consent: boolean;
   };
-};
+}
 
-const allSteps: Step[] = [
+const allSteps: StepDefinition[] = [
   {
     id: "personal",
-    label: "Personal information",
     shortLabel: "Personal",
-    description: "Your identity and contact details",
-    icon: UserRound,
+    label: "Personal",
+    description: "Applicant and investment details",
+    icon: CircleUserRound,
   },
   {
     id: "business",
-    label: "Business information",
     shortLabel: "Business",
-    description: "Entity, tax and ownership details",
+    label: "Business",
+    description: "Assessment, tax and activity",
     icon: BriefcaseBusiness,
   },
   {
-    id: "identity",
-    label: "Prove it’s you",
-    shortLabel: "Identity",
-    description: "Secure identity verification",
+    id: "bank",
+    shortLabel: "Bank",
+    label: "External Bank Account",
+    description: "Settlement account verification",
+    icon: Landmark,
+  },
+  {
+    id: "signature",
+    shortLabel: "E-Signature",
+    label: "E-Signature",
+    description: "Authorised signatory details",
     icon: Fingerprint,
   },
   {
-    id: "bank",
-    label: "Link bank account",
-    shortLabel: "Bank",
-    description: "Connect a funding account",
-    icon: Link2,
-  },
-  {
-    id: "cash",
-    label: "Cash account",
-    shortLabel: "Cash account",
-    description: "Configure your settlement account",
-    icon: WalletCards,
-  },
-  {
     id: "documents",
-    label: "Proof documents",
-    shortLabel: "Documents",
-    description: "Upload required supporting files",
+    shortLabel: "Proof",
+    label: "Upload Proof",
+    description: "Identity and address evidence",
     icon: FileCheck2,
   },
   {
     id: "review",
-    label: "Review and submit",
     shortLabel: "Review",
-    description: "Confirm and send your application",
-    icon: Send,
+    label: "Review and Submit",
+    description: "Confirm and securely submit",
+    icon: BadgeCheck,
   },
 ];
 
-const initialForm: FormState = {
-  personal: {
-    applicationType: "",
-    firstName: "",
-    lastName: "",
-    dateOfBirth: "",
-    citizenship: "",
-    email: "",
-    phone: "",
-    address: "",
-    city: "",
-    state: "",
-    postcode: "",
-    country: "",
-  },
-  jointApplicants: [],
-  business: {
-    legalName: "",
-    tradingName: "",
-    entityType: "",
-    registrationNumber: "",
-    taxCountry: "",
-    industry: "",
-    website: "",
-    role: "",
-    ownership: "",
-    address: "",
-    city: "",
-    postcode: "",
-  },
-  identity: {
-    documentType: "",
-    documentNumber: "",
-    issuingCountry: "",
-    consent: false,
-    verified: false,
-  },
-  bank: {
-    method: "instant",
-    institution: "",
-    accountName: "",
-    last4: "",
-    linked: false,
-  },
-  cash: {
-    purpose: "",
-    currency: "",
-    nickname: "",
-    expectedBalance: "",
-    fundingSource: "",
-  },
-  documents: {},
-  agreements: {
-    accuracy: false,
-    terms: false,
-  },
-};
-
-const APPLICATION_TYPE_OPTIONS: SelectOption[] = [
+const APPLICATION_OPTIONS: SelectOption[] = [
   {
     value: "individual",
-    label: "1 · Individual",
-    description: "An account held by one person",
+    label: "Individual",
+    description: "An account held by one individual applicant",
   },
   {
-    value: "joint-spouse",
-    label: "2 · Husband and wife joint account · same address",
-    description: "Husband and wife with the same residential address",
+    value: "joint-same",
+    label: "Husband-and-wife joint account — same address",
+    description: "Joint applicants who share a residential address",
   },
   {
-    value: "joint-same-address",
-    label: "3 · Different surnames · same address",
-    description: "Applicants with the same residential address",
+    value: "joint-different-name",
+    label: "Different-surname joint account — same address",
+    description: "Joint applicants with different surnames at one address",
   },
   {
     value: "joint-different-address",
-    label: "4 · Joint account with different addresses",
-    description: "Applicants have separate residential addresses",
+    label: "Joint account — different addresses",
+    description: "Joint applicants who have separate residential addresses",
   },
   {
     value: "sole-trader",
-    label: "5 · Sole trader",
-    description: "An individual operating a registered business",
+    label: "Sole Trader",
+    description: "An individual applying in their capacity as a sole trader",
   },
 ];
 
-const createJointApplicant = (): JointApplicant => ({
-  id: `joint-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-  method: "client-id",
-  clientId: "",
-  firstName: "",
-  lastName: "",
-  email: "",
-  address: "",
-  city: "",
-  state: "",
-  postcode: "",
-  country: "",
-  confirmed: false,
-});
+const ASSESSMENT_OPTIONS: SelectOption[] = [
+  {
+    value: "australian",
+    label: "Australian",
+    description: "Australian customer assessment",
+  },
+  {
+    value: "foreign",
+    label: "Foreign",
+    description: "International customer assessment",
+  },
+];
+
+const INVESTMENT_CURRENCY_OPTIONS: SelectOption[] = [
+  { value: "AUD", label: "Australian dollar (AUD)" },
+  { value: "USD", label: "US dollar (USD)" },
+  { value: "GBP", label: "British pound (GBP)" },
+  { value: "EUR", label: "Euro (EUR)" },
+  { value: "SGD", label: "Singapore dollar (SGD)" },
+  { value: "HKD", label: "Hong Kong dollar (HKD)" },
+];
+
+const BANK_CURRENCY_OPTIONS: SelectOption[] = [
+  ...INVESTMENT_CURRENCY_OPTIONS,
+  { value: "NZD", label: "New Zealand dollar (NZD)" },
+  { value: "JPY", label: "Japanese yen (JPY)" },
+  { value: "CAD", label: "Canadian dollar (CAD)" },
+  { value: "CHF", label: "Swiss franc (CHF)" },
+];
+
+const INVESTMENT_AMOUNT_OPTIONS: SelectOption[] = [
+  { value: "$500k–$50 million", label: "$500,000 – $50 million" },
+  { value: "$50–$100 million", label: "$50 million – $100 million" },
+  { value: "$100 million+", label: "$100 million+" },
+];
 
 const COUNTRY_OPTIONS: SelectOption[] = [
-  { value: "Australia", label: "Australia" },
-  { value: "New Zealand", label: "New Zealand" },
-  { value: "United States", label: "United States" },
-  { value: "United Kingdom", label: "United Kingdom" },
-  { value: "Singapore", label: "Singapore" },
-  { value: "Hong Kong", label: "Hong Kong" },
-  { value: "Canada", label: "Canada" },
-  { value: "United Arab Emirates", label: "United Arab Emirates" },
+  "Australia",
+  "Canada",
+  "China",
+  "France",
+  "Germany",
+  "Hong Kong",
+  "India",
+  "Indonesia",
+  "Japan",
+  "New Zealand",
+  "Singapore",
+  "South Korea",
+  "Switzerland",
+  "United Arab Emirates",
+  "United Kingdom",
+  "United States",
+  "Other",
+].map((country) => ({ value: country, label: country }));
+
+const BUSINESS_NATURE_OPTIONS: SelectOption[] = [
+  { value: "Accredited Investor", label: "Accredited Investor" },
+  { value: "High Net-worth Individual", label: "High Net-worth Individual" },
+  { value: "Sophisticated Investor", label: "Sophisticated Investor" },
+  { value: "Wholesale Investor", label: "Wholesale Investor" },
+];
+
+const BUSINESS_ACTIVITY_OPTIONS: SelectOption[] = [
+  { value: "Capital Markets", label: "Capital Markets" },
+  { value: "Commodities", label: "Commodities" },
+  { value: "Financial Markets", label: "Financial Markets" },
   { value: "Other", label: "Other" },
+  { value: "Real Estate", label: "Real Estate" },
+  { value: "Stock Market", label: "Stock Market" },
 ];
 
-const ENTITY_OPTIONS: SelectOption[] = [
-  { value: "Sole trader", label: "Sole trader" },
-  { value: "Private company", label: "Private company" },
-  { value: "Public company", label: "Public company" },
-  { value: "Partnership", label: "Partnership" },
-  { value: "Trust", label: "Trust" },
-  { value: "Foundation", label: "Foundation" },
-  { value: "Family office", label: "Family office" },
-];
-
-const INDUSTRY_OPTIONS: SelectOption[] = [
-  { value: "Financial services", label: "Financial services" },
-  { value: "Professional services", label: "Professional services" },
-  { value: "Technology", label: "Technology" },
-  { value: "Property and construction", label: "Property and construction" },
-  { value: "Healthcare", label: "Healthcare" },
-  { value: "Manufacturing", label: "Manufacturing" },
-  { value: "Other", label: "Other" },
-];
-
-const CURRENCY_OPTIONS: SelectOption[] = [
-  {
-    value: "AUD",
-    label: "AUD · Australian Dollar",
-    description: "Australian Dollar",
+const initialFormState: FormState = {
+  personal: {
+    applicationType: "",
+    referenceNumber: "",
+    advisorReferenceNumber: "",
+    firstName: "",
+    middleName: "",
+    lastName: "",
+    formerNames: "",
+    dateOfBirth: "",
+    residentialAddress: "",
+    investmentCurrency: "",
+    expectedInvestment: "",
+    applicantCountry: "",
   },
-  {
-    value: "USD",
-    label: "USD · US Dollar",
-    description: "United States Dollar",
+  jointApplicants: [],
+  business: {
+    assessmentNature: "",
+    businessName: "",
+    principalBusinessAddress: "",
+    abn: "",
+    usCitizen: "",
+    socialSecurityNumber: "",
+    usTaxResident: "",
+    taxIdentificationNumber: "",
+    investorClassification: "",
+    businessActivity: "",
+    businessActivityOther: "",
+    sourceOfFunds: "",
+    intendedTransactions: "",
+    beneficialOwnership: "",
   },
-  { value: "EUR", label: "EUR · Euro", description: "Euro" },
-  { value: "GBP", label: "GBP · British Pound", description: "Pound Sterling" },
-  {
-    value: "SGD",
-    label: "SGD · Singapore Dollar",
-    description: "Singapore Dollar",
+  bankAccounts: [],
+  signature: {
+    name: "",
+    email: "",
+    phone: "",
+    dateOfBirth: "",
   },
-];
+  documents: {},
+  agreements: {
+    accurate: false,
+    consent: false,
+  },
+};
 
-const BALANCE_OPTIONS: SelectOption[] = [
-  { value: "Under $100,000", label: "Under $100,000" },
-  { value: "$100,000 – $500,000", label: "$100,000 – $500,000" },
-  { value: "$500,000 – $2 million", label: "$500,000 – $2 million" },
-  { value: "$2 million – $10 million", label: "$2 million – $10 million" },
-  { value: "Over $10 million", label: "Over $10 million" },
-];
+const emptyJointDraft: JointApplicantDraft = {
+  method: "existing",
+  clientId: "",
+  firstName: "",
+  middleName: "",
+  lastName: "",
+  formerNames: "",
+  email: "",
+  dateOfBirth: "",
+  residentialAddress: "",
+};
 
-const FUNDING_OPTIONS: SelectOption[] = [
-  { value: "Business operating income", label: "Business operating income" },
-  { value: "Investment proceeds", label: "Investment proceeds" },
-  { value: "Asset sale", label: "Asset sale" },
-  { value: "Capital contribution", label: "Capital contribution" },
-  { value: "Distribution or dividend", label: "Distribution or dividend" },
-  { value: "Other", label: "Other" },
-];
+const createEmptyBank = (): BankAccount => ({
+  id: `bank-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+  bankName: "",
+  swiftCode: "",
+  bankAddress: "",
+  bsb: "",
+  accountNumber: "",
+  currency: "",
+});
 
 const inputClass = (hasError = false) =>
   `h-12 w-full rounded-xl border bg-white px-3.5 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 ${
@@ -380,6 +397,9 @@ const inputClass = (hasError = false) =>
       ? "border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-500/[0.08]"
       : "border-slate-200 hover:border-slate-300 focus:border-[#003478] focus:ring-4 focus:ring-[#003478]/[0.07]"
   }`;
+
+const textareaClass = (hasError = false) =>
+  `${inputClass(hasError)} h-auto min-h-24 resize-y py-3 leading-6`;
 
 function Field({
   label,
@@ -441,6 +461,25 @@ function SectionIntro({
           {description}
         </p>
       </div>
+    </div>
+  );
+}
+
+function SubsectionHeading({
+  title,
+  description,
+}: {
+  title: string;
+  description?: string;
+}) {
+  return (
+    <div className="mb-5">
+      <h2 className="text-base font-semibold tracking-[-0.015em] text-slate-950">
+        {title}
+      </h2>
+      {description ? (
+        <p className="mt-1 text-sm leading-6 text-slate-500">{description}</p>
+      ) : null}
     </div>
   );
 }
@@ -527,2737 +566,2749 @@ function DocumentUpload({
   );
 }
 
+function BinaryChoice({
+  value,
+  onChange,
+  ariaLabel,
+}: {
+  value: YesNo;
+  onChange: (value: Exclude<YesNo, "">) => void;
+  ariaLabel: string;
+}) {
+  return (
+    <div className="grid grid-cols-2 gap-2" role="group" aria-label={ariaLabel}>
+      {(["yes", "no"] as const).map((option) => {
+        const selected = value === option;
+        return (
+          <button
+            key={option}
+            type="button"
+            onClick={() => onChange(option)}
+            aria-pressed={selected}
+            className={`h-12 rounded-xl border px-4 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003478]/20 ${
+              selected
+                ? "border-[rgba(0,52,120,0.18)] bg-[#dce7f2] text-slate-950"
+                : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:text-slate-900"
+            }`}
+          >
+            {option === "yes" ? "Yes" : "No"}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 function ReviewSection({
   title,
   icon: Icon,
-  complete,
-  rows,
   onEdit,
+  children,
 }: {
   title: string;
   icon: LucideIcon;
-  complete: boolean;
-  rows: Array<{ label: string; value: string }>;
   onEdit: () => void;
+  children: ReactNode;
 }) {
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex min-w-0 items-center gap-3">
-          <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[rgba(0,52,120,0.07)] text-[#003478]">
+    <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+      <div className="flex items-center justify-between gap-4 border-b border-slate-100 pb-4">
+        <div className="flex items-center gap-3">
+          <div className="grid h-9 w-9 place-items-center rounded-xl bg-[rgba(0,52,120,0.07)] text-[#003478]">
             <Icon className="h-4 w-4" />
           </div>
-          <div className="min-w-0">
-            <h2 className="truncate text-sm font-semibold text-slate-900">
-              {title}
-            </h2>
-            <p
-              className={`mt-0.5 text-[11px] font-medium ${complete ? "text-[#003478]" : "text-slate-400"}`}
-            >
-              {complete ? "Section complete" : "Information required"}
-            </p>
-          </div>
+          <h2 className="text-sm font-semibold text-slate-950">{title}</h2>
         </div>
         <button
           type="button"
           onClick={onEdit}
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-2 text-xs font-semibold text-slate-500 transition hover:bg-slate-100 hover:text-[#003478] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003478]/20"
+          className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-xs font-semibold text-[#003478] transition hover:bg-[#dce7f2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003478]/20"
         >
           <PencilLine className="h-3.5 w-3.5" />
           Edit
         </button>
       </div>
-      <dl className="mt-4 grid gap-3 border-t border-slate-100 pt-4 sm:grid-cols-2">
-        {rows.map((row) => (
-          <div key={row.label} className="min-w-0">
-            <dt className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
-              {row.label}
-            </dt>
-            <dd className="mt-1 truncate text-xs font-semibold text-slate-700">
-              {row.value || "Not provided"}
-            </dd>
-          </div>
-        ))}
-      </dl>
+      <div className="pt-4">{children}</div>
     </section>
   );
 }
 
-export function Onboarding() {
-  const navigate = useNavigate();
-  const reduceMotion = useReducedMotion();
-  const [form, setForm] = useState<FormState>(initialForm);
-  const [currentStep, setCurrentStep] = useState(0);
-  const [direction, setDirection] = useState(1);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [jointDraft, setJointDraft] = useState<JointApplicant | null>(null);
-  const [jointLookupStatus, setJointLookupStatus] = useState<
-    "idle" | "searching" | "found"
-  >("idle");
-  const [verifying, setVerifying] = useState(false);
-  const [linkingBank, setLinkingBank] = useState(false);
-  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">(
-    "idle",
+function SummaryItem({ label, value }: { label: string; value: ReactNode }) {
+  return (
+    <div>
+      <dt className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-400">
+        {label}
+      </dt>
+      <dd className="mt-1.5 break-words text-sm font-medium leading-6 text-slate-800">
+        {value || "Not provided"}
+      </dd>
+    </div>
   );
-  const [submitting, setSubmitting] = useState(false);
+}
+
+function CheckRow({ checked, label }: { checked: boolean; label: string }) {
+  return (
+    <div className="flex items-center gap-2.5 text-sm text-slate-600">
+      <span
+        className={`grid h-5 w-5 shrink-0 place-items-center rounded-full ${
+          checked ? "bg-[#003478] text-white" : "bg-slate-100 text-slate-400"
+        }`}
+      >
+        {checked ? (
+          <Check className="h-3 w-3" strokeWidth={3} />
+        ) : (
+          <Clock3 className="h-3 w-3" />
+        )}
+      </span>
+      {label}
+    </div>
+  );
+}
+
+const isJointType = (type: ApplicationType) =>
+  type === "joint-same" ||
+  type === "joint-different-name" ||
+  type === "joint-different-address";
+
+const usesSharedAddress = (type: ApplicationType) =>
+  type === "joint-same" || type === "joint-different-name";
+
+const formatApplicantName = (applicant: {
+  firstName: string;
+  middleName: string;
+  lastName: string;
+}) =>
+  [applicant.firstName, applicant.middleName, applicant.lastName]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+
+const documentFromFile = (file?: File): UploadedDocument | undefined =>
+  file
+    ? {
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        uploadedAt: new Date().toISOString(),
+      }
+    : undefined;
+
+const isValidEmail = (email: string) => /^\S+@\S+\.\S+$/.test(email);
+
+const isCompleteJointPersonal = (
+  applicant: JointApplicant,
+  sharedAddress: boolean,
+) => {
+  if (applicant.method === "existing")
+    return applicant.confirmed && Boolean(applicant.clientId);
+  return Boolean(
+    applicant.confirmed &&
+    applicant.firstName.trim() &&
+    applicant.lastName.trim() &&
+    applicant.formerNames.trim() &&
+    applicant.dateOfBirth &&
+    isValidEmail(applicant.email) &&
+    (sharedAddress || applicant.residentialAddress.trim()),
+  );
+};
+
+const hasAustralianProof = (documents?: ApplicantDocuments) =>
+  Boolean(documents?.licenceFront && documents?.licenceBack);
+
+const hasForeignProof = (documents?: ApplicantDocuments) =>
+  Boolean(documents?.photoId && documents?.passport && documents?.utilityBill);
+
+export function Onboarding() {
+  const [form, setForm] = useState<FormState>(initialFormState);
+  const [activeStepId, setActiveStepId] = useState<StepId>("personal");
+  const [jointDraft, setJointDraft] =
+    useState<JointApplicantDraft>(emptyJointDraft);
+  const [showJointComposer, setShowJointComposer] = useState(false);
+  const [lookupState, setLookupState] = useState<
+    "idle" | "loading" | "found" | "error"
+  >("idle");
+  const [bankDraft, setBankDraft] = useState<BankAccount | null>(
+    createEmptyBank(),
+  );
+  const [editingBankId, setEditingBankId] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [notice, setNotice] = useState("");
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
-  const isJointApplication = [
-    "joint-spouse",
-    "joint-same-address",
-    "joint-different-address",
-  ].includes(form.personal.applicationType);
-  const usesPrimaryAddress = ["joint-spouse", "joint-same-address"].includes(
-    form.personal.applicationType,
-  );
+  const isJoint = isJointType(form.personal.applicationType);
+  const sharedAddress = usesSharedAddress(form.personal.applicationType);
   const isSoleTrader = form.personal.applicationType === "sole-trader";
   const visibleSteps = useMemo(
-    () => allSteps.filter((step) => step.id !== "business" || isSoleTrader),
+    () =>
+      isSoleTrader
+        ? allSteps
+        : allSteps.filter((step) => step.id !== "business"),
     [isSoleTrader],
   );
-  const requiredSteps = visibleSteps.filter((step) => step.id !== "review");
-  const activeStep = visibleSteps[currentStep] ?? visibleSteps[0];
-  const progress = ((currentStep + 1) / visibleSteps.length) * 100;
-  const stepIndex = (id: StepId) =>
-    visibleSteps.findIndex((step) => step.id === id);
+  const activeStepIndex = visibleSteps.findIndex(
+    (step) => step.id === activeStepId,
+  );
+  const primaryFullName = formatApplicantName(form.personal);
   const selectedApplicationType =
-    APPLICATION_TYPE_OPTIONS.find(
+    APPLICATION_OPTIONS.find(
       (option) => option.value === form.personal.applicationType,
-    )?.label ?? "Not selected";
+    )?.label || "Not selected";
+  const countryAssessmentNature: AssessmentNature = !form.personal
+    .applicantCountry
+    ? ""
+    : form.personal.applicantCountry === "Australia"
+      ? "australian"
+      : "foreign";
+  const primaryAssessmentNature = isSoleTrader
+    ? form.business.assessmentNature
+    : countryAssessmentNature;
 
-  const updateSection = <K extends keyof FormState>(
-    section: K,
-    patch: Partial<FormState[K]>,
+  const applicantProfiles = useMemo(
+    () => [
+      {
+        key: "primary",
+        label: "Primary applicant",
+        name: primaryFullName || "Primary applicant",
+        assessmentNature: primaryAssessmentNature,
+      },
+      ...form.jointApplicants.map((applicant, index) => ({
+        key: applicant.id,
+        label: `Joint applicant ${index + 1}`,
+        name: formatApplicantName(applicant) || `Joint applicant ${index + 1}`,
+        assessmentNature: countryAssessmentNature,
+      })),
+    ],
+    [
+      countryAssessmentNature,
+      form.jointApplicants,
+      primaryAssessmentNature,
+      primaryFullName,
+    ],
+  );
+
+  const personalComplete = useMemo(() => {
+    const primaryComplete = Boolean(
+      form.personal.applicationType &&
+      form.personal.applicantCountry &&
+      form.personal.firstName.trim() &&
+      form.personal.lastName.trim() &&
+      form.personal.formerNames.trim() &&
+      form.personal.dateOfBirth &&
+      form.personal.residentialAddress.trim() &&
+      form.personal.investmentCurrency &&
+      form.personal.expectedInvestment,
+    );
+    if (!primaryComplete) return false;
+    if (!isJoint) return true;
+    return (
+      form.jointApplicants.length > 0 &&
+      form.jointApplicants.every((applicant) =>
+        isCompleteJointPersonal(applicant, sharedAddress),
+      )
+    );
+  }, [form.jointApplicants, form.personal, isJoint, sharedAddress]);
+
+  const foreignSoleTraderComplete = useMemo(() => {
+    if (!isSoleTrader || form.business.assessmentNature !== "foreign")
+      return true;
+    return Boolean(
+      form.business.investorClassification &&
+      form.business.businessActivity &&
+      (form.business.businessActivity !== "Other" ||
+        form.business.businessActivityOther.trim()) &&
+      form.business.sourceOfFunds.trim() &&
+      form.business.intendedTransactions.trim() &&
+      form.business.beneficialOwnership.trim() &&
+      form.business.usCitizen &&
+      (form.business.usCitizen !== "yes" ||
+        form.business.socialSecurityNumber.trim()) &&
+      form.business.usTaxResident &&
+      (form.business.usTaxResident !== "yes" ||
+        form.business.taxIdentificationNumber.trim()),
+    );
+  }, [form.business, isSoleTrader]);
+
+  const businessComplete = useMemo(() => {
+    if (!isSoleTrader) return true;
+    if (!form.business.assessmentNature) return false;
+    if (
+      !form.business.businessName.trim() ||
+      !form.business.principalBusinessAddress.trim() ||
+      (form.business.assessmentNature === "australian" &&
+        !form.business.abn.trim())
+    ) {
+      return false;
+    }
+    return foreignSoleTraderComplete;
+  }, [form.business, foreignSoleTraderComplete, isSoleTrader]);
+
+  const bankComplete = useMemo(
+    () =>
+      form.bankAccounts.length > 0 &&
+      form.bankAccounts.every((account) =>
+        Boolean(
+          account.bankName.trim() &&
+          account.swiftCode.trim() &&
+          account.bankAddress.trim() &&
+          account.accountNumber.trim() &&
+          account.currency &&
+          account.verificationDocument,
+        ),
+      ),
+    [form.bankAccounts],
+  );
+
+  const signatureComplete = useMemo(
+    () =>
+      Boolean(
+        form.signature.name.trim() &&
+        isValidEmail(form.signature.email) &&
+        form.signature.phone.trim() &&
+        form.signature.dateOfBirth,
+      ),
+    [form.signature],
+  );
+
+  const documentsComplete = useMemo(
+    () =>
+      applicantProfiles.every((applicant) => {
+        if (applicant.assessmentNature === "australian") {
+          return hasAustralianProof(form.documents[applicant.key]);
+        }
+        if (applicant.assessmentNature === "foreign") {
+          return hasForeignProof(form.documents[applicant.key]);
+        }
+        return false;
+      }),
+    [applicantProfiles, form.documents],
+  );
+
+  const allApplicationSectionsComplete =
+    personalComplete &&
+    businessComplete &&
+    bankComplete &&
+    signatureComplete &&
+    documentsComplete;
+
+  const completion: Record<StepId, boolean> = {
+    personal: personalComplete,
+    business: businessComplete,
+    bank: bankComplete,
+    signature: signatureComplete,
+    documents: documentsComplete,
+    review:
+      allApplicationSectionsComplete &&
+      form.agreements.accurate &&
+      form.agreements.consent,
+  };
+
+  const applicationSectionCount = visibleSteps.length - 1;
+  const completedSectionCount = visibleSteps
+    .slice(0, -1)
+    .filter((step) => completion[step.id]).length;
+  const progressPercent = Math.max(
+    6,
+    Math.round(((activeStepIndex + 1) / visibleSteps.length) * 100),
+  );
+  const sectionEyebrow = (stepId: StepId) =>
+    `Section ${visibleSteps.findIndex((step) => step.id === stepId) + 1} of ${visibleSteps.length}`;
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    setErrors({});
+    setNotice("");
+  }, [activeStepId]);
+
+  const updatePersonal = <K extends keyof PersonalState>(
+    key: K,
+    value: PersonalState[K],
   ) => {
     setForm((current) => ({
       ...current,
-      [section]: { ...current[section], ...patch },
+      personal: { ...current.personal, [key]: value },
     }));
-    setErrors({});
-    setSaveStatus("idle");
+    setErrors((current) => ({ ...current, [key]: "" }));
   };
 
-  const updateJointDraft = (patch: Partial<JointApplicant>) => {
-    setJointDraft((current) =>
-      current ? { ...current, ...patch, confirmed: false } : current,
-    );
-    setJointLookupStatus("idle");
-    setErrors({});
-    setSaveStatus("idle");
+  const updateBusiness = <K extends keyof BusinessState>(
+    key: K,
+    value: BusinessState[K],
+  ) => {
+    setForm((current) => ({
+      ...current,
+      business: { ...current.business, [key]: value },
+    }));
+    setErrors((current) => ({ ...current, [key]: "" }));
   };
 
-  const isJointApplicantComplete = (applicant: JointApplicant) =>
-    applicant.method === "client-id"
-      ? Boolean(applicant.clientId.trim()) && applicant.confirmed
-      : Boolean(applicant.firstName.trim()) &&
-        Boolean(applicant.lastName.trim()) &&
-        /^\S+@\S+\.\S+$/.test(applicant.email) &&
-        (usesPrimaryAddress ||
-          (Boolean(applicant.address.trim()) &&
-            Boolean(applicant.city.trim()) &&
-            Boolean(applicant.state) &&
-            Boolean(applicant.postcode.trim()) &&
-            Boolean(applicant.country))) &&
-        applicant.confirmed;
+  const updateSignature = <K extends keyof SignatureState>(
+    key: K,
+    value: SignatureState[K],
+  ) => {
+    setForm((current) => ({
+      ...current,
+      signature: { ...current.signature, [key]: value },
+    }));
+    setErrors((current) => ({ ...current, [key]: "" }));
+  };
 
-  const isStepComplete = (stepId: StepId) => {
-    switch (stepId) {
-      case "personal":
-        return Boolean(
-          form.personal.applicationType &&
-          form.personal.firstName &&
-          form.personal.lastName &&
-          form.personal.dateOfBirth &&
-          /^\S+@\S+\.\S+$/.test(form.personal.email) &&
-          form.personal.phone &&
-          form.personal.address &&
-          form.personal.city &&
-          form.personal.state &&
-          form.personal.postcode &&
-          form.personal.country &&
-          (!isJointApplication ||
-            (form.jointApplicants.length > 0 &&
-              form.jointApplicants.every(isJointApplicantComplete))),
-        );
-      case "business":
-        return Boolean(
-          form.business.legalName &&
-          form.business.entityType &&
-          form.business.registrationNumber &&
-          form.business.taxCountry &&
-          form.business.industry &&
-          form.business.role &&
-          form.business.ownership,
-        );
-      case "identity":
-        return form.identity.verified;
-      case "bank":
-        return form.bank.linked;
-      case "cash":
-        return Boolean(
-          form.cash.purpose &&
-          form.cash.currency &&
-          form.cash.nickname &&
-          form.cash.expectedBalance &&
-          form.cash.fundingSource,
-        );
-      case "documents":
-        return Boolean(
-          form.documents.proofOfAddress &&
-          (!isSoleTrader || form.documents.businessRegistration) &&
-          form.documents.sourceOfFunds,
-        );
-      case "review":
-        return submitted;
-      default:
-        return false;
+  const handleApplicationTypeChange = (value: string) => {
+    const applicationType = value as ApplicationType;
+    setForm((current) => ({
+      ...current,
+      personal: { ...current.personal, applicationType },
+      jointApplicants: isJointType(applicationType)
+        ? current.jointApplicants
+        : [],
+      documents: isJointType(applicationType)
+        ? current.documents
+        : { primary: current.documents.primary || {} },
+    }));
+    setErrors((current) => ({ ...current, applicationType: "" }));
+    if (!isJointType(applicationType)) {
+      setShowJointComposer(false);
+      setJointDraft(emptyJointDraft);
     }
   };
 
-  const completedSections = useMemo(
-    () => requiredSteps.filter((step) => isStepComplete(step.id)).length,
-    [form, requiredSteps, isJointApplication, usesPrimaryAddress, isSoleTrader],
-  );
+  const updateJointDraft = (key: keyof JointApplicantDraft, value: string) => {
+    setJointDraft((current) => ({ ...current, [key]: value }));
+    setErrors((current) => ({ ...current, jointApplicants: "" }));
+    if (key === "clientId") setLookupState("idle");
+  };
 
-  const goToStep = (index: number) => {
-    const safeIndex = Math.max(0, Math.min(index, visibleSteps.length - 1));
-    setDirection(safeIndex >= currentStep ? 1 : -1);
-    setCurrentStep(safeIndex);
-    setErrors({});
-    setJointDraft(null);
-    window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" });
+  const beginJointApplicant = () => {
+    setJointDraft(emptyJointDraft);
+    setLookupState("idle");
+    setShowJointComposer(true);
+  };
+
+  const handleLookupClient = () => {
+    if (jointDraft.clientId.trim().length < 5) {
+      setLookupState("error");
+      return;
+    }
+    setLookupState("loading");
+    window.setTimeout(() => setLookupState("found"), 700);
+  };
+
+  const saveJointApplicant = () => {
+    const isExisting = jointDraft.method === "existing";
+    const address = sharedAddress
+      ? form.personal.residentialAddress
+      : jointDraft.residentialAddress;
+    const valid = isExisting
+      ? lookupState === "found" && jointDraft.clientId.trim()
+      : jointDraft.firstName.trim() &&
+        jointDraft.lastName.trim() &&
+        jointDraft.formerNames.trim() &&
+        jointDraft.dateOfBirth &&
+        isValidEmail(jointDraft.email) &&
+        address.trim();
+
+    if (!valid) {
+      setErrors((current) => ({
+        ...current,
+        jointApplicants: isExisting
+          ? "Verify the Caprock client ID before adding this applicant."
+          : "Complete the applicant’s name, former names, date of birth, email and required address.",
+      }));
+      return;
+    }
+
+    const applicant: JointApplicant = {
+      id: `joint-${Date.now()}`,
+      method: jointDraft.method,
+      clientId: isExisting ? jointDraft.clientId.trim() : "",
+      firstName: isExisting
+        ? `Verified client · ${jointDraft.clientId.trim().toUpperCase()}`
+        : jointDraft.firstName.trim(),
+      middleName: isExisting ? "" : jointDraft.middleName.trim(),
+      lastName: isExisting ? "" : jointDraft.lastName.trim(),
+      formerNames: isExisting
+        ? "Verified on file"
+        : jointDraft.formerNames.trim(),
+      email: isExisting ? "" : jointDraft.email.trim(),
+      dateOfBirth: isExisting ? "" : jointDraft.dateOfBirth,
+      residentialAddress: isExisting ? "Verified on file" : address.trim(),
+      confirmed: true,
+    };
+
+    setForm((current) => ({
+      ...current,
+      jointApplicants: [...current.jointApplicants, applicant],
+    }));
+    setJointDraft(emptyJointDraft);
+    setLookupState("idle");
+    setShowJointComposer(false);
+    setErrors((current) => ({ ...current, jointApplicants: "" }));
+  };
+
+  const removeJointApplicant = (id: string) => {
+    setForm((current) => {
+      const nextDocuments = { ...current.documents };
+      delete nextDocuments[id];
+      return {
+        ...current,
+        jointApplicants: current.jointApplicants.filter(
+          (applicant) => applicant.id !== id,
+        ),
+        documents: nextDocuments,
+      };
+    });
+  };
+
+  const updateBankDraft = <K extends keyof BankAccount>(
+    key: K,
+    value: BankAccount[K],
+  ) => {
+    setBankDraft((current) =>
+      current ? { ...current, [key]: value } : current,
+    );
+    setErrors((current) => ({ ...current, bankDraft: "" }));
+  };
+
+  const saveBankAccount = () => {
+    if (!bankDraft) return;
+    const complete = Boolean(
+      bankDraft.bankName.trim() &&
+      bankDraft.swiftCode.trim() &&
+      bankDraft.bankAddress.trim() &&
+      bankDraft.accountNumber.trim() &&
+      bankDraft.currency &&
+      bankDraft.verificationDocument,
+    );
+    if (!complete) {
+      setErrors((current) => ({
+        ...current,
+        bankDraft:
+          "Complete every required bank field and attach verification evidence.",
+      }));
+      return;
+    }
+
+    setForm((current) => ({
+      ...current,
+      bankAccounts: editingBankId
+        ? current.bankAccounts.map((account) =>
+            account.id === editingBankId ? bankDraft : account,
+          )
+        : [...current.bankAccounts, bankDraft],
+    }));
+    setEditingBankId(null);
+    setBankDraft(null);
+    setErrors((current) => ({ ...current, bank: "", bankDraft: "" }));
+  };
+
+  const editBankAccount = (account: BankAccount) => {
+    setBankDraft({ ...account });
+    setEditingBankId(account.id);
+  };
+
+  const removeBankAccount = (id: string) => {
+    setForm((current) => ({
+      ...current,
+      bankAccounts: current.bankAccounts.filter((account) => account.id !== id),
+    }));
+    if (editingBankId === id) {
+      setEditingBankId(null);
+      setBankDraft(null);
+    }
+  };
+
+  const updateApplicantDocument = (
+    applicantKey: string,
+    field: ProofField,
+    file?: File,
+  ) => {
+    setForm((current) => ({
+      ...current,
+      documents: {
+        ...current.documents,
+        [applicantKey]: {
+          ...current.documents[applicantKey],
+          [field]: documentFromFile(file),
+        },
+      },
+    }));
+    setErrors((current) => ({ ...current, documents: "" }));
   };
 
   const validateStep = (stepId: StepId) => {
     const nextErrors: Record<string, string> = {};
 
     if (stepId === "personal") {
-      if (!form.personal.applicationType) {
+      if (!form.personal.applicationType)
         nextErrors.applicationType = "Select an application type.";
-      }
-      if (!form.personal.firstName)
-        nextErrors.firstName = "First name is required.";
-      if (!form.personal.lastName)
-        nextErrors.lastName = "Last name is required.";
+      if (!form.personal.applicantCountry)
+        nextErrors.applicantCountry = "Select the applicant country.";
+      if (!form.personal.firstName.trim())
+        nextErrors.firstName = "Enter the applicant’s first name.";
+      if (!form.personal.lastName.trim())
+        nextErrors.lastName = "Enter the applicant’s last name.";
+      if (!form.personal.formerNames.trim())
+        nextErrors.formerNames =
+          "Enter former names, or “None” if not applicable.";
       if (!form.personal.dateOfBirth)
-        nextErrors.dateOfBirth = "Date of birth is required.";
-      if (!form.personal.email) nextErrors.email = "Email address is required.";
-      else if (!/^\S+@\S+\.\S+$/.test(form.personal.email)) {
-        nextErrors.email = "Enter a valid email address.";
-      }
-      if (!form.personal.phone) nextErrors.phone = "Phone number is required.";
-      if (!form.personal.address)
-        nextErrors.address = "Residential address is required.";
-      if (!form.personal.city) nextErrors.city = "City is required.";
-      if (!form.personal.state)
-        nextErrors.state = "State or region is required.";
-      if (!form.personal.postcode)
-        nextErrors.postcode = "Postcode is required.";
-      if (!form.personal.country) nextErrors.country = "Country is required.";
-      if (isJointApplication && form.jointApplicants.length === 0) {
-        nextErrors.jointApplicant = "Add at least one joint applicant.";
-      } else if (
-        isJointApplication &&
-        !form.jointApplicants.every(isJointApplicantComplete)
+        nextErrors.dateOfBirth = "Enter the applicant’s date of birth.";
+      if (!form.personal.residentialAddress.trim())
+        nextErrors.residentialAddress = "Enter the residential address.";
+      if (!form.personal.investmentCurrency)
+        nextErrors.investmentCurrency = "Select an investment currency.";
+      if (!form.personal.expectedInvestment)
+        nextErrors.expectedInvestment =
+          "Select the expected investment amount.";
+      if (
+        isJoint &&
+        (form.jointApplicants.length === 0 ||
+          form.jointApplicants.some(
+            (applicant) => !isCompleteJointPersonal(applicant, sharedAddress),
+          ))
       ) {
-        nextErrors.jointApplicant =
-          "Complete every joint applicant before continuing.";
-      }
-      if (isJointApplication && jointDraft) {
-        nextErrors.jointDraft =
-          "Save or cancel the applicant currently being edited.";
+        nextErrors.jointApplicants =
+          "Add at least one complete joint applicant.";
       }
     }
 
-    if (stepId === "business") {
-      if (!form.business.legalName)
-        nextErrors.legalName = "Legal business name is required.";
-      if (!form.business.entityType)
-        nextErrors.entityType = "Select an entity type.";
-      if (!form.business.registrationNumber)
-        nextErrors.registrationNumber = "Registration number is required.";
-      if (!form.business.taxCountry)
-        nextErrors.taxCountry = "Tax country is required.";
-      if (!form.business.industry)
-        nextErrors.industry = "Industry is required.";
-      if (!form.business.role) nextErrors.role = "Your role is required.";
-      if (!form.business.ownership)
-        nextErrors.ownership = "Ownership percentage is required.";
-    }
-
-    if (stepId === "identity" && !form.identity.verified) {
-      nextErrors.identity = "Complete the identity check before continuing.";
-    }
-
-    if (stepId === "bank" && !form.bank.linked) {
-      nextErrors.bank = "Link and verify a bank account before continuing.";
-    }
-
-    if (stepId === "cash") {
-      if (!form.cash.purpose) nextErrors.purpose = "Choose an account purpose.";
-      if (!form.cash.currency) nextErrors.currency = "Select a base currency.";
-      if (!form.cash.nickname)
-        nextErrors.nickname = "Account name is required.";
-      if (!form.cash.expectedBalance)
-        nextErrors.expectedBalance = "Select an expected balance.";
-      if (!form.cash.fundingSource)
-        nextErrors.fundingSource = "Select a funding source.";
-    }
-
-    if (stepId === "documents") {
-      if (!form.documents.proofOfAddress)
-        nextErrors.proofOfAddress = "Proof of address is required.";
-      if (isSoleTrader && !form.documents.businessRegistration) {
-        nextErrors.businessRegistration = "Business registration is required.";
+    if (stepId === "business" && isSoleTrader) {
+      if (!form.business.assessmentNature)
+        nextErrors.assessmentNature =
+          "Select the individual assessment nature.";
+      if (!form.business.businessName.trim())
+        nextErrors.businessName = "Enter the business name.";
+      if (!form.business.principalBusinessAddress.trim()) {
+        nextErrors.principalBusinessAddress =
+          "Enter the principal place of business.";
       }
-      if (!form.documents.sourceOfFunds)
-        nextErrors.sourceOfFunds = "Source-of-funds evidence is required.";
+      if (
+        form.business.assessmentNature === "australian" &&
+        !form.business.abn.trim()
+      ) {
+        nextErrors.abn = "Enter the Australian Business Number.";
+      }
+      if (form.business.assessmentNature === "foreign") {
+        if (!form.business.investorClassification)
+          nextErrors.investorClassification =
+            "Select the major business nature.";
+        if (!form.business.businessActivity)
+          nextErrors.businessActivity = "Select the business activity.";
+        if (
+          form.business.businessActivity === "Other" &&
+          !form.business.businessActivityOther.trim()
+        ) {
+          nextErrors.businessActivityOther = "Describe the business activity.";
+        }
+        if (!form.business.sourceOfFunds.trim())
+          nextErrors.sourceOfFunds = "Describe the source and origin of funds.";
+        if (!form.business.intendedTransactions.trim()) {
+          nextErrors.intendedTransactions =
+            "Describe the intended transaction behaviour.";
+        }
+        if (!form.business.beneficialOwnership.trim()) {
+          nextErrors.beneficialOwnership =
+            "Describe the beneficial ownership of the funds.";
+        }
+        if (!form.business.usCitizen)
+          nextErrors.usCitizen = "Confirm U.S. citizenship status.";
+        if (
+          form.business.usCitizen === "yes" &&
+          !form.business.socialSecurityNumber.trim()
+        ) {
+          nextErrors.socialSecurityNumber = "Enter the Social Security Number.";
+        }
+        if (!form.business.usTaxResident)
+          nextErrors.usTaxResident = "Confirm U.S. tax residency status.";
+        if (
+          form.business.usTaxResident === "yes" &&
+          !form.business.taxIdentificationNumber.trim()
+        ) {
+          nextErrors.taxIdentificationNumber =
+            "Enter the tax identification number.";
+        }
+      }
+    }
+
+    if (stepId === "bank" && !bankComplete) {
+      nextErrors.bank =
+        "Add at least one complete, verified external bank account.";
+    }
+
+    if (stepId === "signature") {
+      if (!form.signature.name.trim())
+        nextErrors.signatureName = "Enter the authorised signatory’s name.";
+      if (!isValidEmail(form.signature.email))
+        nextErrors.signatureEmail = "Enter a valid email address.";
+      if (!form.signature.phone.trim())
+        nextErrors.signaturePhone = "Enter a phone number.";
+      if (!form.signature.dateOfBirth)
+        nextErrors.signatureDateOfBirth =
+          "Enter the signatory’s date of birth.";
+    }
+
+    if (stepId === "documents" && !documentsComplete) {
+      nextErrors.documents =
+        "Upload every required document for each applicant.";
     }
 
     if (stepId === "review") {
-      if (!form.agreements.accuracy)
-        nextErrors.accuracy = "Confirm that the information is accurate.";
-      if (!form.agreements.terms)
-        nextErrors.terms = "Accept the application terms to submit.";
+      if (!allApplicationSectionsComplete)
+        nextErrors.review =
+          "Complete every application section before submitting.";
+      if (!form.agreements.accurate || !form.agreements.consent) {
+        nextErrors.agreements = "Confirm both declarations before submitting.";
+      }
     }
 
     setErrors(nextErrors);
-    return Object.keys(nextErrors).length === 0;
-  };
-
-  const handleContinue = () => {
-    if (!validateStep(activeStep.id)) return;
-    if (currentStep < visibleSteps.length - 1) goToStep(currentStep + 1);
-  };
-
-  const handleApplicationTypeChange = (value: string) => {
-    const applicationType = value as ApplicationType;
-    const remainsJoint = [
-      "joint-spouse",
-      "joint-same-address",
-      "joint-different-address",
-    ].includes(applicationType);
-    setForm((current) => ({
-      ...current,
-      personal: { ...current.personal, applicationType },
-      jointApplicants: remainsJoint ? current.jointApplicants : [],
-      business:
-        applicationType === "sole-trader"
-          ? {
-              ...current.business,
-              entityType: current.business.entityType || "Sole trader",
-            }
-          : current.business,
-    }));
-    setJointDraft(null);
-    setJointLookupStatus("idle");
-    setErrors({});
-    setSaveStatus("idle");
-  };
-
-  const beginJointApplicant = () => {
-    const applicant = createJointApplicant();
-    if (usesPrimaryAddress) {
-      Object.assign(applicant, {
-        address: form.personal.address,
-        city: form.personal.city,
-        state: form.personal.state,
-        postcode: form.personal.postcode,
-        country: form.personal.country,
-      });
+    if (Object.keys(nextErrors).length > 0) {
+      setNotice("Please review the highlighted information before continuing.");
+      return false;
     }
-    setJointDraft(applicant);
-    setJointLookupStatus("idle");
-    setErrors({});
+    setNotice("");
+    return true;
   };
 
-  const editJointApplicant = (applicant: JointApplicant) => {
-    setJointDraft({ ...applicant });
-    setJointLookupStatus(applicant.method === "client-id" ? "found" : "idle");
-    setErrors({});
+  const goToStep = (stepId: StepId) => {
+    setActiveStepId(stepId);
+    setMobileNavOpen(false);
   };
 
-  const removeJointApplicant = (id: string) => {
-    setForm((current) => ({
-      ...current,
-      jointApplicants: current.jointApplicants.filter((item) => item.id !== id),
-    }));
-    if (jointDraft?.id === id) setJointDraft(null);
-    setErrors({});
-    setSaveStatus("idle");
+  const goBack = () => {
+    if (activeStepIndex > 0) goToStep(visibleSteps[activeStepIndex - 1].id);
   };
 
-  const handleFindJointClient = async () => {
-    if (!jointDraft?.clientId.trim()) {
-      setErrors({ jointClientId: "Enter the existing client ID." });
+  const goNext = () => {
+    if (!validateStep(activeStepId)) return;
+    if (activeStepId === "review") {
+      submitApplication();
       return;
     }
-    setErrors({});
-    setJointLookupStatus("searching");
-    await wait(850);
-    setJointDraft((current) =>
-      current
-        ? {
-            ...current,
-            firstName: current.firstName || "Existing",
-            lastName: current.lastName || "Caprock client",
-            email: current.email || "Email verified on file",
-            confirmed: true,
-          }
-        : current,
+    goToStep(
+      visibleSteps[Math.min(activeStepIndex + 1, visibleSteps.length - 1)].id,
     );
-    setJointLookupStatus("found");
   };
 
-  const handleSaveJointApplicant = () => {
-    if (!jointDraft) return;
-    const nextErrors: Record<string, string> = {};
-    if (jointDraft.method === "client-id") {
-      if (!jointDraft.clientId.trim()) {
-        nextErrors.jointClientId = "Enter the existing client ID.";
-      } else if (jointLookupStatus !== "found" || !jointDraft.confirmed) {
-        nextErrors.jointDraft =
-          "Find and verify this client before adding them.";
-      }
-    } else {
-      if (!jointDraft.firstName)
-        nextErrors.jointFirstName = "First name is required.";
-      if (!jointDraft.lastName)
-        nextErrors.jointLastName = "Last name is required.";
-      if (!jointDraft.email)
-        nextErrors.jointEmail = "Email address is required.";
-      else if (!/^\S+@\S+\.\S+$/.test(jointDraft.email)) {
-        nextErrors.jointEmail = "Enter a valid email address.";
-      }
-      if (!usesPrimaryAddress) {
-        if (!jointDraft.address)
-          nextErrors.jointAddress = "Residential address is required.";
-        if (!jointDraft.city) nextErrors.jointCity = "City is required.";
-        if (!jointDraft.state)
-          nextErrors.jointState = "State or region is required.";
-        if (!jointDraft.postcode)
-          nextErrors.jointPostcode = "Postcode is required.";
-        if (!jointDraft.country)
-          nextErrors.jointCountry = "Country is required.";
-      }
-    }
-    if (Object.keys(nextErrors).length) {
-      setErrors(nextErrors);
-      return;
-    }
-
-    const savedApplicant: JointApplicant = {
-      ...jointDraft,
-      ...(usesPrimaryAddress && jointDraft.method === "new-invite"
-        ? {
-            address: form.personal.address,
-            city: form.personal.city,
-            state: form.personal.state,
-            postcode: form.personal.postcode,
-            country: form.personal.country,
-          }
-        : {}),
-      confirmed: true,
-    };
-    setForm((current) => {
-      const exists = current.jointApplicants.some(
-        (applicant) => applicant.id === savedApplicant.id,
-      );
-      return {
-        ...current,
-        jointApplicants: exists
-          ? current.jointApplicants.map((applicant) =>
-              applicant.id === savedApplicant.id ? savedApplicant : applicant,
-            )
-          : [...current.jointApplicants, savedApplicant],
-      };
-    });
-    setJointDraft(null);
-    setJointLookupStatus("idle");
-    setErrors({});
-    setSaveStatus("idle");
+  const saveDraft = () => {
+    setIsSaving(true);
+    window.setTimeout(() => setIsSaving(false), 900);
   };
 
-  const handleIdentityVerification = async () => {
-    const nextErrors: Record<string, string> = {};
-    if (!form.identity.documentType)
-      nextErrors.documentType = "Select an identity document.";
-    if (!form.identity.documentNumber)
-      nextErrors.documentNumber = "Document number is required.";
-    if (!form.identity.issuingCountry)
-      nextErrors.issuingCountry = "Issuing country is required.";
-    if (!form.identity.consent)
-      nextErrors.consent = "Consent is required to run this check.";
-    if (Object.keys(nextErrors).length) {
-      setErrors(nextErrors);
-      return;
-    }
-
-    setVerifying(true);
-    await wait(1100);
-    updateSection("identity", { verified: true });
-    setVerifying(false);
-  };
-
-  const handleBankConnection = async () => {
-    const nextErrors: Record<string, string> = {};
-    if (form.bank.method === "manual") {
-      if (!form.bank.institution)
-        nextErrors.institution = "Financial institution is required.";
-      if (!form.bank.accountName)
-        nextErrors.accountName = "Account name is required.";
-      if (!/^\d{4}$/.test(form.bank.last4))
-        nextErrors.last4 = "Enter the final four account digits.";
-    }
-    if (Object.keys(nextErrors).length) {
-      setErrors(nextErrors);
-      return;
-    }
-
-    setLinkingBank(true);
-    await wait(1000);
-    updateSection("bank", {
-      linked: true,
-      institution: form.bank.institution || "Connected financial institution",
-      accountName: form.bank.accountName || "Primary operating account",
-      last4: form.bank.last4 || "4821",
-    });
-    setLinkingBank(false);
-  };
-
-  const handleSave = async () => {
-    setSaveStatus("saving");
-    await wait(650);
-    setSaveStatus("saved");
-  };
-
-  const handleSubmit = async () => {
-    for (const step of requiredSteps) {
-      if (!isStepComplete(step.id)) {
-        const index = visibleSteps.findIndex((item) => item.id === step.id);
-        goToStep(index);
-        window.setTimeout(() => validateStep(step.id), 0);
-        return;
-      }
-    }
+  const submitApplication = () => {
     if (!validateStep("review")) return;
-
-    setSubmitting(true);
-    await wait(1400);
-    setSubmitting(false);
-    setSubmitted(true);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    setIsSubmitting(true);
+    window.setTimeout(() => {
+      setIsSubmitting(false);
+      setSubmitted(true);
+    }, 1400);
   };
 
-  const updateDocument = (key: keyof FormState["documents"], file?: File) => {
-    updateSection("documents", {
-      [key]: file ? { name: file.name, size: file.size } : undefined,
-    });
+  const renderPersonal = () => (
+    <div className="animate-[fadeUp_.35s_ease-out]">
+      <SectionIntro
+        eyebrow={sectionEyebrow("personal")}
+        title="Personal"
+        description="Tell us who is applying and provide the investment profile details required for this application."
+        icon={CircleUserRound}
+      />
+
+      <div className="space-y-8">
+        <section>
+          <SubsectionHeading
+            title="Application structure"
+            description="Choose the account structure first. The form adapts for joint applicants and sole traders."
+          />
+          <div className="grid gap-5 sm:grid-cols-2">
+            <Field
+              label="Application type"
+              htmlFor="applicationType"
+              error={errors.applicationType}
+            >
+              <CustomSelect
+                id="applicationType"
+                value={form.personal.applicationType}
+                onChange={handleApplicationTypeChange}
+                options={APPLICATION_OPTIONS}
+                placeholder="Select application type"
+                error={Boolean(errors.applicationType)}
+              />
+            </Field>
+            <Field
+              label="Applicant’s country"
+              htmlFor="applicantCountry"
+              error={errors.applicantCountry}
+            >
+              <CustomSelect
+                id="applicantCountry"
+                value={form.personal.applicantCountry}
+                onChange={(value) => updatePersonal("applicantCountry", value)}
+                options={COUNTRY_OPTIONS}
+                placeholder="Select country"
+                error={Boolean(errors.applicantCountry)}
+              />
+            </Field>
+          </div>
+        </section>
+
+        <section className="rounded-2xl border border-slate-200 bg-slate-50/55 p-5 sm:p-6">
+          <SubsectionHeading
+            title="Application references"
+            description="These references are supplied by Caprock or your adviser and cannot be changed here."
+          />
+          <div className="grid gap-5 sm:grid-cols-2">
+            <Field
+              label="Caprock reference number (optional)"
+              htmlFor="referenceNumber"
+              hint="Assigned automatically when available."
+            >
+              <input
+                id="referenceNumber"
+                value={form.personal.referenceNumber}
+                readOnly
+                placeholder="Assigned by Caprock"
+                className={`${inputClass()} cursor-not-allowed bg-slate-100/80 text-slate-500`}
+              />
+            </Field>
+            <Field
+              label="Adviser reference number (optional)"
+              htmlFor="advisorReferenceNumber"
+              hint="Supplied by your adviser when applicable."
+            >
+              <input
+                id="advisorReferenceNumber"
+                value={form.personal.advisorReferenceNumber}
+                readOnly
+                placeholder="Provided by adviser"
+                className={`${inputClass()} cursor-not-allowed bg-slate-100/80 text-slate-500`}
+              />
+            </Field>
+          </div>
+        </section>
+
+        <section>
+          <SubsectionHeading
+            title="Primary applicant"
+            description="Use legal identity details exactly as they appear on official documents."
+          />
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="sm:col-span-2 lg:col-span-3">
+              <DocumentUpload
+                id="profilePicture"
+                title="Profile image (optional)"
+                description="Upload a clear recent image in PDF, JPG or PNG format."
+                value={form.personal.profilePicture}
+                onChange={(file) =>
+                  updatePersonal("profilePicture", documentFromFile(file))
+                }
+              />
+            </div>
+            <Field
+              label="First name"
+              htmlFor="firstName"
+              error={errors.firstName}
+            >
+              <input
+                id="firstName"
+                value={form.personal.firstName}
+                onChange={(event) =>
+                  updatePersonal("firstName", event.target.value)
+                }
+                autoComplete="given-name"
+                placeholder="Legal first name"
+                className={inputClass(Boolean(errors.firstName))}
+              />
+            </Field>
+            <Field label="Middle name (optional)" htmlFor="middleName">
+              <input
+                id="middleName"
+                value={form.personal.middleName}
+                onChange={(event) =>
+                  updatePersonal("middleName", event.target.value)
+                }
+                autoComplete="additional-name"
+                placeholder="Legal middle name"
+                className={inputClass()}
+              />
+            </Field>
+            <Field label="Last name" htmlFor="lastName" error={errors.lastName}>
+              <input
+                id="lastName"
+                value={form.personal.lastName}
+                onChange={(event) =>
+                  updatePersonal("lastName", event.target.value)
+                }
+                autoComplete="family-name"
+                placeholder="Legal last name"
+                className={inputClass(Boolean(errors.lastName))}
+              />
+            </Field>
+            <Field
+              label="Former name(s)"
+              htmlFor="formerNames"
+              error={errors.formerNames}
+              hint="Enter “None” if you have not used another legal name."
+            >
+              <input
+                id="formerNames"
+                value={form.personal.formerNames}
+                onChange={(event) =>
+                  updatePersonal("formerNames", event.target.value)
+                }
+                placeholder="Former legal names or None"
+                className={inputClass(Boolean(errors.formerNames))}
+              />
+            </Field>
+            <Field
+              label="Date of birth"
+              htmlFor="dateOfBirth"
+              error={errors.dateOfBirth}
+            >
+              <input
+                id="dateOfBirth"
+                type="date"
+                value={form.personal.dateOfBirth}
+                onChange={(event) =>
+                  updatePersonal("dateOfBirth", event.target.value)
+                }
+                className={inputClass(Boolean(errors.dateOfBirth))}
+              />
+            </Field>
+            <div className="sm:col-span-2 lg:col-span-3">
+              <Field
+                label="Residential address"
+                htmlFor="residentialAddress"
+                error={errors.residentialAddress}
+              >
+                <textarea
+                  id="residentialAddress"
+                  value={form.personal.residentialAddress}
+                  onChange={(event) =>
+                    updatePersonal("residentialAddress", event.target.value)
+                  }
+                  autoComplete="street-address"
+                  placeholder="Street, suburb or city, state or region, postcode and country"
+                  className={textareaClass(Boolean(errors.residentialAddress))}
+                />
+              </Field>
+            </div>
+          </div>
+        </section>
+
+        {isJoint ? (
+          <section className="rounded-2xl border border-[rgba(0,52,120,0.15)] bg-[rgba(0,52,120,0.025)] p-5 sm:p-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <SubsectionHeading
+                title="Joint applicants"
+                description="Add each applicant using an existing Caprock client ID or invite them as a new client."
+              />
+              {!showJointComposer ? (
+                <button
+                  type="button"
+                  onClick={beginJointApplicant}
+                  className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#003478] px-4 text-xs font-semibold text-white transition hover:bg-[#002b63] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#003478]/15"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add applicant
+                </button>
+              ) : null}
+            </div>
+
+            {form.jointApplicants.length > 0 ? (
+              <div className="mb-5 space-y-3">
+                {form.jointApplicants.map((applicant, index) => (
+                  <div
+                    key={applicant.id}
+                    className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3.5"
+                  >
+                    <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#dce7f2] text-[#003478]">
+                      <Users className="h-4 w-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-slate-900">
+                        {formatApplicantName(applicant)}
+                      </p>
+                      <p className="mt-0.5 text-xs text-slate-500">
+                        Applicant {index + 1} ·{" "}
+                        {applicant.method === "existing"
+                          ? "Existing Caprock client"
+                          : applicant.email}
+                      </p>
+                    </div>
+                    <span className="hidden rounded-full bg-[#dce7f2] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-800 sm:inline-flex">
+                      Added
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => removeJointApplicant(applicant.id)}
+                      aria-label={`Remove ${formatApplicantName(applicant)}`}
+                      className="grid h-9 w-9 place-items-center rounded-xl text-slate-400 transition hover:bg-red-50 hover:text-red-600"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+
+            {showJointComposer ? (
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+                <div className="mb-5 flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-950">
+                      Add a joint applicant
+                    </p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      Choose how this person will join the application.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowJointComposer(false)}
+                    aria-label="Close applicant form"
+                    className="grid h-9 w-9 place-items-center rounded-xl text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+
+                <div className="mb-5 grid grid-cols-2 gap-2 rounded-xl bg-slate-100 p-1">
+                  {(["existing", "new"] as JointMethod[]).map((method) => (
+                    <button
+                      key={method}
+                      type="button"
+                      onClick={() => {
+                        setJointDraft({ ...emptyJointDraft, method });
+                        setLookupState("idle");
+                      }}
+                      className={`rounded-lg px-3 py-2.5 text-xs font-semibold transition ${
+                        jointDraft.method === method
+                          ? "bg-white text-slate-950 shadow-sm ring-1 ring-slate-200"
+                          : "text-slate-500 hover:text-slate-800"
+                      }`}
+                    >
+                      {method === "existing"
+                        ? "Existing client"
+                        : "Invite new client"}
+                    </button>
+                  ))}
+                </div>
+
+                {jointDraft.method === "existing" ? (
+                  <div>
+                    <Field
+                      label="Caprock client ID"
+                      htmlFor="jointClientId"
+                      hint="Client IDs are verified before the applicant is added."
+                    >
+                      <div className="flex flex-col gap-2 sm:flex-row">
+                        <input
+                          id="jointClientId"
+                          value={jointDraft.clientId}
+                          onChange={(event) =>
+                            updateJointDraft("clientId", event.target.value)
+                          }
+                          placeholder="For example, CM-10284"
+                          className={inputClass(lookupState === "error")}
+                        />
+                        <button
+                          type="button"
+                          onClick={handleLookupClient}
+                          disabled={lookupState === "loading"}
+                          className="inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:text-[#003478] disabled:cursor-wait disabled:opacity-60"
+                        >
+                          {lookupState === "loading" ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <BadgeCheck className="h-4 w-4" />
+                          )}
+                          Verify ID
+                        </button>
+                      </div>
+                    </Field>
+                    {lookupState === "found" ? (
+                      <div className="mt-3 flex items-center gap-2 rounded-xl bg-[#dce7f2] px-3.5 py-3 text-xs font-medium text-slate-800">
+                        <CheckCircle2 className="h-4 w-4 shrink-0 text-[#003478]" />
+                        Client record found. Identity details will be securely
+                        linked.
+                      </div>
+                    ) : lookupState === "error" ? (
+                      <p className="mt-2 text-xs font-medium text-red-600">
+                        Enter a valid client ID with at least five characters.
+                      </p>
+                    ) : null}
+                  </div>
+                ) : (
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    <Field label="First name" htmlFor="jointFirstName">
+                      <input
+                        id="jointFirstName"
+                        value={jointDraft.firstName}
+                        onChange={(event) =>
+                          updateJointDraft("firstName", event.target.value)
+                        }
+                        placeholder="Legal first name"
+                        className={inputClass()}
+                      />
+                    </Field>
+                    <Field
+                      label="Middle name (optional)"
+                      htmlFor="jointMiddleName"
+                    >
+                      <input
+                        id="jointMiddleName"
+                        value={jointDraft.middleName}
+                        onChange={(event) =>
+                          updateJointDraft("middleName", event.target.value)
+                        }
+                        placeholder="Legal middle name"
+                        className={inputClass()}
+                      />
+                    </Field>
+                    <Field label="Last name" htmlFor="jointLastName">
+                      <input
+                        id="jointLastName"
+                        value={jointDraft.lastName}
+                        onChange={(event) =>
+                          updateJointDraft("lastName", event.target.value)
+                        }
+                        placeholder="Legal last name"
+                        className={inputClass()}
+                      />
+                    </Field>
+                    <Field
+                      label="Former name(s)"
+                      htmlFor="jointFormerNames"
+                      hint="Enter “None” if not applicable."
+                    >
+                      <input
+                        id="jointFormerNames"
+                        value={jointDraft.formerNames}
+                        onChange={(event) =>
+                          updateJointDraft("formerNames", event.target.value)
+                        }
+                        placeholder="Former names or None"
+                        className={inputClass()}
+                      />
+                    </Field>
+                    <Field label="Date of birth" htmlFor="jointDateOfBirth">
+                      <input
+                        id="jointDateOfBirth"
+                        type="date"
+                        value={jointDraft.dateOfBirth}
+                        onChange={(event) =>
+                          updateJointDraft("dateOfBirth", event.target.value)
+                        }
+                        className={inputClass()}
+                      />
+                    </Field>
+                    <Field label="Email address" htmlFor="jointEmail">
+                      <input
+                        id="jointEmail"
+                        type="email"
+                        value={jointDraft.email}
+                        onChange={(event) =>
+                          updateJointDraft("email", event.target.value)
+                        }
+                        placeholder="name@example.com"
+                        className={inputClass()}
+                      />
+                    </Field>
+                    {sharedAddress ? (
+                      <div className="sm:col-span-2 lg:col-span-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-xs leading-5 text-slate-600">
+                        This account type uses the primary applicant’s
+                        residential address for this joint applicant.
+                      </div>
+                    ) : (
+                      <div className="sm:col-span-2 lg:col-span-3">
+                        <Field
+                          label="Residential address"
+                          htmlFor="jointResidentialAddress"
+                        >
+                          <textarea
+                            id="jointResidentialAddress"
+                            value={jointDraft.residentialAddress}
+                            onChange={(event) =>
+                              updateJointDraft(
+                                "residentialAddress",
+                                event.target.value,
+                              )
+                            }
+                            placeholder="Street, suburb or city, state or region, postcode and country"
+                            className={textareaClass()}
+                          />
+                        </Field>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {errors.jointApplicants ? (
+                  <p className="mt-4 text-xs font-medium text-red-600">
+                    {errors.jointApplicants}
+                  </p>
+                ) : null}
+                <div className="mt-5 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={saveJointApplicant}
+                    className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#003478] px-5 text-xs font-semibold text-white transition hover:bg-[#002b63]"
+                  >
+                    <UserPlus className="h-4 w-4" />
+                    {jointDraft.method === "existing"
+                      ? "Add verified client"
+                      : "Add and invite"}
+                  </button>
+                </div>
+              </div>
+            ) : null}
+
+            {errors.jointApplicants && !showJointComposer ? (
+              <p className="mt-3 text-xs font-medium text-red-600">
+                {errors.jointApplicants}
+              </p>
+            ) : null}
+          </section>
+        ) : null}
+
+        <section>
+          <SubsectionHeading
+            title="Investment profile"
+            description="Provide the investment currency and expected investment range."
+          />
+          <div className="grid gap-5 sm:grid-cols-2">
+            <Field
+              label="Investment currency"
+              htmlFor="investmentCurrency"
+              error={errors.investmentCurrency}
+            >
+              <CustomSelect
+                id="investmentCurrency"
+                value={form.personal.investmentCurrency}
+                onChange={(value) =>
+                  updatePersonal("investmentCurrency", value)
+                }
+                options={INVESTMENT_CURRENCY_OPTIONS}
+                placeholder="Select currency"
+                error={Boolean(errors.investmentCurrency)}
+              />
+            </Field>
+            <Field
+              label="Expected investment amount"
+              htmlFor="expectedInvestment"
+              error={errors.expectedInvestment}
+            >
+              <CustomSelect
+                id="expectedInvestment"
+                value={form.personal.expectedInvestment}
+                onChange={(value) =>
+                  updatePersonal("expectedInvestment", value)
+                }
+                options={INVESTMENT_AMOUNT_OPTIONS}
+                placeholder="Select expected amount"
+                error={Boolean(errors.expectedInvestment)}
+              />
+            </Field>
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+
+  const renderBusiness = () => (
+    <div className="animate-[fadeUp_.35s_ease-out]">
+      <SectionIntro
+        eyebrow={sectionEyebrow("business")}
+        title="Business"
+        description="Provide the Sole Trader assessment and business information required for this application."
+        icon={BriefcaseBusiness}
+      />
+
+      <div className="space-y-8">
+        <section>
+          <SubsectionHeading
+            title="Sole Trader assessment"
+            description="Confirm whether the Sole Trader is assessed as Australian or foreign. Additional fields appear where required."
+          />
+          <div className="grid gap-5 sm:grid-cols-2">
+            <Field
+              label="Individual assessment nature"
+              htmlFor="assessmentNature"
+              error={errors.assessmentNature}
+            >
+              <CustomSelect
+                id="assessmentNature"
+                value={form.business.assessmentNature}
+                onChange={(value) =>
+                  updateBusiness("assessmentNature", value as AssessmentNature)
+                }
+                options={ASSESSMENT_OPTIONS}
+                placeholder="Select Australian or foreign"
+                error={Boolean(errors.assessmentNature)}
+              />
+            </Field>
+            <Field
+              label="Type of individual"
+              htmlFor="individualType"
+              hint="Set from the application type selected in Personal."
+            >
+              <input
+                id="individualType"
+                value="Sole Trader"
+                readOnly
+                className={`${inputClass()} cursor-not-allowed bg-slate-100/80 text-slate-600`}
+              />
+            </Field>
+          </div>
+        </section>
+
+        <section className="rounded-2xl border border-[rgba(0,52,120,0.14)] bg-[rgba(0,52,120,0.025)] p-5 sm:p-6">
+          <SubsectionHeading
+            title="Business details"
+            description="Enter the legal business details used by the Sole Trader."
+          />
+          <div className="grid gap-5 sm:grid-cols-2">
+            <Field
+              label="Business name"
+              htmlFor="businessName"
+              error={errors.businessName}
+            >
+              <input
+                id="businessName"
+                value={form.business.businessName}
+                onChange={(event) =>
+                  updateBusiness("businessName", event.target.value)
+                }
+                placeholder="Name under which the business is carried out"
+                className={inputClass(Boolean(errors.businessName))}
+              />
+            </Field>
+            {form.business.assessmentNature === "australian" ? (
+              <Field
+                label="Australian Business Number (ABN)"
+                htmlFor="abn"
+                error={errors.abn}
+              >
+                <input
+                  id="abn"
+                  value={form.business.abn}
+                  onChange={(event) =>
+                    updateBusiness("abn", event.target.value)
+                  }
+                  inputMode="numeric"
+                  placeholder="11-digit ABN"
+                  className={inputClass(Boolean(errors.abn))}
+                />
+              </Field>
+            ) : null}
+            <div className="sm:col-span-2">
+              <Field
+                label="Address of principal place of business"
+                htmlFor="principalBusinessAddress"
+                error={errors.principalBusinessAddress}
+              >
+                <textarea
+                  id="principalBusinessAddress"
+                  value={form.business.principalBusinessAddress}
+                  onChange={(event) =>
+                    updateBusiness(
+                      "principalBusinessAddress",
+                      event.target.value,
+                    )
+                  }
+                  placeholder="Principal place of business"
+                  className={textareaClass(
+                    Boolean(errors.principalBusinessAddress),
+                  )}
+                />
+              </Field>
+            </div>
+          </div>
+        </section>
+
+        {form.business.assessmentNature === "foreign" ? (
+          <>
+            <section>
+              <SubsectionHeading
+                title="Business activity and funds"
+                description="Provide the major business nature, activity and intended account use documented for a foreign Sole Trader."
+              />
+              <div className="grid gap-5 sm:grid-cols-2">
+                <Field
+                  label="Business nature (major business)"
+                  htmlFor="investorClassification"
+                  error={errors.investorClassification}
+                >
+                  <CustomSelect
+                    id="investorClassification"
+                    value={form.business.investorClassification}
+                    onChange={(value) =>
+                      updateBusiness("investorClassification", value)
+                    }
+                    options={BUSINESS_NATURE_OPTIONS}
+                    placeholder="Select business nature"
+                    error={Boolean(errors.investorClassification)}
+                  />
+                </Field>
+                <Field
+                  label="Describe the business activity"
+                  htmlFor="businessActivity"
+                  error={errors.businessActivity}
+                >
+                  <CustomSelect
+                    id="businessActivity"
+                    value={form.business.businessActivity}
+                    onChange={(value) =>
+                      updateBusiness("businessActivity", value)
+                    }
+                    options={BUSINESS_ACTIVITY_OPTIONS}
+                    placeholder="Select business activity"
+                    error={Boolean(errors.businessActivity)}
+                  />
+                </Field>
+                {form.business.businessActivity === "Other" ? (
+                  <div className="sm:col-span-2">
+                    <Field
+                      label="Please specify the business activity"
+                      htmlFor="businessActivityOther"
+                      error={errors.businessActivityOther}
+                    >
+                      <input
+                        id="businessActivityOther"
+                        value={form.business.businessActivityOther}
+                        onChange={(event) =>
+                          updateBusiness(
+                            "businessActivityOther",
+                            event.target.value,
+                          )
+                        }
+                        placeholder="For example, IT services"
+                        className={inputClass(
+                          Boolean(errors.businessActivityOther),
+                        )}
+                      />
+                    </Field>
+                  </div>
+                ) : null}
+                <div className="sm:col-span-2">
+                  <Field
+                    label="Source of funds, including origin"
+                    htmlFor="sourceOfFunds"
+                    error={errors.sourceOfFunds}
+                  >
+                    <textarea
+                      id="sourceOfFunds"
+                      value={form.business.sourceOfFunds}
+                      onChange={(event) =>
+                        updateBusiness("sourceOfFunds", event.target.value)
+                      }
+                      placeholder="Describe where the funds came from and their origin"
+                      className={textareaClass(Boolean(errors.sourceOfFunds))}
+                    />
+                  </Field>
+                </div>
+                <div className="sm:col-span-2">
+                  <Field
+                    label="Nature and level of intended transaction behaviour"
+                    htmlFor="intendedTransactions"
+                    error={errors.intendedTransactions}
+                  >
+                    <textarea
+                      id="intendedTransactions"
+                      value={form.business.intendedTransactions}
+                      onChange={(event) =>
+                        updateBusiness(
+                          "intendedTransactions",
+                          event.target.value,
+                        )
+                      }
+                      placeholder="Describe the expected type, frequency and level of transactions"
+                      className={textareaClass(
+                        Boolean(errors.intendedTransactions),
+                      )}
+                    />
+                  </Field>
+                </div>
+                <div className="sm:col-span-2">
+                  <Field
+                    label="Beneficial ownership of funds used by this account"
+                    htmlFor="beneficialOwnership"
+                    error={errors.beneficialOwnership}
+                  >
+                    <textarea
+                      id="beneficialOwnership"
+                      value={form.business.beneficialOwnership}
+                      onChange={(event) =>
+                        updateBusiness(
+                          "beneficialOwnership",
+                          event.target.value,
+                        )
+                      }
+                      placeholder="Describe who beneficially owns the funds"
+                      className={textareaClass(
+                        Boolean(errors.beneficialOwnership),
+                      )}
+                    />
+                  </Field>
+                </div>
+              </div>
+            </section>
+
+            <section className="rounded-2xl border border-slate-200 bg-slate-50/55 p-5 sm:p-6">
+              <SubsectionHeading
+                title="U.S. tax status"
+                description="Complete the Sole Trader’s U.S. citizenship and tax-residency declarations."
+              />
+              <div className="grid gap-6 sm:grid-cols-2">
+                <Field
+                  label="Are you a U.S. citizen?"
+                  htmlFor="usCitizen"
+                  error={errors.usCitizen}
+                >
+                  <BinaryChoice
+                    value={form.business.usCitizen}
+                    onChange={(value) => updateBusiness("usCitizen", value)}
+                    ariaLabel="U.S. citizenship status"
+                  />
+                </Field>
+                <Field
+                  label="Are you a U.S. tax resident?"
+                  htmlFor="usTaxResident"
+                  error={errors.usTaxResident}
+                >
+                  <BinaryChoice
+                    value={form.business.usTaxResident}
+                    onChange={(value) => updateBusiness("usTaxResident", value)}
+                    ariaLabel="U.S. tax residency status"
+                  />
+                </Field>
+                {form.business.usCitizen === "yes" ? (
+                  <Field
+                    label="Social Security Number"
+                    htmlFor="socialSecurityNumber"
+                    error={errors.socialSecurityNumber}
+                  >
+                    <input
+                      id="socialSecurityNumber"
+                      value={form.business.socialSecurityNumber}
+                      onChange={(event) =>
+                        updateBusiness(
+                          "socialSecurityNumber",
+                          event.target.value,
+                        )
+                      }
+                      placeholder="Enter Social Security Number"
+                      className={inputClass(
+                        Boolean(errors.socialSecurityNumber),
+                      )}
+                    />
+                  </Field>
+                ) : null}
+                {form.business.usTaxResident === "yes" ? (
+                  <Field
+                    label="U.S. tax identification number"
+                    htmlFor="taxIdentificationNumber"
+                    error={errors.taxIdentificationNumber}
+                  >
+                    <input
+                      id="taxIdentificationNumber"
+                      value={form.business.taxIdentificationNumber}
+                      onChange={(event) =>
+                        updateBusiness(
+                          "taxIdentificationNumber",
+                          event.target.value,
+                        )
+                      }
+                      placeholder="Enter tax identification number"
+                      className={inputClass(
+                        Boolean(errors.taxIdentificationNumber),
+                      )}
+                    />
+                  </Field>
+                ) : null}
+              </div>
+            </section>
+          </>
+        ) : null}
+      </div>
+    </div>
+  );
+
+  const renderBank = () => (
+    <div className="animate-[fadeUp_.35s_ease-out]">
+      <SectionIntro
+        eyebrow={sectionEyebrow("bank")}
+        title="External Bank Account"
+        description="Add one or more verified accounts that may be used for transfers and settlement."
+        icon={Landmark}
+      />
+
+      <div className="space-y-6">
+        {form.bankAccounts.length > 0 ? (
+          <section>
+            <div className="mb-4 flex items-center justify-between gap-4">
+              <SubsectionHeading
+                title="Saved bank accounts"
+                description="Each account requires independent verification evidence."
+              />
+              {!bankDraft ? (
+                <button
+                  type="button"
+                  onClick={() => setBankDraft(createEmptyBank())}
+                  className="inline-flex h-10 shrink-0 items-center gap-2 rounded-xl bg-[#003478] px-4 text-xs font-semibold text-white transition hover:bg-[#002b63]"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add account
+                </button>
+              ) : null}
+            </div>
+            <div className="space-y-3">
+              {form.bankAccounts.map((account, index) => (
+                <div
+                  key={account.id}
+                  className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-4 sm:flex-row sm:items-center"
+                >
+                  <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[#dce7f2] text-[#003478]">
+                    <Landmark className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-slate-950">
+                      {account.bankName}
+                    </p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      {account.currency} · ••••{" "}
+                      {account.accountNumber.slice(-4)} · SWIFT{" "}
+                      {account.swiftCode}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="mr-auto inline-flex items-center gap-1.5 rounded-full bg-[#dce7f2] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-800 sm:mr-2">
+                      <Check className="h-3 w-3" /> Verified file
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => editBankAccount(account)}
+                      aria-label={`Edit bank account ${index + 1}`}
+                      className="grid h-9 w-9 place-items-center rounded-xl text-slate-400 transition hover:bg-slate-100 hover:text-[#003478]"
+                    >
+                      <PencilLine className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removeBankAccount(account.id)}
+                      aria-label={`Remove bank account ${index + 1}`}
+                      className="grid h-9 w-9 place-items-center rounded-xl text-slate-400 transition hover:bg-red-50 hover:text-red-600"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
+        {bankDraft ? (
+          <section className="rounded-2xl border border-[rgba(0,52,120,0.15)] bg-[rgba(0,52,120,0.025)] p-5 sm:p-6">
+            <div className="flex items-start justify-between gap-4">
+              <SubsectionHeading
+                title={
+                  editingBankId
+                    ? "Edit external account"
+                    : form.bankAccounts.length
+                      ? "Add another external account"
+                      : "External account details"
+                }
+                description="Enter the details exactly as they appear on the bank record."
+              />
+              {form.bankAccounts.length > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setBankDraft(null);
+                    setEditingBankId(null);
+                  }}
+                  aria-label="Close bank account form"
+                  className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-slate-400 transition hover:bg-white hover:text-slate-700"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              ) : null}
+            </div>
+
+            <div className="grid gap-5 sm:grid-cols-2">
+              <Field label="Bank name" htmlFor="bankName">
+                <input
+                  id="bankName"
+                  value={bankDraft.bankName}
+                  onChange={(event) =>
+                    updateBankDraft("bankName", event.target.value)
+                  }
+                  placeholder="Financial institution name"
+                  className={inputClass()}
+                />
+              </Field>
+              <Field label="SWIFT / BIC code" htmlFor="swiftCode">
+                <input
+                  id="swiftCode"
+                  value={bankDraft.swiftCode}
+                  onChange={(event) =>
+                    updateBankDraft(
+                      "swiftCode",
+                      event.target.value.toUpperCase(),
+                    )
+                  }
+                  placeholder="8 or 11 characters"
+                  className={inputClass()}
+                />
+              </Field>
+              <div className="sm:col-span-2">
+                <Field label="Bank address" htmlFor="bankAddress">
+                  <textarea
+                    id="bankAddress"
+                    value={bankDraft.bankAddress}
+                    onChange={(event) =>
+                      updateBankDraft("bankAddress", event.target.value)
+                    }
+                    placeholder="Branch or registered bank address"
+                    className={textareaClass()}
+                  />
+                </Field>
+              </div>
+              <Field
+                label="Australian BSB (optional)"
+                htmlFor="bsb"
+                hint="Complete this field for Australian bank accounts."
+              >
+                <input
+                  id="bsb"
+                  value={bankDraft.bsb}
+                  onChange={(event) =>
+                    updateBankDraft("bsb", event.target.value)
+                  }
+                  inputMode="numeric"
+                  placeholder="000-000"
+                  className={inputClass()}
+                />
+              </Field>
+              <Field label="Account number or IBAN" htmlFor="accountNumber">
+                <input
+                  id="accountNumber"
+                  value={bankDraft.accountNumber}
+                  onChange={(event) =>
+                    updateBankDraft("accountNumber", event.target.value)
+                  }
+                  placeholder="Account number or IBAN"
+                  className={inputClass()}
+                />
+              </Field>
+              <div className="sm:col-span-2">
+                <Field label="Account currency" htmlFor="bankCurrency">
+                  <CustomSelect
+                    id="bankCurrency"
+                    value={bankDraft.currency}
+                    onChange={(value) => updateBankDraft("currency", value)}
+                    options={BANK_CURRENCY_OPTIONS}
+                    placeholder="Select account currency"
+                  />
+                </Field>
+              </div>
+              <div className="sm:col-span-2">
+                <DocumentUpload
+                  id={`bankVerification-${bankDraft.id}`}
+                  title="Bank verification document"
+                  description="Upload a recent bank statement or official bank letter showing the account holder and account details."
+                  value={bankDraft.verificationDocument}
+                  onChange={(file) =>
+                    updateBankDraft(
+                      "verificationDocument",
+                      documentFromFile(file),
+                    )
+                  }
+                />
+              </div>
+            </div>
+
+            {errors.bankDraft ? (
+              <div className="mt-4 flex items-start gap-2 rounded-xl bg-red-50 px-3.5 py-3 text-xs font-medium text-red-700">
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                {errors.bankDraft}
+              </div>
+            ) : null}
+
+            <div className="mt-5 flex justify-end">
+              <button
+                type="button"
+                onClick={saveBankAccount}
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#003478] px-5 text-xs font-semibold text-white transition hover:bg-[#002b63]"
+              >
+                <Check className="h-4 w-4" />
+                {editingBankId ? "Save changes" : "Save bank account"}
+              </button>
+            </div>
+          </section>
+        ) : null}
+
+        {errors.bank ? (
+          <p className="text-xs font-medium text-red-600">{errors.bank}</p>
+        ) : null}
+
+        <div className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-xs leading-5 text-slate-500">
+          <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-[#003478]" />
+          Bank details and supporting evidence are encrypted in transit.
+          Accounts are used only for approved application transfers and
+          settlement.
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderSignature = () => (
+    <div className="animate-[fadeUp_.35s_ease-out]">
+      <SectionIntro
+        eyebrow={sectionEyebrow("signature")}
+        title="E-Signature"
+        description="Provide the authorised signatory details that will be used to issue and validate the electronic signature request."
+        icon={Fingerprint}
+      />
+
+      <div className="space-y-7">
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+          <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <SubsectionHeading
+              title="Authorised signatory"
+              description="The signatory must be the person authorised to complete this application."
+            />
+            <button
+              type="button"
+              onClick={() =>
+                setForm((current) => ({
+                  ...current,
+                  signature: {
+                    ...current.signature,
+                    name: formatApplicantName(current.personal),
+                    dateOfBirth: current.personal.dateOfBirth,
+                  },
+                }))
+              }
+              className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:text-[#003478]"
+            >
+              <CircleUserRound className="h-4 w-4" />
+              Use primary details
+            </button>
+          </div>
+          <div className="grid gap-5 sm:grid-cols-2">
+            <Field
+              label="Full name"
+              htmlFor="signatureName"
+              error={errors.signatureName}
+            >
+              <input
+                id="signatureName"
+                value={form.signature.name}
+                onChange={(event) =>
+                  updateSignature("name", event.target.value)
+                }
+                autoComplete="name"
+                placeholder="Authorised signatory’s full name"
+                className={inputClass(Boolean(errors.signatureName))}
+              />
+            </Field>
+            <Field
+              label="Email address"
+              htmlFor="signatureEmail"
+              error={errors.signatureEmail}
+            >
+              <div className="relative">
+                <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <input
+                  id="signatureEmail"
+                  type="email"
+                  value={form.signature.email}
+                  onChange={(event) =>
+                    updateSignature("email", event.target.value)
+                  }
+                  autoComplete="email"
+                  placeholder="name@example.com"
+                  className={`${inputClass(Boolean(errors.signatureEmail))} pl-10`}
+                />
+              </div>
+            </Field>
+            <Field
+              label="Phone number"
+              htmlFor="signaturePhone"
+              error={errors.signaturePhone}
+            >
+              <div className="relative">
+                <Phone className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <input
+                  id="signaturePhone"
+                  type="tel"
+                  value={form.signature.phone}
+                  onChange={(event) =>
+                    updateSignature("phone", event.target.value)
+                  }
+                  autoComplete="tel"
+                  placeholder="+61 400 000 000"
+                  className={`${inputClass(Boolean(errors.signaturePhone))} pl-10`}
+                />
+              </div>
+            </Field>
+            <Field
+              label="Date of birth"
+              htmlFor="signatureDateOfBirth"
+              error={errors.signatureDateOfBirth}
+            >
+              <input
+                id="signatureDateOfBirth"
+                type="date"
+                value={form.signature.dateOfBirth}
+                onChange={(event) =>
+                  updateSignature("dateOfBirth", event.target.value)
+                }
+                className={inputClass(Boolean(errors.signatureDateOfBirth))}
+              />
+            </Field>
+          </div>
+        </section>
+
+        <div className="flex items-start gap-3 rounded-2xl border border-[rgba(0,52,120,0.13)] bg-[rgba(0,52,120,0.035)] p-4 text-sm leading-6 text-slate-600">
+          <LockKeyhole className="mt-0.5 h-5 w-5 shrink-0 text-[#003478]" />
+          An electronic signature request will be sent to this email and phone
+          number after the application passes its initial review.
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderDocuments = () => (
+    <div className="animate-[fadeUp_.35s_ease-out]">
+      <SectionIntro
+        eyebrow={sectionEyebrow("documents")}
+        title="Upload Proof"
+        description="Upload identity and address evidence for each applicant. Requirements adapt to the applicant country and any Sole Trader assessment."
+        icon={FileCheck2}
+      />
+
+      <div className="space-y-6">
+        {applicantProfiles.map((applicant) => {
+          const documents = form.documents[applicant.key] || {};
+          const isAustralian = applicant.assessmentNature === "australian";
+          const isForeign = applicant.assessmentNature === "foreign";
+          const complete = isAustralian
+            ? hasAustralianProof(documents)
+            : isForeign
+              ? hasForeignProof(documents)
+              : false;
+
+          return (
+            <section
+              key={applicant.key}
+              className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6"
+            >
+              <div className="mb-5 flex items-start justify-between gap-4 border-b border-slate-100 pb-5">
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#dce7f2] text-[#003478]">
+                    {applicant.key === "primary" ? (
+                      <CircleUserRound className="h-4 w-4" />
+                    ) : (
+                      <Users className="h-4 w-4" />
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-slate-950">
+                      {applicant.name}
+                    </p>
+                    <p className="mt-0.5 text-xs text-slate-500">
+                      {applicant.label} ·{" "}
+                      {isAustralian
+                        ? "Australian assessment"
+                        : isForeign
+                          ? "Foreign assessment"
+                          : "Assessment not selected"}
+                    </p>
+                  </div>
+                </div>
+                <span
+                  className={`hidden shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] sm:inline-flex ${
+                    complete
+                      ? "bg-[#dce7f2] text-slate-800"
+                      : "bg-slate-100 text-slate-500"
+                  }`}
+                >
+                  {complete ? "Complete" : "Required"}
+                </span>
+              </div>
+
+              {!applicant.assessmentNature ? (
+                <div className="flex items-start gap-3 rounded-xl bg-amber-50 p-4 text-sm leading-6 text-amber-900">
+                  <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
+                  {isSoleTrader
+                    ? "Select the assessment nature in Business before uploading proof."
+                    : "Complete the applicant country in Personal before uploading proof."}
+                </div>
+              ) : isAustralian ? (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <DocumentUpload
+                    id={`${applicant.key}-licenceFront`}
+                    title="Australian driver licence — front"
+                    description="Clear colour image showing the full front of the current licence."
+                    value={documents.licenceFront}
+                    onChange={(file) =>
+                      updateApplicantDocument(
+                        applicant.key,
+                        "licenceFront",
+                        file,
+                      )
+                    }
+                  />
+                  <DocumentUpload
+                    id={`${applicant.key}-licenceBack`}
+                    title="Australian driver licence — back"
+                    description="Clear colour image showing the full reverse of the current licence."
+                    value={documents.licenceBack}
+                    onChange={(file) =>
+                      updateApplicantDocument(
+                        applicant.key,
+                        "licenceBack",
+                        file,
+                      )
+                    }
+                  />
+                </div>
+              ) : (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <DocumentUpload
+                    id={`${applicant.key}-photoId`}
+                    title="Foreign identity or driver licence"
+                    description="Government-issued photo identity or a valid foreign driver licence."
+                    value={documents.photoId}
+                    onChange={(file) =>
+                      updateApplicantDocument(applicant.key, "photoId", file)
+                    }
+                  />
+                  <DocumentUpload
+                    id={`${applicant.key}-passport`}
+                    title="Passport"
+                    description="Clear image of the passport identity page."
+                    value={documents.passport}
+                    onChange={(file) =>
+                      updateApplicantDocument(applicant.key, "passport", file)
+                    }
+                  />
+                  <div className="sm:col-span-2">
+                    <DocumentUpload
+                      id={`${applicant.key}-utilityBill`}
+                      title="Residential address evidence"
+                      description="Recent utility bill or equivalent address evidence showing the applicant’s name and residential address."
+                      value={documents.utilityBill}
+                      onChange={(file) =>
+                        updateApplicantDocument(
+                          applicant.key,
+                          "utilityBill",
+                          file,
+                        )
+                      }
+                    />
+                  </div>
+                </div>
+              )}
+            </section>
+          );
+        })}
+
+        {errors.documents ? (
+          <div className="flex items-start gap-2 rounded-xl bg-red-50 px-3.5 py-3 text-xs font-medium text-red-700">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            {errors.documents}
+          </div>
+        ) : null}
+
+        <div className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-xs leading-5 text-slate-500">
+          <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-[#003478]" />
+          Accepted formats: PDF, JPG or PNG. Upload complete, readable documents
+          without cropping or glare.
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderReview = () => {
+    const uploadedProofCount = Object.values(form.documents).reduce(
+      (total, documents) =>
+        total + Object.values(documents).filter(Boolean).length,
+      0,
+    );
+
+    return (
+      <div className="animate-[fadeUp_.35s_ease-out]">
+        <SectionIntro
+          eyebrow={sectionEyebrow("review")}
+          title="Review and Submit"
+          description="Check the application carefully. Use Edit to return to any section before secure submission."
+          icon={BadgeCheck}
+        />
+
+        {!allApplicationSectionsComplete ? (
+          <div className="mb-6 flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
+            <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
+            Some sections are incomplete. Review the status navigation and
+            complete all required information before submitting.
+          </div>
+        ) : (
+          <div className="mb-6 flex items-start gap-3 rounded-2xl border border-[rgba(0,52,120,0.14)] bg-[rgba(0,52,120,0.035)] p-4 text-sm leading-6 text-slate-700">
+            <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-[#003478]" />
+            All application sections are complete and ready for your final
+            declarations.
+          </div>
+        )}
+
+        <div className="space-y-4">
+          <ReviewSection
+            title="Personal"
+            icon={CircleUserRound}
+            onEdit={() => goToStep("personal")}
+          >
+            <dl className="grid gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+              <SummaryItem
+                label="Application type"
+                value={selectedApplicationType}
+              />
+              <SummaryItem
+                label="Applicant country"
+                value={form.personal.applicantCountry}
+              />
+              <SummaryItem label="First name" value={form.personal.firstName} />
+              <SummaryItem
+                label="Middle name"
+                value={form.personal.middleName || "Not provided"}
+              />
+              <SummaryItem label="Last name" value={form.personal.lastName} />
+              <SummaryItem
+                label="Former names"
+                value={form.personal.formerNames}
+              />
+              <SummaryItem
+                label="Date of birth"
+                value={form.personal.dateOfBirth}
+              />
+              <SummaryItem
+                label="Investment profile"
+                value={`${form.personal.investmentCurrency || "—"} · ${form.personal.expectedInvestment || "—"}`}
+              />
+              <div className="sm:col-span-2 lg:col-span-3">
+                <SummaryItem
+                  label="Residential address"
+                  value={form.personal.residentialAddress}
+                />
+              </div>
+            </dl>
+            {isJoint ? (
+              <div className="mt-5 border-t border-slate-100 pt-5">
+                <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.09em] text-slate-400">
+                  Joint applicants
+                </p>
+                <div className="space-y-2.5">
+                  {form.jointApplicants.map((applicant, index) => (
+                    <div
+                      key={applicant.id}
+                      className="flex flex-col gap-1 rounded-xl bg-slate-50 px-3.5 py-3 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                      <span className="text-sm font-semibold text-slate-800">
+                        {index + 1}. {formatApplicantName(applicant)}
+                      </span>
+                      <span className="text-xs text-slate-500">
+                        {applicant.method === "existing"
+                          ? `Client ID ${applicant.clientId}`
+                          : applicant.email}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </ReviewSection>
+
+          {isSoleTrader ? (
+            <ReviewSection
+              title="Business"
+              icon={BriefcaseBusiness}
+              onEdit={() => goToStep("business")}
+            >
+              <dl className="grid gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+                <SummaryItem
+                  label="Individual assessment"
+                  value={
+                    form.business.assessmentNature === "australian"
+                      ? "Australian"
+                      : form.business.assessmentNature === "foreign"
+                        ? "Foreign"
+                        : "Not selected"
+                  }
+                />
+                <SummaryItem label="Type of individual" value="Sole Trader" />
+                <SummaryItem
+                  label="Business name"
+                  value={form.business.businessName}
+                />
+                <SummaryItem
+                  label="Principal business address"
+                  value={form.business.principalBusinessAddress}
+                />
+                <SummaryItem
+                  label="ABN"
+                  value={form.business.abn || "Not applicable"}
+                />
+                {form.business.assessmentNature === "foreign" ? (
+                  <>
+                    <SummaryItem
+                      label="Business nature"
+                      value={form.business.investorClassification}
+                    />
+                    <SummaryItem
+                      label="Business activity"
+                      value={
+                        form.business.businessActivity === "Other"
+                          ? form.business.businessActivityOther
+                          : form.business.businessActivity
+                      }
+                    />
+                    <SummaryItem
+                      label="Source and origin of funds"
+                      value={form.business.sourceOfFunds}
+                    />
+                    <SummaryItem
+                      label="Transaction behaviour"
+                      value={form.business.intendedTransactions}
+                    />
+                    <SummaryItem
+                      label="Beneficial ownership"
+                      value={form.business.beneficialOwnership}
+                    />
+                    <SummaryItem
+                      label="U.S. citizen"
+                      value={form.business.usCitizen === "yes" ? "Yes" : "No"}
+                    />
+                    <SummaryItem
+                      label="U.S. tax resident"
+                      value={
+                        form.business.usTaxResident === "yes" ? "Yes" : "No"
+                      }
+                    />
+                  </>
+                ) : null}
+              </dl>
+            </ReviewSection>
+          ) : null}
+
+          <ReviewSection
+            title="External Bank Account"
+            icon={Landmark}
+            onEdit={() => goToStep("bank")}
+          >
+            <div className="space-y-3">
+              {form.bankAccounts.length ? (
+                form.bankAccounts.map((account, index) => (
+                  <div
+                    key={account.id}
+                    className="grid gap-3 rounded-xl bg-slate-50 p-3.5 sm:grid-cols-[1fr_auto] sm:items-center"
+                  >
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900">
+                        {index + 1}. {account.bankName}
+                      </p>
+                      <p className="mt-1 text-xs text-slate-500">
+                        {account.currency} · SWIFT {account.swiftCode} · ••••{" "}
+                        {account.accountNumber.slice(-4)}
+                      </p>
+                    </div>
+                    <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-[#dce7f2] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-800">
+                      <FileCheck2 className="h-3 w-3" /> Evidence attached
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-slate-500">No bank account saved.</p>
+              )}
+            </div>
+          </ReviewSection>
+
+          <ReviewSection
+            title="E-Signature"
+            icon={Fingerprint}
+            onEdit={() => goToStep("signature")}
+          >
+            <dl className="grid gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-4">
+              <SummaryItem label="Signatory" value={form.signature.name} />
+              <SummaryItem label="Email" value={form.signature.email} />
+              <SummaryItem label="Phone" value={form.signature.phone} />
+              <SummaryItem
+                label="Date of birth"
+                value={form.signature.dateOfBirth}
+              />
+            </dl>
+          </ReviewSection>
+
+          <ReviewSection
+            title="Upload Proof"
+            icon={FileCheck2}
+            onEdit={() => goToStep("documents")}
+          >
+            <div className="grid gap-3 sm:grid-cols-2">
+              <CheckRow
+                checked={uploadedProofCount > 0}
+                label={`${uploadedProofCount} identity and address file${uploadedProofCount === 1 ? "" : "s"} attached`}
+              />
+              <CheckRow
+                checked={documentsComplete}
+                label={`${applicantProfiles.length} applicant proof set${applicantProfiles.length === 1 ? "" : "s"} complete`}
+              />
+            </div>
+          </ReviewSection>
+        </div>
+
+        <section className="mt-6 rounded-2xl border border-slate-200 bg-slate-50/70 p-5 sm:p-6">
+          <h2 className="text-base font-semibold text-slate-950">
+            Final declarations
+          </h2>
+          <p className="mt-1 text-sm leading-6 text-slate-500">
+            Both confirmations are required before secure submission.
+          </p>
+          <div className="mt-5 space-y-3">
+            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-white p-4 transition hover:border-slate-300">
+              <input
+                type="checkbox"
+                checked={form.agreements.accurate}
+                onChange={(event) =>
+                  setForm((current) => ({
+                    ...current,
+                    agreements: {
+                      ...current.agreements,
+                      accurate: event.target.checked,
+                    },
+                  }))
+                }
+                className="mt-0.5 h-4 w-4 rounded border-slate-300 accent-[#003478]"
+              />
+              <span className="text-sm leading-6 text-slate-700">
+                I confirm that the information and documents supplied are
+                complete, current and accurate.
+              </span>
+            </label>
+            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-white p-4 transition hover:border-slate-300">
+              <input
+                type="checkbox"
+                checked={form.agreements.consent}
+                onChange={(event) =>
+                  setForm((current) => ({
+                    ...current,
+                    agreements: {
+                      ...current.agreements,
+                      consent: event.target.checked,
+                    },
+                  }))
+                }
+                className="mt-0.5 h-4 w-4 rounded border-slate-300 accent-[#003478]"
+              />
+              <span className="text-sm leading-6 text-slate-700">
+                I consent to identity, bank and compliance verification and to
+                receiving the electronic signature request.
+              </span>
+            </label>
+          </div>
+          {errors.agreements ? (
+            <p className="mt-3 text-xs font-medium text-red-600">
+              {errors.agreements}
+            </p>
+          ) : null}
+        </section>
+      </div>
+    );
+  };
+
+  const renderActiveStep = () => {
+    switch (activeStepId) {
+      case "personal":
+        return renderPersonal();
+      case "business":
+        return renderBusiness();
+      case "bank":
+        return renderBank();
+      case "signature":
+        return renderSignature();
+      case "documents":
+        return renderDocuments();
+      case "review":
+        return renderReview();
+      default:
+        return null;
+    }
   };
 
   if (submitted) {
     return (
-      <main className="grid min-h-[100svh] place-items-center bg-[#f5f7f9] px-5 py-10 selection:bg-[#dce7f2] selection:text-[#0f172a]">
-        <motion.section
-          initial={reduceMotion ? false : { opacity: 0, y: 18, scale: 0.985 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.58, ease: EASE }}
-          className="w-full max-w-[620px] rounded-[28px] border border-black/[0.07] bg-white p-6 text-center shadow-[0_28px_80px_-48px_rgba(15,23,42,0.35)] sm:p-10"
-        >
-          <div className="mx-auto grid h-16 w-16 place-items-center rounded-[22px] bg-[#003478] text-white">
-            <Check className="h-7 w-7" strokeWidth={2.4} />
+      <div className="min-h-screen bg-[#f6f8fb] px-4 py-10 text-slate-950 sm:px-6 sm:py-16">
+        <div className="mx-auto max-w-2xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_24px_70px_rgba(15,23,42,0.08)]">
+          <div className="h-1.5 bg-[#003478]" />
+          <div className="px-6 py-10 text-center sm:px-12 sm:py-14">
+            <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-[#dce7f2] text-[#003478]">
+              <CheckCircle2 className="h-8 w-8" />
+            </div>
+            <p className="mt-7 text-[10px] font-bold uppercase tracking-[0.2em] text-[#003478]">
+              Application received
+            </p>
+            <h1 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-slate-950 sm:text-4xl">
+              Securely submitted
+            </h1>
+            <p className="mx-auto mt-4 max-w-lg text-sm leading-7 text-slate-500">
+              Your Caprock individual application has been submitted for review.
+              The authorised signatory will receive the next steps at{" "}
+              {form.signature.email}.
+            </p>
+            <div className="mt-8 grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-5 text-left sm:grid-cols-3">
+              <SummaryItem
+                label="Reference"
+                value={`CR-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`}
+              />
+              <SummaryItem
+                label="Application"
+                value={selectedApplicationType}
+              />
+              <SummaryItem label="Status" value="Compliance review" />
+            </div>
+            <div className="mt-8 flex items-center justify-center gap-2 text-xs text-slate-400">
+              <LockKeyhole className="h-4 w-4" />
+              Submission encrypted and time-stamped
+            </div>
           </div>
-          <p className="mt-7 text-[10px] font-bold uppercase tracking-[0.2em] text-[#003478]">
-            Application received
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-slate-950 sm:text-4xl">
-            Your application is under review.
-          </h1>
-          <p className="mx-auto mt-4 max-w-md text-sm leading-6 text-slate-500">
-            We have securely received your information and supporting documents.
-            A member of the onboarding team will contact you if anything else is
-            required.
-          </p>
-          <div className="mt-8 grid gap-3 text-left sm:grid-cols-3">
-            {[
-              ["Reference", "CAP-28417"],
-              ["Submitted", "Just now"],
-              ["Typical review", "1–2 business days"],
-            ].map(([label, value]) => (
-              <div
-                key={label}
-                className="rounded-2xl border border-slate-200 bg-[#f7f9fb] p-4"
-              >
-                <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-slate-400">
-                  {label}
-                </p>
-                <p className="mt-1.5 text-xs font-semibold text-slate-800">
-                  {value}
-                </p>
-              </div>
-            ))}
-          </div>
-          <button
-            type="button"
-            onClick={() => navigate("/")}
-            className="mt-8 inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[#003478] px-6 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003478]/25 focus-visible:ring-offset-2"
-          >
-            Return to sign in
-            <ArrowRight className="h-4 w-4" />
-          </button>
-        </motion.section>
-      </main>
+        </div>
+      </div>
     );
   }
 
   return (
-    <div className="min-h-[100svh] bg-[#f5f7f9] text-slate-950 selection:bg-[#dce7f2] selection:text-[#0f172a]">
-      <header className="sticky top-0 z-30 border-b border-black/[0.065] bg-white/95 backdrop-blur-xl">
-        <div className="mx-auto flex h-[72px] max-w-[1380px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-          <button
-            type="button"
-            onClick={() => navigate("/")}
-            aria-label="Return to sign in"
-            className="inline-flex rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003478]/20 focus-visible:ring-offset-4"
-          >
-            <img
-              src="/company-logo.svg"
-              alt="Caprock"
-              className="h-8 w-auto sm:h-9"
-            />
-          </button>
+    <div className="min-h-screen bg-[#f6f8fb] text-slate-950 selection:bg-[#dce7f2] selection:text-slate-950">
+      <style>{`
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
+        }
+      `}</style>
 
-          <div className="flex items-center gap-2 sm:gap-3">
-            <div
-              className="hidden items-center gap-2 text-xs font-medium text-slate-400 sm:flex"
-              aria-live="polite"
+      <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/95 backdrop-blur-xl">
+        <div className="mx-auto flex h-16 max-w-[1440px] items-center justify-between gap-4 px-4 sm:h-[72px] sm:px-6 lg:px-8">
+          <div className="flex min-w-0 items-center gap-4">
+            <button
+              type="button"
+              onClick={() => setMobileNavOpen((open) => !open)}
+              aria-label="Toggle application navigation"
+              aria-expanded={mobileNavOpen}
+              className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-slate-200 text-slate-600 transition hover:bg-slate-50 lg:hidden"
             >
-              {saveStatus === "saving" ? (
-                <>
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" /> Saving
-                </>
-              ) : saveStatus === "saved" ? (
-                <>
-                  <Check className="h-3.5 w-3.5 text-[#003478]" /> Draft saved
-                </>
+              {mobileNavOpen ? (
+                <X className="h-4 w-4" />
               ) : (
-                <>
-                  <Clock3 className="h-3.5 w-3.5" /> Changes not saved
-                </>
+                <Menu className="h-4 w-4" />
               )}
+            </button>
+            <a
+              href="/"
+              className="flex shrink-0 items-center"
+              aria-label="Caprock home"
+            >
+              <img
+                src="/company-logo.svg"
+                alt="Caprock"
+                className="h-8 w-auto sm:h-9"
+              />
+            </a>
+            <div className="hidden h-7 w-px bg-slate-200 sm:block" />
+            <div className="hidden min-w-0 sm:block">
+              <p className="truncate text-sm font-semibold text-slate-900">
+                Individual application
+              </p>
+              <p className="text-[11px] text-slate-400">Secure onboarding</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="hidden items-center gap-2 text-xs font-medium text-slate-500 md:flex">
+              <ShieldCheck className="h-4 w-4 text-[#003478]" />
+              Encrypted session
             </div>
             <button
               type="button"
-              onClick={handleSave}
-              disabled={saveStatus === "saving"}
-              className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:text-[#003478] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003478]/20 disabled:cursor-wait sm:px-4"
+              onClick={saveDraft}
+              disabled={isSaving}
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:text-[#003478] disabled:opacity-60 sm:px-4"
             >
-              {saveStatus === "saving" ? (
+              {isSaving ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <Save className="h-4 w-4" />
               )}
-              <span className="hidden sm:inline">Save draft</span>
-              <span className="sm:hidden">Save</span>
+              <span className="hidden sm:inline">
+                {isSaving ? "Saved" : "Save draft"}
+              </span>
             </button>
             <button
               type="button"
-              onClick={() => navigate("/")}
-              className="grid h-10 w-10 place-items-center rounded-xl text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003478]/20"
-              aria-label="Exit onboarding"
+              aria-label="Help with application"
+              className="grid h-10 w-10 place-items-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:border-slate-300 hover:text-[#003478]"
             >
-              <X className="h-[18px] w-[18px]" />
+              <HelpCircle className="h-4 w-4" />
             </button>
           </div>
         </div>
+        <div className="h-1 bg-slate-100">
+          <div
+            className="h-full bg-[#003478] transition-[width] duration-500 ease-out"
+            style={{ width: `${progressPercent}%` }}
+          />
+        </div>
       </header>
 
-      <div className="mx-auto max-w-[1380px] px-4 py-5 sm:px-6 sm:py-7 lg:px-8 lg:py-9">
-        <div className="mb-5 rounded-2xl border border-slate-200 bg-white p-4 lg:hidden">
-          <div className="flex items-center justify-between gap-4">
-            <div className="min-w-0">
-              <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#003478]">
-                Step {currentStep + 1} of {visibleSteps.length}
-              </p>
-              <p className="mt-1 truncate text-sm font-semibold text-slate-900">
-                {activeStep.label}
-              </p>
-            </div>
-            <span className="shrink-0 text-xs font-semibold text-slate-400">
-              {Math.round(progress)}%
-            </span>
-          </div>
-          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-100">
-            <motion.div
-              className="h-full rounded-full bg-[#003478]"
-              animate={{ width: `${progress}%` }}
-              transition={{ duration: reduceMotion ? 0 : 0.4, ease: EASE }}
-            />
-          </div>
-          <div className="mt-3 flex gap-1.5" aria-label="Application steps">
-            {visibleSteps.map((step, index) => (
-              <button
-                key={step.id}
-                type="button"
-                onClick={() => goToStep(index)}
-                aria-label={`Go to ${step.label}`}
-                aria-current={index === currentStep ? "step" : undefined}
-                className={`h-1.5 flex-1 rounded-full transition ${
-                  index <= currentStep ? "bg-[#003478]" : "bg-slate-200"
-                }`}
-              />
-            ))}
-          </div>
-        </div>
-
-        <div className="grid items-start gap-7 lg:grid-cols-[292px_minmax(0,820px)] lg:justify-center xl:grid-cols-[320px_minmax(0,840px)] xl:gap-10">
-          <aside className="sticky top-[108px] hidden lg:block">
-            <div className="overflow-hidden rounded-[26px] border border-black/[0.07] bg-white shadow-[0_24px_60px_-44px_rgba(15,23,42,0.28)]">
-              <div className="border-b border-slate-100 bg-[#f3f6f9] p-5 xl:p-6">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#003478]">
-                      Account application
-                    </p>
-                    <p className="mt-1.5 text-sm font-semibold text-slate-900">
-                      {completedSections} of {requiredSteps.length} sections
-                      complete
-                    </p>
-                  </div>
-                  <div className="grid h-11 w-11 place-items-center rounded-2xl bg-white text-xs font-bold text-[#003478] shadow-sm ring-1 ring-slate-200/70">
-                    {Math.round(progress)}%
-                  </div>
-                </div>
-                <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-white">
-                  <motion.div
-                    className="h-full rounded-full bg-[#003478]"
-                    animate={{ width: `${progress}%` }}
-                    transition={{
-                      duration: reduceMotion ? 0 : 0.4,
-                      ease: EASE,
-                    }}
-                  />
-                </div>
-              </div>
-
-              <nav className="p-3" aria-label="Onboarding progress">
-                {visibleSteps.map((step, index) => {
-                  const Icon = step.icon;
-                  const active = index === currentStep;
-                  const complete = isStepComplete(step.id);
-                  return (
-                    <button
-                      key={step.id}
-                      type="button"
-                      onClick={() => goToStep(index)}
-                      aria-current={active ? "step" : undefined}
-                      className="group relative flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003478]/20"
+      {mobileNavOpen ? (
+        <div
+          className="fixed inset-0 top-[68px] z-30 bg-slate-950/20 backdrop-blur-[2px] lg:hidden"
+          onClick={() => setMobileNavOpen(false)}
+        >
+          <nav
+            className="h-full w-[min(88vw,360px)] overflow-y-auto border-r border-slate-200 bg-white p-4 shadow-xl"
+            onClick={(event) => event.stopPropagation()}
+            aria-label="Application sections"
+          >
+            <p className="px-3 pb-3 pt-1 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">
+              Application sections
+            </p>
+            <div className="space-y-1.5">
+              {visibleSteps.map((step, index) => {
+                const Icon = step.icon;
+                const active = step.id === activeStepId;
+                const done = completion[step.id];
+                return (
+                  <button
+                    key={step.id}
+                    type="button"
+                    onClick={() => goToStep(step.id)}
+                    className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition ${
+                      active
+                        ? "bg-[#dce7f2] text-slate-950"
+                        : "text-slate-600 hover:bg-slate-50"
+                    }`}
+                  >
+                    <span
+                      className={`grid h-9 w-9 place-items-center rounded-xl ${active ? "bg-white text-[#003478]" : "bg-slate-100 text-slate-500"}`}
                     >
-                      {active ? (
-                        <motion.span
-                          layoutId="active-onboarding-step"
-                          className="absolute inset-0 rounded-2xl bg-[rgba(0,52,120,0.065)]"
-                          transition={{
-                            type: "spring",
-                            stiffness: 360,
-                            damping: 31,
-                          }}
-                        />
-                      ) : null}
-                      <span
-                        className={`relative z-10 grid h-9 w-9 shrink-0 place-items-center rounded-xl border transition ${
-                          complete
-                            ? "border-[#003478] bg-[#003478] text-white"
-                            : active
-                              ? "border-[rgba(0,52,120,0.16)] bg-white text-[#003478]"
-                              : "border-slate-200 bg-white text-slate-400 group-hover:text-slate-600"
-                        }`}
-                      >
-                        {complete ? (
-                          <Check className="h-4 w-4" strokeWidth={2.5} />
-                        ) : (
-                          <Icon className="h-4 w-4" />
-                        )}
+                      {done && !active ? (
+                        <Check className="h-4 w-4" />
+                      ) : (
+                        <Icon className="h-4 w-4" />
+                      )}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm font-semibold">
+                        {step.label}
                       </span>
-                      <span className="relative z-10 min-w-0 flex-1">
-                        <span
-                          className={`block truncate text-xs font-semibold ${active ? "text-slate-950" : "text-slate-600"}`}
-                        >
-                          {step.label}
-                        </span>
-                        <span className="mt-0.5 block truncate text-[10px] text-slate-400">
-                          {step.description}
-                        </span>
+                      <span className="mt-0.5 block truncate text-[11px] text-slate-500">
+                        {step.description}
                       </span>
-                    </button>
-                  );
-                })}
-              </nav>
+                    </span>
+                    <span className="text-[10px] font-bold text-slate-400">
+                      {index + 1}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </nav>
+        </div>
+      ) : null}
 
-              <div className="m-4 mt-1 rounded-2xl border border-slate-200 bg-[#f7f9fb] p-4">
-                <div className="flex items-start gap-3">
-                  <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#003478]" />
-                  <p className="text-[10px] leading-[1.6] text-slate-500">
-                    Your information is encrypted and handled under
-                    institutional privacy and compliance controls.
+      <main className="mx-auto grid max-w-[1440px] lg:grid-cols-[300px_minmax(0,1fr)]">
+        <aside className="hidden min-h-[calc(100vh-76px)] border-r border-slate-200/80 bg-white/65 px-5 py-8 lg:block">
+          <div className="sticky top-28">
+            <div className="mb-6 px-3">
+              <div className="flex items-end justify-between gap-4">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">
+                    Application progress
+                  </p>
+                  <p className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-slate-950">
+                    {completedSectionCount}/{applicationSectionCount}
+                  </p>
+                </div>
+                <p className="pb-1 text-xs font-medium text-slate-400">
+                  sections complete
+                </p>
+              </div>
+            </div>
+
+            <nav className="space-y-1.5" aria-label="Application sections">
+              {visibleSteps.map((step, index) => {
+                const Icon = step.icon;
+                const active = step.id === activeStepId;
+                const done = completion[step.id];
+                return (
+                  <button
+                    key={step.id}
+                    type="button"
+                    onClick={() => goToStep(step.id)}
+                    aria-current={active ? "step" : undefined}
+                    className={`group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition ${
+                      active
+                        ? "bg-[#dce7f2] text-slate-950"
+                        : "text-slate-600 hover:bg-white hover:text-slate-900"
+                    }`}
+                  >
+                    <span
+                      className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl transition ${
+                        active
+                          ? "bg-white text-[#003478] shadow-sm ring-1 ring-slate-200/60"
+                          : done
+                            ? "bg-[rgba(0,52,120,0.08)] text-[#003478]"
+                            : "bg-slate-100 text-slate-400 group-hover:bg-slate-50"
+                      }`}
+                    >
+                      {done && !active ? (
+                        <Check className="h-4 w-4" strokeWidth={2.5} />
+                      ) : (
+                        <Icon className="h-4 w-4" />
+                      )}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[13px] font-semibold">
+                        {step.label}
+                      </span>
+                      <span className="mt-0.5 block truncate text-[10px] text-slate-400">
+                        {step.description}
+                      </span>
+                    </span>
+                    <span
+                      className={`text-[10px] font-bold ${active ? "text-[#003478]" : "text-slate-300"}`}
+                    >
+                      {index + 1}
+                    </span>
+                  </button>
+                );
+              })}
+            </nav>
+
+            <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-4">
+              <div className="flex items-start gap-3">
+                <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[rgba(0,52,120,0.07)] text-[#003478]">
+                  <LockKeyhole className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-slate-800">
+                    Secure application
+                  </p>
+                  <p className="mt-1 text-[10px] leading-4 text-slate-400">
+                    Your entries are protected throughout this session.
                   </p>
                 </div>
               </div>
             </div>
-          </aside>
+          </div>
+        </aside>
 
-          <main className="min-w-0">
-            <div className="overflow-hidden rounded-[24px] border border-black/[0.07] bg-white shadow-[0_28px_80px_-50px_rgba(15,23,42,0.28)] sm:rounded-[30px]">
-              <div className="min-h-[570px] p-5 sm:p-8 lg:p-9 xl:p-10">
-                <AnimatePresence mode="wait" custom={direction} initial={false}>
-                  <motion.div
-                    key={activeStep.id}
-                    custom={direction}
-                    initial={
-                      reduceMotion ? false : { opacity: 0, x: direction * 22 }
-                    }
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={
-                      reduceMotion
-                        ? undefined
-                        : { opacity: 0, x: direction * -16 }
-                    }
-                    transition={{ duration: 0.34, ease: EASE }}
-                  >
-                    {activeStep.id === "personal" ? (
-                      <>
-                        <SectionIntro
-                          eyebrow={`Step ${currentStep + 1} · Personal information`}
-                          title="Start with your application type."
-                          description="Choose how this account will be held, then enter your legal details exactly as they appear on your identity documents."
-                          icon={UserRound}
-                        />
-                        <div className="grid gap-5 sm:grid-cols-2">
-                          <div className="sm:col-span-2">
-                            <Field
-                              label="Application type"
-                              htmlFor="applicationType"
-                              error={errors.applicationType}
-                              hint="Your choice controls which information and application stages are required."
-                            >
-                              <CustomSelect
-                                id="applicationType"
-                                value={form.personal.applicationType}
-                                options={APPLICATION_TYPE_OPTIONS}
-                                onChange={handleApplicationTypeChange}
-                                placeholder="Select application type"
-                                error={Boolean(errors.applicationType)}
-                              />
-                            </Field>
-                          </div>
-                          <Field
-                            label="Legal first name"
-                            htmlFor="firstName"
-                            error={errors.firstName}
-                          >
-                            <input
-                              id="firstName"
-                              value={form.personal.firstName}
-                              onChange={(event) =>
-                                updateSection("personal", {
-                                  firstName: event.target.value,
-                                })
-                              }
-                              className={inputClass(Boolean(errors.firstName))}
-                              autoComplete="given-name"
-                            />
-                          </Field>
-                          <Field
-                            label="Legal last name"
-                            htmlFor="lastName"
-                            error={errors.lastName}
-                          >
-                            <input
-                              id="lastName"
-                              value={form.personal.lastName}
-                              onChange={(event) =>
-                                updateSection("personal", {
-                                  lastName: event.target.value,
-                                })
-                              }
-                              className={inputClass(Boolean(errors.lastName))}
-                              autoComplete="family-name"
-                            />
-                          </Field>
-                          <Field
-                            label="Date of birth"
-                            htmlFor="dateOfBirth"
-                            error={errors.dateOfBirth}
-                          >
-                            <input
-                              id="dateOfBirth"
-                              type="date"
-                              value={form.personal.dateOfBirth}
-                              onChange={(event) =>
-                                updateSection("personal", {
-                                  dateOfBirth: event.target.value,
-                                })
-                              }
-                              className={inputClass(
-                                Boolean(errors.dateOfBirth),
-                              )}
-                            />
-                          </Field>
-                          <Field label="Citizenship" htmlFor="citizenship">
-                            <CustomSelect
-                              id="citizenship"
-                              value={form.personal.citizenship}
-                              options={COUNTRY_OPTIONS}
-                              onChange={(value) =>
-                                updateSection("personal", {
-                                  citizenship: value,
-                                })
-                              }
-                              placeholder="Select citizenship"
-                            />
-                          </Field>
-                          <Field
-                            label="Email address"
-                            htmlFor="personalEmail"
-                            error={errors.email}
-                          >
-                            <div className="relative">
-                              <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                              <input
-                                id="personalEmail"
-                                type="email"
-                                value={form.personal.email}
-                                onChange={(event) =>
-                                  updateSection("personal", {
-                                    email: event.target.value,
-                                  })
-                                }
-                                className={`${inputClass(Boolean(errors.email))} pl-10`}
-                                autoComplete="email"
-                                placeholder="you@example.com"
-                              />
-                            </div>
-                          </Field>
-                          <Field
-                            label="Mobile number"
-                            htmlFor="phone"
-                            error={errors.phone}
-                          >
-                            <div className="relative">
-                              <Phone className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                              <input
-                                id="phone"
-                                type="tel"
-                                value={form.personal.phone}
-                                onChange={(event) =>
-                                  updateSection("personal", {
-                                    phone: event.target.value,
-                                  })
-                                }
-                                className={`${inputClass(Boolean(errors.phone))} pl-10`}
-                                autoComplete="tel"
-                                placeholder="+61 400 000 000"
-                              />
-                            </div>
-                          </Field>
-                          <div className="sm:col-span-2">
-                            <Field
-                              label="Residential address"
-                              htmlFor="address"
-                              error={errors.address}
-                            >
-                              <div className="relative">
-                                <MapPin className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                                <input
-                                  id="address"
-                                  value={form.personal.address}
-                                  onChange={(event) =>
-                                    updateSection("personal", {
-                                      address: event.target.value,
-                                    })
-                                  }
-                                  className={`${inputClass(Boolean(errors.address))} pl-10`}
-                                  autoComplete="street-address"
-                                  placeholder="Street address"
-                                />
-                              </div>
-                            </Field>
-                          </div>
-                          <Field
-                            label="City"
-                            htmlFor="city"
-                            error={errors.city}
-                          >
-                            <input
-                              id="city"
-                              value={form.personal.city}
-                              onChange={(event) =>
-                                updateSection("personal", {
-                                  city: event.target.value,
-                                })
-                              }
-                              className={inputClass(Boolean(errors.city))}
-                              autoComplete="address-level2"
-                            />
-                          </Field>
-                          <Field
-                            label="State or region"
-                            htmlFor="state"
-                            error={errors.state}
-                          >
-                            <input
-                              id="state"
-                              value={form.personal.state}
-                              onChange={(event) =>
-                                updateSection("personal", {
-                                  state: event.target.value,
-                                })
-                              }
-                              className={inputClass(Boolean(errors.state))}
-                              autoComplete="address-level1"
-                            />
-                          </Field>
-                          <Field
-                            label="Postcode"
-                            htmlFor="postcode"
-                            error={errors.postcode}
-                          >
-                            <input
-                              id="postcode"
-                              value={form.personal.postcode}
-                              onChange={(event) =>
-                                updateSection("personal", {
-                                  postcode: event.target.value,
-                                })
-                              }
-                              className={inputClass(Boolean(errors.postcode))}
-                              autoComplete="postal-code"
-                            />
-                          </Field>
-                          <Field
-                            label="Country of residence"
-                            htmlFor="country"
-                            error={errors.country}
-                          >
-                            <CustomSelect
-                              id="country"
-                              value={form.personal.country}
-                              options={COUNTRY_OPTIONS}
-                              onChange={(value) =>
-                                updateSection("personal", { country: value })
-                              }
-                              placeholder="Select country"
-                              error={Boolean(errors.country)}
-                            />
-                          </Field>
-                        </div>
-
-                        <AnimatePresence initial={false}>
-                          {isJointApplication ? (
-                            <motion.section
-                              initial={
-                                reduceMotion ? false : { opacity: 0, y: 10 }
-                              }
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={
-                                reduceMotion ? undefined : { opacity: 0, y: -8 }
-                              }
-                              transition={{ duration: 0.32, ease: EASE }}
-                              className="mt-8 border-t border-slate-100 pt-8"
-                            >
-                              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                                <div className="flex min-w-0 items-start gap-3.5">
-                                  <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[rgba(0,52,120,0.07)] text-[#003478]">
-                                    <UsersRound className="h-5 w-5" />
-                                  </div>
-                                  <div>
-                                    <div className="flex flex-wrap items-center gap-2">
-                                      <h2 className="text-base font-semibold text-slate-950">
-                                        Joint applicants
-                                      </h2>
-                                      <span className="rounded-full bg-[#dce7f2] px-2 py-1 text-[10px] font-bold text-slate-800">
-                                        {form.jointApplicants.length} added
-                                      </span>
-                                    </div>
-                                    <p className="mt-1 max-w-xl text-xs leading-5 text-slate-500">
-                                      Add every person who will jointly own this
-                                      account. Use a Caprock client ID or
-                                      prepare a secure invitation for a new
-                                      client.
-                                    </p>
-                                  </div>
-                                </div>
-                                {!jointDraft ? (
-                                  <button
-                                    type="button"
-                                    onClick={beginJointApplicant}
-                                    className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#003478] px-4 text-xs font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-                                  >
-                                    <UserPlus className="h-4 w-4" /> Add
-                                    applicant
-                                  </button>
-                                ) : null}
-                              </div>
-
-                              {form.jointApplicants.length > 0 ? (
-                                <div className="mt-5 grid gap-3">
-                                  {form.jointApplicants.map(
-                                    (applicant, index) => (
-                                      <motion.article
-                                        layout
-                                        key={applicant.id}
-                                        className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between"
-                                      >
-                                        <div className="flex min-w-0 items-center gap-3.5">
-                                          <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[rgba(0,52,120,0.075)] text-sm font-bold text-[#003478]">
-                                            {index + 2}
-                                          </div>
-                                          <div className="min-w-0">
-                                            <div className="flex items-center gap-2">
-                                              <p className="truncate text-sm font-semibold text-slate-900">
-                                                {applicant.method ===
-                                                "client-id"
-                                                  ? "Verified Caprock client"
-                                                  : `${applicant.firstName} ${applicant.lastName}`}
-                                              </p>
-                                              <CheckCircle2 className="h-4 w-4 shrink-0 text-[#003478]" />
-                                            </div>
-                                            <p className="mt-1 truncate text-xs text-slate-500">
-                                              {applicant.method === "client-id"
-                                                ? `Client ID · ${applicant.clientId}`
-                                                : applicant.email}
-                                            </p>
-                                            {applicant.method ===
-                                            "new-invite" ? (
-                                              <p className="mt-1 truncate text-[11px] text-slate-400">
-                                                {usesPrimaryAddress
-                                                  ? "Same address as primary applicant"
-                                                  : [
-                                                      applicant.address,
-                                                      applicant.city,
-                                                      applicant.state,
-                                                      applicant.postcode,
-                                                    ]
-                                                      .filter(Boolean)
-                                                      .join(", ")}
-                                              </p>
-                                            ) : null}
-                                          </div>
-                                        </div>
-                                        <div className="flex shrink-0 items-center gap-1 self-end sm:self-auto">
-                                          <button
-                                            type="button"
-                                            onClick={() =>
-                                              editJointApplicant(applicant)
-                                            }
-                                            disabled={Boolean(jointDraft)}
-                                            className="grid h-9 w-9 place-items-center rounded-xl text-slate-400 transition hover:bg-slate-100 hover:text-[#003478] disabled:cursor-not-allowed disabled:opacity-40"
-                                            aria-label={`Edit joint applicant ${index + 1}`}
-                                          >
-                                            <PencilLine className="h-4 w-4" />
-                                          </button>
-                                          <button
-                                            type="button"
-                                            onClick={() =>
-                                              removeJointApplicant(applicant.id)
-                                            }
-                                            className="grid h-9 w-9 place-items-center rounded-xl text-slate-400 transition hover:bg-red-50 hover:text-red-600"
-                                            aria-label={`Remove joint applicant ${index + 1}`}
-                                          >
-                                            <X className="h-4 w-4" />
-                                          </button>
-                                        </div>
-                                      </motion.article>
-                                    ),
-                                  )}
-                                </div>
-                              ) : (
-                                <div className="mt-5 rounded-2xl border border-dashed border-slate-300 bg-[#f8fafb] px-5 py-6 text-center">
-                                  <UsersRound className="mx-auto h-5 w-5 text-slate-400" />
-                                  <p className="mt-2 text-xs font-semibold text-slate-700">
-                                    No joint applicants added yet
-                                  </p>
-                                  <p className="mt-1 text-[11px] text-slate-400">
-                                    At least one additional applicant is
-                                    required.
-                                  </p>
-                                </div>
-                              )}
-
-                              <AnimatePresence initial={false}>
-                                {jointDraft ? (
-                                  <motion.div
-                                    initial={
-                                      reduceMotion
-                                        ? false
-                                        : { opacity: 0, height: 0 }
-                                    }
-                                    animate={{ opacity: 1, height: "auto" }}
-                                    exit={
-                                      reduceMotion
-                                        ? undefined
-                                        : { opacity: 0, height: 0 }
-                                    }
-                                    transition={{ duration: 0.34, ease: EASE }}
-                                    className="overflow-visible"
-                                  >
-                                    <div className="mt-5 rounded-[22px] border border-[rgba(0,52,120,0.16)] bg-[#f7f9fb] p-4 sm:p-5">
-                                      <div className="mb-5 flex items-center justify-between gap-4">
-                                        <div>
-                                          <p className="text-sm font-semibold text-slate-950">
-                                            {form.jointApplicants.some(
-                                              (item) =>
-                                                item.id === jointDraft.id,
-                                            )
-                                              ? "Edit joint applicant"
-                                              : "Add a joint applicant"}
-                                          </p>
-                                          <p className="mt-1 text-xs text-slate-500">
-                                            Choose how to add this person to the
-                                            application.
-                                          </p>
-                                        </div>
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            setJointDraft(null);
-                                            setJointLookupStatus("idle");
-                                            setErrors({});
-                                          }}
-                                          className="grid h-9 w-9 place-items-center rounded-xl text-slate-400 transition hover:bg-white hover:text-slate-700"
-                                          aria-label="Cancel applicant"
-                                        >
-                                          <X className="h-4 w-4" />
-                                        </button>
-                                      </div>
-
-                                      <div className="grid gap-3 sm:grid-cols-2">
-                                        <button
-                                          type="button"
-                                          onClick={() =>
-                                            jointDraft.method !== "client-id" &&
-                                            updateJointDraft({
-                                              method: "client-id",
-                                              clientId: "",
-                                              firstName: "",
-                                              lastName: "",
-                                              email: "",
-                                            })
-                                          }
-                                          className={`rounded-2xl border p-4 text-left transition ${jointDraft.method === "client-id" ? "border-[#003478] bg-white ring-2 ring-[#003478]/[0.06]" : "border-slate-200 bg-white/70 hover:border-slate-300"}`}
-                                        >
-                                          <div className="flex items-center gap-3">
-                                            <div
-                                              className={`grid h-10 w-10 place-items-center rounded-xl ${jointDraft.method === "client-id" ? "bg-[#003478] text-white" : "bg-slate-100 text-slate-500"}`}
-                                            >
-                                              <Search className="h-4 w-4" />
-                                            </div>
-                                            <div>
-                                              <p className="text-sm font-semibold text-slate-900">
-                                                Existing client
-                                              </p>
-                                              <p className="mt-0.5 text-xs text-slate-400">
-                                                Find by Caprock client ID
-                                              </p>
-                                            </div>
-                                          </div>
-                                        </button>
-                                        <button
-                                          type="button"
-                                          onClick={() =>
-                                            jointDraft.method !==
-                                              "new-invite" &&
-                                            updateJointDraft({
-                                              method: "new-invite",
-                                              clientId: "",
-                                            })
-                                          }
-                                          className={`rounded-2xl border p-4 text-left transition ${jointDraft.method === "new-invite" ? "border-[#003478] bg-white ring-2 ring-[#003478]/[0.06]" : "border-slate-200 bg-white/70 hover:border-slate-300"}`}
-                                        >
-                                          <div className="flex items-center gap-3">
-                                            <div
-                                              className={`grid h-10 w-10 place-items-center rounded-xl ${jointDraft.method === "new-invite" ? "bg-[#003478] text-white" : "bg-slate-100 text-slate-500"}`}
-                                            >
-                                              <Mail className="h-4 w-4" />
-                                            </div>
-                                            <div>
-                                              <p className="text-sm font-semibold text-slate-900">
-                                                New client
-                                              </p>
-                                              <p className="mt-0.5 text-xs text-slate-400">
-                                                Prepare a secure invitation
-                                              </p>
-                                            </div>
-                                          </div>
-                                        </button>
-                                      </div>
-
-                                      {jointDraft.method === "client-id" ? (
-                                        <div className="mt-5">
-                                          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-                                            <div className="min-w-0 flex-1">
-                                              <Field
-                                                label="Caprock client ID"
-                                                htmlFor="jointClientId"
-                                                error={errors.jointClientId}
-                                              >
-                                                <input
-                                                  id="jointClientId"
-                                                  value={jointDraft.clientId}
-                                                  onChange={(event) =>
-                                                    updateJointDraft({
-                                                      clientId:
-                                                        event.target.value,
-                                                    })
-                                                  }
-                                                  className={inputClass(
-                                                    Boolean(
-                                                      errors.jointClientId,
-                                                    ),
-                                                  )}
-                                                  placeholder="e.g. CAP-102847"
-                                                />
-                                              </Field>
-                                            </div>
-                                            <button
-                                              type="button"
-                                              onClick={handleFindJointClient}
-                                              disabled={
-                                                jointLookupStatus ===
-                                                "searching"
-                                              }
-                                              className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-[#003478]/30 hover:text-[#003478] disabled:cursor-wait"
-                                            >
-                                              {jointLookupStatus ===
-                                              "searching" ? (
-                                                <Loader2 className="h-4 w-4 animate-spin" />
-                                              ) : (
-                                                <Search className="h-4 w-4" />
-                                              )}
-                                              {jointLookupStatus === "searching"
-                                                ? "Searching"
-                                                : "Find client"}
-                                            </button>
-                                          </div>
-                                          {jointLookupStatus === "found" ? (
-                                            <motion.div
-                                              initial={
-                                                reduceMotion
-                                                  ? false
-                                                  : { opacity: 0, y: 6 }
-                                              }
-                                              animate={{ opacity: 1, y: 0 }}
-                                              className="mt-4 flex items-center gap-3 rounded-2xl border border-[rgba(0,52,120,0.13)] bg-white p-4"
-                                            >
-                                              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[rgba(0,52,120,0.08)] text-[#003478]">
-                                                <BadgeCheck className="h-5 w-5" />
-                                              </div>
-                                              <div>
-                                                <p className="text-sm font-semibold text-slate-900">
-                                                  Eligible client record located
-                                                </p>
-                                                <p className="mt-0.5 text-xs text-slate-500">
-                                                  Client ID{" "}
-                                                  {jointDraft.clientId} is
-                                                  verified and ready to add.
-                                                </p>
-                                              </div>
-                                            </motion.div>
-                                          ) : null}
-                                        </div>
-                                      ) : (
-                                        <div className="mt-5">
-                                          <div className="mb-5 flex items-start gap-3 rounded-2xl bg-white p-4 ring-1 ring-slate-200/70">
-                                            <Mail className="mt-0.5 h-4 w-4 shrink-0 text-[#003478]" />
-                                            <p className="text-xs leading-5 text-slate-500">
-                                              We’ll email this applicant a
-                                              secure invitation after the
-                                              application is submitted.
-                                            </p>
-                                          </div>
-                                          <div className="grid gap-5 sm:grid-cols-2">
-                                            <Field
-                                              label="Legal first name"
-                                              htmlFor="jointFirstName"
-                                              error={errors.jointFirstName}
-                                            >
-                                              <input
-                                                id="jointFirstName"
-                                                value={jointDraft.firstName}
-                                                onChange={(event) =>
-                                                  updateJointDraft({
-                                                    firstName:
-                                                      event.target.value,
-                                                  })
-                                                }
-                                                className={inputClass(
-                                                  Boolean(
-                                                    errors.jointFirstName,
-                                                  ),
-                                                )}
-                                              />
-                                            </Field>
-                                            <Field
-                                              label="Legal last name"
-                                              htmlFor="jointLastName"
-                                              error={errors.jointLastName}
-                                            >
-                                              <input
-                                                id="jointLastName"
-                                                value={jointDraft.lastName}
-                                                onChange={(event) =>
-                                                  updateJointDraft({
-                                                    lastName:
-                                                      event.target.value,
-                                                  })
-                                                }
-                                                className={inputClass(
-                                                  Boolean(errors.jointLastName),
-                                                )}
-                                              />
-                                            </Field>
-                                            <div className="sm:col-span-2">
-                                              <Field
-                                                label="Email address"
-                                                htmlFor="jointEmail"
-                                                error={errors.jointEmail}
-                                              >
-                                                <input
-                                                  id="jointEmail"
-                                                  type="email"
-                                                  value={jointDraft.email}
-                                                  onChange={(event) =>
-                                                    updateJointDraft({
-                                                      email: event.target.value,
-                                                    })
-                                                  }
-                                                  className={inputClass(
-                                                    Boolean(errors.jointEmail),
-                                                  )}
-                                                  placeholder="joint.applicant@example.com"
-                                                />
-                                              </Field>
-                                            </div>
-                                            {usesPrimaryAddress ? (
-                                              <div className="sm:col-span-2 rounded-2xl border border-slate-200 bg-white p-4">
-                                                <div className="flex items-start gap-3">
-                                                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#003478]" />
-                                                  <div>
-                                                    <p className="text-xs font-semibold text-slate-800">
-                                                      Same residential address
-                                                      as the primary applicant
-                                                    </p>
-                                                    <p className="mt-1 text-xs leading-5 text-slate-500">
-                                                      {[
-                                                        form.personal.address,
-                                                        form.personal.city,
-                                                        form.personal.state,
-                                                        form.personal.postcode,
-                                                        form.personal.country,
-                                                      ]
-                                                        .filter(Boolean)
-                                                        .join(", ") ||
-                                                        "Complete the primary residential address above."}
-                                                    </p>
-                                                  </div>
-                                                </div>
-                                              </div>
-                                            ) : (
-                                              <>
-                                                <div className="sm:col-span-2">
-                                                  <Field
-                                                    label="Residential address"
-                                                    htmlFor="jointAddress"
-                                                    error={errors.jointAddress}
-                                                  >
-                                                    <input
-                                                      id="jointAddress"
-                                                      value={jointDraft.address}
-                                                      onChange={(event) =>
-                                                        updateJointDraft({
-                                                          address:
-                                                            event.target.value,
-                                                        })
-                                                      }
-                                                      className={inputClass(
-                                                        Boolean(
-                                                          errors.jointAddress,
-                                                        ),
-                                                      )}
-                                                      placeholder="Street address"
-                                                    />
-                                                  </Field>
-                                                </div>
-                                                <Field
-                                                  label="City"
-                                                  htmlFor="jointCity"
-                                                  error={errors.jointCity}
-                                                >
-                                                  <input
-                                                    id="jointCity"
-                                                    value={jointDraft.city}
-                                                    onChange={(event) =>
-                                                      updateJointDraft({
-                                                        city: event.target
-                                                          .value,
-                                                      })
-                                                    }
-                                                    className={inputClass(
-                                                      Boolean(errors.jointCity),
-                                                    )}
-                                                  />
-                                                </Field>
-                                                <Field
-                                                  label="State or region"
-                                                  htmlFor="jointState"
-                                                  error={errors.jointState}
-                                                >
-                                                  <input
-                                                    id="jointState"
-                                                    value={jointDraft.state}
-                                                    onChange={(event) =>
-                                                      updateJointDraft({
-                                                        state:
-                                                          event.target.value,
-                                                      })
-                                                    }
-                                                    className={inputClass(
-                                                      Boolean(
-                                                        errors.jointState,
-                                                      ),
-                                                    )}
-                                                  />
-                                                </Field>
-                                                <Field
-                                                  label="Postcode"
-                                                  htmlFor="jointPostcode"
-                                                  error={errors.jointPostcode}
-                                                >
-                                                  <input
-                                                    id="jointPostcode"
-                                                    value={jointDraft.postcode}
-                                                    onChange={(event) =>
-                                                      updateJointDraft({
-                                                        postcode:
-                                                          event.target.value,
-                                                      })
-                                                    }
-                                                    className={inputClass(
-                                                      Boolean(
-                                                        errors.jointPostcode,
-                                                      ),
-                                                    )}
-                                                  />
-                                                </Field>
-                                                <Field
-                                                  label="Country of residence"
-                                                  htmlFor="jointCountry"
-                                                  error={errors.jointCountry}
-                                                >
-                                                  <CustomSelect
-                                                    id="jointCountry"
-                                                    value={jointDraft.country}
-                                                    options={COUNTRY_OPTIONS}
-                                                    onChange={(value) =>
-                                                      updateJointDraft({
-                                                        country: value,
-                                                      })
-                                                    }
-                                                    placeholder="Select country"
-                                                    error={Boolean(
-                                                      errors.jointCountry,
-                                                    )}
-                                                  />
-                                                </Field>
-                                              </>
-                                            )}
-                                          </div>
-                                        </div>
-                                      )}
-
-                                      {errors.jointDraft ? (
-                                        <p className="mt-4 text-xs font-medium text-red-600">
-                                          {errors.jointDraft}
-                                        </p>
-                                      ) : null}
-                                      <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            setJointDraft(null);
-                                            setJointLookupStatus("idle");
-                                            setErrors({});
-                                          }}
-                                          className="inline-flex h-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-600 transition hover:border-slate-300"
-                                        >
-                                          Cancel
-                                        </button>
-                                        <button
-                                          type="button"
-                                          onClick={handleSaveJointApplicant}
-                                          className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#003478] px-4 text-xs font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-                                        >
-                                          <Check className="h-4 w-4" />
-                                          {form.jointApplicants.some(
-                                            (item) => item.id === jointDraft.id,
-                                          )
-                                            ? "Save changes"
-                                            : "Add applicant"}
-                                        </button>
-                                      </div>
-                                    </div>
-                                  </motion.div>
-                                ) : null}
-                              </AnimatePresence>
-
-                              {errors.jointApplicant ? (
-                                <p className="mt-4 text-xs font-medium text-red-600">
-                                  {errors.jointApplicant}
-                                </p>
-                              ) : null}
-                              {errors.jointDraft && !jointDraft ? (
-                                <p className="mt-4 text-xs font-medium text-red-600">
-                                  {errors.jointDraft}
-                                </p>
-                              ) : null}
-                            </motion.section>
-                          ) : null}
-                        </AnimatePresence>
-                      </>
-                    ) : null}
-
-                    {activeStep.id === "business" ? (
-                      <>
-                        <SectionIntro
-                          eyebrow={`Step ${currentStep + 1} · Business information`}
-                          title="Tell us about the business."
-                          description="We use this information to understand the entity, ownership structure and regulatory obligations."
-                          icon={BriefcaseBusiness}
-                        />
-                        <div className="grid gap-5 sm:grid-cols-2">
-                          <div className="sm:col-span-2">
-                            <Field
-                              label="Legal business name"
-                              htmlFor="legalName"
-                              error={errors.legalName}
-                            >
-                              <div className="relative">
-                                <Building2 className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                                <input
-                                  id="legalName"
-                                  value={form.business.legalName}
-                                  onChange={(e) =>
-                                    updateSection("business", {
-                                      legalName: e.target.value,
-                                    })
-                                  }
-                                  className={`${inputClass(Boolean(errors.legalName))} pl-10`}
-                                  placeholder="Registered entity name"
-                                />
-                              </div>
-                            </Field>
-                          </div>
-                          <Field
-                            label="Trading name"
-                            htmlFor="tradingName"
-                            hint="Optional, if different from the legal name"
-                          >
-                            <input
-                              id="tradingName"
-                              value={form.business.tradingName}
-                              onChange={(e) =>
-                                updateSection("business", {
-                                  tradingName: e.target.value,
-                                })
-                              }
-                              className={inputClass()}
-                            />
-                          </Field>
-                          <Field
-                            label="Entity type"
-                            htmlFor="entityType"
-                            error={errors.entityType}
-                          >
-                            <CustomSelect
-                              id="entityType"
-                              value={form.business.entityType}
-                              options={ENTITY_OPTIONS}
-                              onChange={(value) =>
-                                updateSection("business", { entityType: value })
-                              }
-                              placeholder="Select entity type"
-                              error={Boolean(errors.entityType)}
-                            />
-                          </Field>
-                          <Field
-                            label="Registration number"
-                            htmlFor="registrationNumber"
-                            error={errors.registrationNumber}
-                          >
-                            <input
-                              id="registrationNumber"
-                              value={form.business.registrationNumber}
-                              onChange={(e) =>
-                                updateSection("business", {
-                                  registrationNumber: e.target.value,
-                                })
-                              }
-                              className={inputClass(
-                                Boolean(errors.registrationNumber),
-                              )}
-                              placeholder="ABN, ACN, EIN or equivalent"
-                            />
-                          </Field>
-                          <Field
-                            label="Tax residency"
-                            htmlFor="taxCountry"
-                            error={errors.taxCountry}
-                          >
-                            <CustomSelect
-                              id="taxCountry"
-                              value={form.business.taxCountry}
-                              options={COUNTRY_OPTIONS}
-                              onChange={(value) =>
-                                updateSection("business", { taxCountry: value })
-                              }
-                              placeholder="Select tax country"
-                              error={Boolean(errors.taxCountry)}
-                            />
-                          </Field>
-                          <Field
-                            label="Industry"
-                            htmlFor="industry"
-                            error={errors.industry}
-                          >
-                            <CustomSelect
-                              id="industry"
-                              value={form.business.industry}
-                              options={INDUSTRY_OPTIONS}
-                              onChange={(value) =>
-                                updateSection("business", { industry: value })
-                              }
-                              placeholder="Select industry"
-                              error={Boolean(errors.industry)}
-                            />
-                          </Field>
-                          <Field label="Company website" htmlFor="website">
-                            <div className="relative">
-                              <Globe2 className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                              <input
-                                id="website"
-                                type="url"
-                                value={form.business.website}
-                                onChange={(e) =>
-                                  updateSection("business", {
-                                    website: e.target.value,
-                                  })
-                                }
-                                className={`${inputClass()} pl-10`}
-                                placeholder="https://"
-                              />
-                            </div>
-                          </Field>
-                          <Field
-                            label="Your role"
-                            htmlFor="role"
-                            error={errors.role}
-                          >
-                            <input
-                              id="role"
-                              value={form.business.role}
-                              onChange={(e) =>
-                                updateSection("business", {
-                                  role: e.target.value,
-                                })
-                              }
-                              className={inputClass(Boolean(errors.role))}
-                              placeholder="Director, trustee, authorised officer"
-                            />
-                          </Field>
-                          <Field
-                            label="Ownership percentage"
-                            htmlFor="ownership"
-                            error={errors.ownership}
-                          >
-                            <input
-                              id="ownership"
-                              inputMode="decimal"
-                              value={form.business.ownership}
-                              onChange={(e) =>
-                                updateSection("business", {
-                                  ownership: e.target.value,
-                                })
-                              }
-                              className={inputClass(Boolean(errors.ownership))}
-                              placeholder="e.g. 25%"
-                            />
-                          </Field>
-                          <div className="sm:col-span-2">
-                            <Field
-                              label="Registered address"
-                              htmlFor="businessAddress"
-                            >
-                              <input
-                                id="businessAddress"
-                                value={form.business.address}
-                                onChange={(e) =>
-                                  updateSection("business", {
-                                    address: e.target.value,
-                                  })
-                                }
-                                className={inputClass()}
-                                placeholder="Street address"
-                              />
-                            </Field>
-                          </div>
-                          <Field label="City" htmlFor="businessCity">
-                            <input
-                              id="businessCity"
-                              value={form.business.city}
-                              onChange={(e) =>
-                                updateSection("business", {
-                                  city: e.target.value,
-                                })
-                              }
-                              className={inputClass()}
-                            />
-                          </Field>
-                          <Field label="Postcode" htmlFor="businessPostcode">
-                            <input
-                              id="businessPostcode"
-                              value={form.business.postcode}
-                              onChange={(e) =>
-                                updateSection("business", {
-                                  postcode: e.target.value,
-                                })
-                              }
-                              className={inputClass()}
-                            />
-                          </Field>
-                        </div>
-                      </>
-                    ) : null}
-
-                    {activeStep.id === "identity" ? (
-                      <>
-                        <SectionIntro
-                          eyebrow={`Step ${currentStep + 1} · Prove it’s you`}
-                          title="Complete a secure identity check."
-                          description="Verify an eligible identity document. Your details are encrypted and used only for identity and compliance checks."
-                          icon={Fingerprint}
-                        />
-                        {form.identity.verified ? (
-                          <motion.div
-                            initial={
-                              reduceMotion ? false : { opacity: 0, y: 10 }
-                            }
-                            animate={{ opacity: 1, y: 0 }}
-                            className="rounded-[22px] border border-[rgba(0,52,120,0.16)] bg-[rgba(0,52,120,0.04)] p-5 sm:p-6"
-                          >
-                            <div className="flex items-start gap-4">
-                              <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-[#003478] text-white">
-                                <BadgeCheck className="h-6 w-6" />
-                              </div>
-                              <div>
-                                <h2 className="text-base font-semibold text-slate-950">
-                                  Identity verified
-                                </h2>
-                                <p className="mt-1 text-sm leading-6 text-slate-500">
-                                  Your document details and identity check have
-                                  been successfully completed.
-                                </p>
-                              </div>
-                            </div>
-                            <div className="mt-5 grid gap-3 sm:grid-cols-3">
-                              {[
-                                "Document details matched",
-                                "Identity presence confirmed",
-                                "Compliance screening complete",
-                              ].map((item) => (
-                                <div
-                                  key={item}
-                                  className="flex items-start gap-2 rounded-xl bg-white p-3 ring-1 ring-slate-200/70"
-                                >
-                                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#003478]" />
-                                  <span className="text-xs font-medium leading-5 text-slate-600">
-                                    {item}
-                                  </span>
-                                </div>
-                              ))}
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                updateSection("identity", { verified: false })
-                              }
-                              className="mt-5 text-xs font-semibold text-slate-500 hover:text-[#003478]"
-                            >
-                              Run verification again
-                            </button>
-                          </motion.div>
-                        ) : (
-                          <div className="space-y-6">
-                            <fieldset>
-                              <legend className="mb-3 text-[13px] font-semibold text-slate-800">
-                                Choose an identity document
-                              </legend>
-                              <div className="grid gap-3 sm:grid-cols-3">
-                                {[
-                                  {
-                                    value: "passport",
-                                    label: "Passport",
-                                    icon: Globe2,
-                                  },
-                                  {
-                                    value: "licence",
-                                    label: "Driver licence",
-                                    icon: IdCard,
-                                  },
-                                  {
-                                    value: "national-id",
-                                    label: "National ID",
-                                    icon: BadgeCheck,
-                                  },
-                                ].map((option) => {
-                                  const Icon = option.icon;
-                                  const selected =
-                                    form.identity.documentType === option.value;
-                                  return (
-                                    <button
-                                      key={option.value}
-                                      type="button"
-                                      onClick={() =>
-                                        updateSection("identity", {
-                                          documentType: option.value,
-                                          verified: false,
-                                        })
-                                      }
-                                      className={`flex items-center gap-3 rounded-2xl border p-4 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003478]/20 ${selected ? "border-[#003478] bg-[rgba(0,52,120,0.055)]" : "border-slate-200 hover:border-slate-300"}`}
-                                    >
-                                      <div
-                                        className={`grid h-9 w-9 place-items-center rounded-xl ${selected ? "bg-[#003478] text-white" : "bg-slate-100 text-slate-500"}`}
-                                      >
-                                        <Icon className="h-4 w-4" />
-                                      </div>
-                                      <span className="text-xs font-semibold text-slate-800">
-                                        {option.label}
-                                      </span>
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                              {errors.documentType ? (
-                                <p className="mt-2 text-xs font-medium text-red-600">
-                                  {errors.documentType}
-                                </p>
-                              ) : null}
-                            </fieldset>
-                            <div className="grid gap-5 sm:grid-cols-2">
-                              <Field
-                                label="Document number"
-                                htmlFor="documentNumber"
-                                error={errors.documentNumber}
-                              >
-                                <input
-                                  id="documentNumber"
-                                  value={form.identity.documentNumber}
-                                  onChange={(e) =>
-                                    updateSection("identity", {
-                                      documentNumber: e.target.value,
-                                      verified: false,
-                                    })
-                                  }
-                                  className={inputClass(
-                                    Boolean(errors.documentNumber),
-                                  )}
-                                />
-                              </Field>
-                              <Field
-                                label="Issuing country"
-                                htmlFor="issuingCountry"
-                                error={errors.issuingCountry}
-                              >
-                                <input
-                                  id="issuingCountry"
-                                  value={form.identity.issuingCountry}
-                                  onChange={(e) =>
-                                    updateSection("identity", {
-                                      issuingCountry: e.target.value,
-                                      verified: false,
-                                    })
-                                  }
-                                  className={inputClass(
-                                    Boolean(errors.issuingCountry),
-                                  )}
-                                />
-                              </Field>
-                            </div>
-                            <label
-                              className={`flex cursor-pointer items-start gap-3 rounded-2xl border p-4 ${errors.consent ? "border-red-300" : "border-slate-200"}`}
-                            >
-                              <input
-                                type="checkbox"
-                                checked={form.identity.consent}
-                                onChange={(e) =>
-                                  updateSection("identity", {
-                                    consent: e.target.checked,
-                                    verified: false,
-                                  })
-                                }
-                                className="mt-0.5 h-4 w-4 rounded accent-[#003478]"
-                              />
-                              <span className="text-xs leading-5 text-slate-600">
-                                I consent to Caprock verifying my identity
-                                details with approved identity and compliance
-                                providers.
-                              </span>
-                            </label>
-                            {errors.consent ? (
-                              <p className="-mt-4 text-xs font-medium text-red-600">
-                                {errors.consent}
-                              </p>
-                            ) : null}
-                            <button
-                              type="button"
-                              onClick={handleIdentityVerification}
-                              disabled={verifying}
-                              className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#003478] px-5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:cursor-wait disabled:transform-none disabled:opacity-85 sm:w-auto"
-                            >
-                              {verifying ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <LockKeyhole className="h-4 w-4" />
-                              )}
-                              {verifying
-                                ? "Verifying securely"
-                                : "Start secure identity check"}
-                            </button>
-                            {errors.identity ? (
-                              <p className="text-xs font-medium text-red-600">
-                                {errors.identity}
-                              </p>
-                            ) : null}
-                          </div>
-                        )}
-                      </>
-                    ) : null}
-
-                    {activeStep.id === "bank" ? (
-                      <>
-                        <SectionIntro
-                          eyebrow={`Step ${currentStep + 1} · Link bank account`}
-                          title="Connect a funding account."
-                          description="Link an account held in the same legal name. This will be used for approved deposits and withdrawals."
-                          icon={Landmark}
-                        />
-                        {form.bank.linked ? (
-                          <motion.div
-                            initial={
-                              reduceMotion ? false : { opacity: 0, y: 10 }
-                            }
-                            animate={{ opacity: 1, y: 0 }}
-                            className="overflow-hidden rounded-[22px] border border-[rgba(0,52,120,0.16)] bg-white"
-                          >
-                            <div className="flex items-start justify-between gap-4 bg-[rgba(0,52,120,0.045)] p-5 sm:p-6">
-                              <div className="flex items-center gap-4">
-                                <div className="grid h-12 w-12 place-items-center rounded-2xl bg-[#003478] text-white">
-                                  <Landmark className="h-5 w-5" />
-                                </div>
-                                <div>
-                                  <p className="text-sm font-semibold text-slate-950">
-                                    {form.bank.institution}
-                                  </p>
-                                  <p className="mt-1 text-xs text-slate-500">
-                                    Secure bank connection
-                                  </p>
-                                </div>
-                              </div>
-                              <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1.5 text-[10px] font-bold text-[#003478] ring-1 ring-[rgba(0,52,120,0.12)]">
-                                <Check className="h-3 w-3" />
-                                Linked
-                              </span>
-                            </div>
-                            <div className="grid gap-4 p-5 sm:grid-cols-3 sm:p-6">
-                              <div>
-                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                                  Account name
-                                </p>
-                                <p className="mt-1.5 text-xs font-semibold text-slate-700">
-                                  {form.bank.accountName}
-                                </p>
-                              </div>
-                              <div>
-                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                                  Account
-                                </p>
-                                <p className="mt-1.5 text-xs font-semibold text-slate-700">
-                                  •••• {form.bank.last4}
-                                </p>
-                              </div>
-                              <div>
-                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                                  Verification
-                                </p>
-                                <p className="mt-1.5 text-xs font-semibold text-[#003478]">
-                                  Ownership matched
-                                </p>
-                              </div>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                updateSection("bank", { linked: false })
-                              }
-                              className="mx-5 mb-5 text-xs font-semibold text-slate-500 hover:text-[#003478] sm:mx-6 sm:mb-6"
-                            >
-                              Change linked account
-                            </button>
-                          </motion.div>
-                        ) : (
-                          <div className="space-y-6">
-                            <div className="grid gap-3 sm:grid-cols-2">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  updateSection("bank", { method: "instant" })
-                                }
-                                className={`rounded-2xl border p-4 text-left transition ${form.bank.method === "instant" ? "border-[#003478] bg-[rgba(0,52,120,0.05)]" : "border-slate-200"}`}
-                              >
-                                <div className="flex items-center gap-3">
-                                  <div
-                                    className={`grid h-10 w-10 place-items-center rounded-xl ${form.bank.method === "instant" ? "bg-[#003478] text-white" : "bg-slate-100 text-slate-500"}`}
-                                  >
-                                    <Link2 className="h-4 w-4" />
-                                  </div>
-                                  <div>
-                                    <p className="text-sm font-semibold text-slate-900">
-                                      Instant connection
-                                    </p>
-                                    <p className="mt-0.5 text-xs text-slate-400">
-                                      Recommended · About 1 minute
-                                    </p>
-                                  </div>
-                                </div>
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  updateSection("bank", { method: "manual" })
-                                }
-                                className={`rounded-2xl border p-4 text-left transition ${form.bank.method === "manual" ? "border-[#003478] bg-[rgba(0,52,120,0.05)]" : "border-slate-200"}`}
-                              >
-                                <div className="flex items-center gap-3">
-                                  <div
-                                    className={`grid h-10 w-10 place-items-center rounded-xl ${form.bank.method === "manual" ? "bg-[#003478] text-white" : "bg-slate-100 text-slate-500"}`}
-                                  >
-                                    <Banknote className="h-4 w-4" />
-                                  </div>
-                                  <div>
-                                    <p className="text-sm font-semibold text-slate-900">
-                                      Enter manually
-                                    </p>
-                                    <p className="mt-0.5 text-xs text-slate-400">
-                                      Verify account details
-                                    </p>
-                                  </div>
-                                </div>
-                              </button>
-                            </div>
-                            {form.bank.method === "manual" ? (
-                              <div className="grid gap-5 sm:grid-cols-2">
-                                <div className="sm:col-span-2">
-                                  <Field
-                                    label="Financial institution"
-                                    htmlFor="institution"
-                                    error={errors.institution}
-                                  >
-                                    <input
-                                      id="institution"
-                                      value={form.bank.institution}
-                                      onChange={(e) =>
-                                        updateSection("bank", {
-                                          institution: e.target.value,
-                                        })
-                                      }
-                                      className={inputClass(
-                                        Boolean(errors.institution),
-                                      )}
-                                    />
-                                  </Field>
-                                </div>
-                                <Field
-                                  label="Account name"
-                                  htmlFor="accountName"
-                                  error={errors.accountName}
-                                >
-                                  <input
-                                    id="accountName"
-                                    value={form.bank.accountName}
-                                    onChange={(e) =>
-                                      updateSection("bank", {
-                                        accountName: e.target.value,
-                                      })
-                                    }
-                                    className={inputClass(
-                                      Boolean(errors.accountName),
-                                    )}
-                                  />
-                                </Field>
-                                <Field
-                                  label="Last four account digits"
-                                  htmlFor="last4"
-                                  error={errors.last4}
-                                >
-                                  <input
-                                    id="last4"
-                                    inputMode="numeric"
-                                    maxLength={4}
-                                    value={form.bank.last4}
-                                    onChange={(e) =>
-                                      updateSection("bank", {
-                                        last4: e.target.value.replace(
-                                          /\D/g,
-                                          "",
-                                        ),
-                                      })
-                                    }
-                                    className={inputClass(
-                                      Boolean(errors.last4),
-                                    )}
-                                    placeholder="0000"
-                                  />
-                                </Field>
-                              </div>
-                            ) : (
-                              <div className="rounded-2xl border border-slate-200 bg-[#f7f9fb] p-5">
-                                <div className="flex items-start gap-3">
-                                  <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-[#003478]" />
-                                  <div>
-                                    <p className="text-sm font-semibold text-slate-900">
-                                      Private and read-only
-                                    </p>
-                                    <p className="mt-1 text-xs leading-5 text-slate-500">
-                                      Caprock receives account ownership and
-                                      routing confirmation only. Your banking
-                                      credentials are never stored.
-                                    </p>
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-                            <button
-                              type="button"
-                              onClick={handleBankConnection}
-                              disabled={linkingBank}
-                              className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#003478] px-5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:cursor-wait disabled:transform-none disabled:opacity-85 sm:w-auto"
-                            >
-                              {linkingBank ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <Link2 className="h-4 w-4" />
-                              )}
-                              {linkingBank
-                                ? "Connecting securely"
-                                : form.bank.method === "instant"
-                                  ? "Connect bank securely"
-                                  : "Verify bank account"}
-                            </button>
-                            {errors.bank ? (
-                              <p className="text-xs font-medium text-red-600">
-                                {errors.bank}
-                              </p>
-                            ) : null}
-                          </div>
-                        )}
-                      </>
-                    ) : null}
-
-                    {activeStep.id === "cash" ? (
-                      <>
-                        <SectionIntro
-                          eyebrow={`Step ${currentStep + 1} · Cash account`}
-                          title="Configure your cash account."
-                          description="Choose how the account will be used and provide an expected funding profile."
-                          icon={CircleDollarSign}
-                        />
-                        <div className="space-y-6">
-                          <fieldset>
-                            <legend className="mb-3 text-[13px] font-semibold text-slate-800">
-                              Primary account purpose
-                            </legend>
-                            <div className="grid gap-3 sm:grid-cols-3">
-                              {[
-                                {
-                                  value: "operating",
-                                  label: "Operating cash",
-                                  description: "Everyday capital movements",
-                                  icon: Banknote,
-                                },
-                                {
-                                  value: "reserve",
-                                  label: "Reserve & liquidity",
-                                  description: "Hold strategic cash",
-                                  icon: ShieldCheck,
-                                },
-                                {
-                                  value: "settlement",
-                                  label: "Investment settlement",
-                                  description: "Fund subscriptions and income",
-                                  icon: Landmark,
-                                },
-                              ].map((option) => {
-                                const Icon = option.icon;
-                                const selected =
-                                  form.cash.purpose === option.value;
-                                return (
-                                  <button
-                                    key={option.value}
-                                    type="button"
-                                    onClick={() =>
-                                      updateSection("cash", {
-                                        purpose: option.value,
-                                      })
-                                    }
-                                    className={`rounded-2xl border p-4 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003478]/20 ${selected ? "border-[#003478] bg-[rgba(0,52,120,0.05)]" : "border-slate-200 hover:border-slate-300"}`}
-                                  >
-                                    <div
-                                      className={`grid h-10 w-10 place-items-center rounded-xl ${selected ? "bg-[#003478] text-white" : "bg-slate-100 text-slate-500"}`}
-                                    >
-                                      <Icon className="h-4 w-4" />
-                                    </div>
-                                    <p className="mt-3 text-xs font-semibold text-slate-900">
-                                      {option.label}
-                                    </p>
-                                    <p className="mt-1 text-[11px] leading-5 text-slate-400">
-                                      {option.description}
-                                    </p>
-                                  </button>
-                                );
-                              })}
-                            </div>
-                            {errors.purpose ? (
-                              <p className="mt-2 text-xs font-medium text-red-600">
-                                {errors.purpose}
-                              </p>
-                            ) : null}
-                          </fieldset>
-                          <div className="grid gap-5 sm:grid-cols-2">
-                            <Field
-                              label="Base currency"
-                              htmlFor="currency"
-                              error={errors.currency}
-                            >
-                              <CustomSelect
-                                id="currency"
-                                value={form.cash.currency}
-                                options={CURRENCY_OPTIONS}
-                                onChange={(value) =>
-                                  updateSection("cash", { currency: value })
-                                }
-                                placeholder="Select currency"
-                                error={Boolean(errors.currency)}
-                              />
-                            </Field>
-                            <Field
-                              label="Account nickname"
-                              htmlFor="nickname"
-                              error={errors.nickname}
-                            >
-                              <input
-                                id="nickname"
-                                value={form.cash.nickname}
-                                onChange={(e) =>
-                                  updateSection("cash", {
-                                    nickname: e.target.value,
-                                  })
-                                }
-                                className={inputClass(Boolean(errors.nickname))}
-                                placeholder="e.g. Primary settlement"
-                              />
-                            </Field>
-                            <Field
-                              label="Expected account balance"
-                              htmlFor="expectedBalance"
-                              error={errors.expectedBalance}
-                            >
-                              <CustomSelect
-                                id="expectedBalance"
-                                value={form.cash.expectedBalance}
-                                options={BALANCE_OPTIONS}
-                                onChange={(value) =>
-                                  updateSection("cash", {
-                                    expectedBalance: value,
-                                  })
-                                }
-                                placeholder="Select range"
-                                error={Boolean(errors.expectedBalance)}
-                              />
-                            </Field>
-                            <Field
-                              label="Primary funding source"
-                              htmlFor="fundingSource"
-                              error={errors.fundingSource}
-                            >
-                              <CustomSelect
-                                id="fundingSource"
-                                value={form.cash.fundingSource}
-                                options={FUNDING_OPTIONS}
-                                onChange={(value) =>
-                                  updateSection("cash", {
-                                    fundingSource: value,
-                                  })
-                                }
-                                placeholder="Select source"
-                                error={Boolean(errors.fundingSource)}
-                              />
-                            </Field>
-                          </div>
-                          <div className="rounded-2xl border border-slate-200 bg-[#f7f9fb] p-4">
-                            <div className="flex items-start gap-3">
-                              <LockKeyhole className="mt-0.5 h-4 w-4 shrink-0 text-[#003478]" />
-                              <div>
-                                <p className="text-xs font-semibold text-slate-800">
-                                  Account controls by design
-                                </p>
-                                <p className="mt-1 text-[11px] leading-5 text-slate-500">
-                                  Withdrawals are restricted to verified
-                                  accounts held in the approved legal name.
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </>
-                    ) : null}
-
-                    {activeStep.id === "documents" ? (
-                      <>
-                        <SectionIntro
-                          eyebrow={`Step ${currentStep + 1} · Proof documents`}
-                          title="Upload supporting documents."
-                          description="Provide clear, current documents. PDF, PNG and JPG files up to 10 MB are accepted."
-                          icon={FileCheck2}
-                        />
-                        <div className="space-y-3">
-                          <DocumentUpload
-                            id="proof-address"
-                            title="Proof of residential address"
-                            description="Utility bill, bank statement or government correspondence issued within the last 90 days."
-                            value={form.documents.proofOfAddress}
-                            onChange={(file) =>
-                              updateDocument("proofOfAddress", file)
-                            }
-                          />
-                          {isSoleTrader ? (
-                            <DocumentUpload
-                              id="business-registration"
-                              title="Business registration"
-                              description="Business name registration, ABN record or equivalent sole-trader registration document."
-                              value={form.documents.businessRegistration}
-                              onChange={(file) =>
-                                updateDocument("businessRegistration", file)
-                              }
-                            />
-                          ) : null}
-                          <DocumentUpload
-                            id="source-funds"
-                            title="Source of funds"
-                            description="Bank statement, audited financial statement, sale agreement or other supporting evidence."
-                            value={form.documents.sourceOfFunds}
-                            onChange={(file) =>
-                              updateDocument("sourceOfFunds", file)
-                            }
-                          />
-                        </div>
-                        {Object.keys(errors).length ? (
-                          <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs font-medium text-red-700">
-                            Please upload all required documents before
-                            continuing.
-                          </div>
-                        ) : null}
-                        <div className="mt-5 flex items-start gap-3 rounded-2xl border border-slate-200 bg-[#f7f9fb] p-4">
-                          <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#003478]" />
-                          <p className="text-[11px] leading-5 text-slate-500">
-                            Files are encrypted during transfer and at rest.
-                            Access is limited to authorised onboarding and
-                            compliance personnel.
-                          </p>
-                        </div>
-                      </>
-                    ) : null}
-
-                    {activeStep.id === "review" ? (
-                      <>
-                        <SectionIntro
-                          eyebrow="Final step · Review and submit"
-                          title="Review your application."
-                          description="Confirm each section before securely submitting your application for review."
-                          icon={Send}
-                        />
-                        <div className="mb-5 rounded-2xl border border-[rgba(0,52,120,0.14)] bg-[rgba(0,52,120,0.04)] p-4 sm:p-5">
-                          <div className="flex items-center justify-between gap-4">
-                            <div>
-                              <p className="text-sm font-semibold text-slate-900">
-                                Application readiness
-                              </p>
-                              <p className="mt-1 text-xs text-slate-500">
-                                {completedSections} of {requiredSteps.length}{" "}
-                                required sections complete
-                              </p>
-                            </div>
-                            <span className="text-lg font-semibold tracking-[-0.04em] text-[#003478]">
-                              {Math.round(
-                                (completedSections / requiredSteps.length) *
-                                  100,
-                              )}
-                              %
-                            </span>
-                          </div>
-                          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white">
-                            <motion.div
-                              className="h-full rounded-full bg-[#003478]"
-                              animate={{
-                                width: `${(completedSections / requiredSteps.length) * 100}%`,
-                              }}
-                            />
-                          </div>
-                        </div>
-                        <div className="space-y-3">
-                          <ReviewSection
-                            title="Personal information"
-                            icon={UserRound}
-                            complete={isStepComplete("personal")}
-                            onEdit={() => goToStep(stepIndex("personal"))}
-                            rows={[
-                              {
-                                label: "Application type",
-                                value: selectedApplicationType,
-                              },
-                              {
-                                label: "Primary applicant",
-                                value:
-                                  `${form.personal.firstName} ${form.personal.lastName}`.trim(),
-                              },
-                              {
-                                label: "Contact",
-                                value:
-                                  form.personal.email || form.personal.phone,
-                              },
-                              {
-                                label: "Residence",
-                                value: [
-                                  form.personal.city,
-                                  form.personal.state,
-                                  form.personal.country,
-                                ]
-                                  .filter(Boolean)
-                                  .join(", "),
-                              },
-                              {
-                                label: "Joint applicants",
-                                value: isJointApplication
-                                  ? `${form.jointApplicants.length} applicant${form.jointApplicants.length === 1 ? "" : "s"} added`
-                                  : "Not applicable",
-                              },
-                            ]}
-                          />
-                          {isSoleTrader ? (
-                            <ReviewSection
-                              title="Business information"
-                              icon={BriefcaseBusiness}
-                              complete={isStepComplete("business")}
-                              onEdit={() => goToStep(stepIndex("business"))}
-                              rows={[
-                                {
-                                  label: "Legal business name",
-                                  value: form.business.legalName,
-                                },
-                                {
-                                  label: "Entity type",
-                                  value: form.business.entityType,
-                                },
-                                {
-                                  label: "Registration",
-                                  value: form.business.registrationNumber,
-                                },
-                                {
-                                  label: "Your role",
-                                  value: form.business.role,
-                                },
-                              ]}
-                            />
-                          ) : null}
-                          <ReviewSection
-                            title="Identity and bank"
-                            icon={BadgeCheck}
-                            complete={
-                              isStepComplete("identity") &&
-                              isStepComplete("bank")
-                            }
-                            onEdit={() =>
-                              goToStep(
-                                stepIndex(
-                                  isStepComplete("identity")
-                                    ? "bank"
-                                    : "identity",
-                                ),
-                              )
-                            }
-                            rows={[
-                              {
-                                label: "Identity",
-                                value: form.identity.verified
-                                  ? "Verified"
-                                  : "Not verified",
-                              },
-                              {
-                                label: "Identity document",
-                                value: form.identity.documentType,
-                              },
-                              {
-                                label: "Linked account",
-                                value: form.bank.linked
-                                  ? `${form.bank.accountName} •••• ${form.bank.last4}`
-                                  : "Not linked",
-                              },
-                              {
-                                label: "Institution",
-                                value: form.bank.institution,
-                              },
-                            ]}
-                          />
-                          <ReviewSection
-                            title="Cash account and documents"
-                            icon={WalletCards}
-                            complete={
-                              isStepComplete("cash") &&
-                              isStepComplete("documents")
-                            }
-                            onEdit={() =>
-                              goToStep(
-                                stepIndex(
-                                  isStepComplete("cash") ? "documents" : "cash",
-                                ),
-                              )
-                            }
-                            rows={[
-                              { label: "Account", value: form.cash.nickname },
-                              { label: "Currency", value: form.cash.currency },
-                              { label: "Purpose", value: form.cash.purpose },
-                              {
-                                label: "Documents",
-                                value: isStepComplete("documents")
-                                  ? `${isSoleTrader ? 3 : 2} files ready`
-                                  : "Files required",
-                              },
-                            ]}
-                          />
-                        </div>
-                        <div className="mt-6 space-y-3">
-                          <label
-                            className={`flex cursor-pointer items-start gap-3 rounded-2xl border p-4 ${errors.accuracy ? "border-red-300" : "border-slate-200"}`}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={form.agreements.accuracy}
-                              onChange={(e) =>
-                                updateSection("agreements", {
-                                  accuracy: e.target.checked,
-                                })
-                              }
-                              className="mt-0.5 h-4 w-4 rounded accent-[#003478]"
-                            />
-                            <span className="text-xs leading-5 text-slate-600">
-                              I confirm that the information and documents
-                              provided are complete, current and accurate.
-                            </span>
-                          </label>
-                          <label
-                            className={`flex cursor-pointer items-start gap-3 rounded-2xl border p-4 ${errors.terms ? "border-red-300" : "border-slate-200"}`}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={form.agreements.terms}
-                              onChange={(e) =>
-                                updateSection("agreements", {
-                                  terms: e.target.checked,
-                                })
-                              }
-                              className="mt-0.5 h-4 w-4 rounded accent-[#003478]"
-                            />
-                            <span className="text-xs leading-5 text-slate-600">
-                              I agree to the account application terms, privacy
-                              notice and electronic communications consent.
-                            </span>
-                          </label>
-                          {errors.accuracy || errors.terms ? (
-                            <p className="text-xs font-medium text-red-600">
-                              Complete both confirmations before submitting.
-                            </p>
-                          ) : null}
-                        </div>
-                      </>
-                    ) : null}
-                  </motion.div>
-                </AnimatePresence>
+        <div className="min-w-0 px-4 py-6 sm:px-6 sm:py-8 lg:px-10 lg:py-10 xl:px-14">
+          <div className="mx-auto max-w-4xl">
+            <div className="mb-5 flex items-center justify-between gap-4 lg:hidden">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
+                  Step {activeStepIndex + 1} of {visibleSteps.length}
+                </p>
+                <p className="mt-1 text-sm font-semibold text-slate-800">
+                  {visibleSteps[activeStepIndex].label}
+                </p>
               </div>
+              <span className="rounded-full bg-[#dce7f2] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-800">
+                {completedSectionCount}/{applicationSectionCount} complete
+              </span>
+            </div>
 
-              <div className="flex flex-col-reverse gap-3 border-t border-slate-100 bg-white px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-8 lg:px-9 xl:px-10">
+            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_12px_45px_rgba(15,23,42,0.045)] sm:p-8 lg:p-10">
+              {notice ? (
+                <div
+                  role="alert"
+                  className="mb-6 flex items-start gap-3 rounded-2xl border border-red-100 bg-red-50 p-4 text-sm leading-6 text-red-800"
+                >
+                  <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
+                  {notice}
+                </div>
+              ) : null}
+              {renderActiveStep()}
+            </div>
+
+            <div className="mt-5 flex flex-col-reverse gap-3 rounded-2xl border border-slate-200/80 bg-white/80 p-3 backdrop-blur sm:flex-row sm:items-center sm:justify-between sm:p-4">
+              <button
+                type="button"
+                onClick={goBack}
+                disabled={activeStepIndex === 0}
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-950 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back
+              </button>
+
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <button
                   type="button"
-                  onClick={() =>
-                    currentStep > 0 ? goToStep(currentStep - 1) : navigate("/")
-                  }
-                  className="inline-flex h-12 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003478]/20"
+                  onClick={saveDraft}
+                  disabled={isSaving}
+                  className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:text-[#003478] disabled:opacity-60"
                 >
-                  <ArrowLeft className="h-4 w-4" />
-                  {currentStep === 0 ? "Back to sign in" : "Previous"}
+                  {isSaving ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4" />
+                  )}
+                  Save draft
                 </button>
-
-                {currentStep === visibleSteps.length - 1 ? (
-                  <motion.button
-                    type="button"
-                    onClick={handleSubmit}
-                    disabled={submitting}
-                    whileHover={
-                      !reduceMotion && !submitting ? { y: -1 } : undefined
-                    }
-                    whileTap={
-                      !reduceMotion && !submitting
-                        ? { scale: 0.985 }
-                        : undefined
-                    }
-                    className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[#003478] px-6 text-sm font-semibold text-white shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003478]/25 focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-85"
-                  >
-                    {submitting ? (
+                <button
+                  type="button"
+                  onClick={goNext}
+                  disabled={isSubmitting}
+                  className="group inline-flex h-12 min-w-40 items-center justify-center gap-2 rounded-xl bg-[#003478] px-6 text-sm font-semibold text-white shadow-[0_8px_22px_rgba(0,52,120,0.16)] transition hover:-translate-y-0.5 hover:bg-[#002b63] hover:shadow-[0_12px_28px_rgba(0,52,120,0.2)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#003478]/15 disabled:cursor-wait disabled:transform-none disabled:opacity-70"
+                >
+                  {isSubmitting ? (
+                    <>
                       <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
+                      Submitting
+                    </>
+                  ) : activeStepId === "review" ? (
+                    <>
                       <Send className="h-4 w-4" />
-                    )}
-                    {submitting ? "Submitting securely" : "Submit application"}
-                  </motion.button>
-                ) : (
-                  <motion.button
-                    type="button"
-                    onClick={handleContinue}
-                    whileHover={!reduceMotion ? { y: -1 } : undefined}
-                    whileTap={!reduceMotion ? { scale: 0.985 } : undefined}
-                    className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[#003478] px-6 text-sm font-semibold text-white shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003478]/25 focus-visible:ring-offset-2"
-                  >
-                    Continue
-                    <ArrowRight className="h-4 w-4" />
-                  </motion.button>
-                )}
+                      Submit securely
+                    </>
+                  ) : (
+                    <>
+                      Continue
+                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                    </>
+                  )}
+                </button>
               </div>
             </div>
 
-            <p className="mt-4 text-center text-[11px] leading-5 text-slate-400">
-              Need help? Contact your Caprock representative or onboarding
-              support.
-            </p>
-          </main>
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 pb-8 text-[10px] font-medium text-slate-400">
+              <span className="inline-flex items-center gap-1.5">
+                <ShieldCheck className="h-3.5 w-3.5" /> Encrypted
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <Banknote className="h-3.5 w-3.5" /> Bank verification
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <Building2 className="h-3.5 w-3.5" /> Compliance review
+              </span>
+            </div>
+          </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
