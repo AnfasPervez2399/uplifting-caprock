@@ -3,6 +3,7 @@ import type { ChangeEvent, FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Check, Eye, EyeOff, Loader2, LogIn } from "lucide-react";
+import { useLoader } from "../components/ui/LoaderProvider";
 
 type Status = "idle" | "loading" | "success";
 type Errors = Partial<Record<"email" | "password", string>>;
@@ -175,6 +176,7 @@ function HeaderVisual({ reduceMotion }: { reduceMotion: boolean | null }) {
 export function Login() {
   const navigate = useNavigate();
   const reduceMotion = useReducedMotion();
+  const { withLoader } = useLoader();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -222,12 +224,27 @@ export function Login() {
     setErrors({});
     setStatus("loading");
 
-    // Replace this demo delay with your authentication request.
-    await wait(1000);
-    setStatus("success");
-    sessionStorage.setItem("caprockUserEmail", normalizedEmail);
-    await wait(450);
-    navigate("/onboarding");
+    try {
+      await withLoader(
+        async () => {
+          // Replace this demo delay with your authentication request.
+          await wait(1000);
+          setStatus("success");
+          sessionStorage.setItem("caprockUserEmail", normalizedEmail);
+          await wait(450);
+          navigate("/onboarding");
+        },
+        {
+          message: "Signing you in securely",
+          detail:
+            "Verifying your account and preparing your onboarding workspace.",
+          minimumDuration: 800,
+        },
+      );
+    } catch {
+      setStatus("idle");
+      setErrors({ password: "We could not sign you in. Please try again." });
+    }
   };
 
   return (
@@ -472,3 +489,5 @@ export function Login() {
     </motion.section>
   );
 }
+
+export default Login;

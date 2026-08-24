@@ -1,12 +1,12 @@
-import { motion } from 'framer-motion'
-import { Sparkles, ArrowRight } from 'lucide-react'
-import { DashboardLayout } from '../components/layout/DashboardLayout'
-import { BalanceCard, QuickActions } from '../components/dashboard/BalanceCard'
-import { PortfolioChart } from '../components/dashboard/PortfolioChart'
-import { TransactionList } from '../components/dashboard/TransactionList'
-import { AssetAllocation } from '../components/dashboard/AssetAllocation'
+import { motion } from "framer-motion";
+import { Sparkles, ArrowRight } from "lucide-react";
+import { DashboardLayout } from "../components/layout/DashboardLayout";
+import { BalanceCard, QuickActions } from "../components/dashboard/BalanceCard";
+import { PortfolioChart } from "../components/dashboard/PortfolioChart";
+import { TransactionList } from "../components/dashboard/TransactionList";
+import { AssetAllocation } from "../components/dashboard/AssetAllocation";
 
-export function Dashboard() {
+export default function Dashboard() {
   return (
     <DashboardLayout>
       <div className="mx-auto max-w-7xl space-y-6">
@@ -21,8 +21,12 @@ export function Dashboard() {
               <Sparkles className="h-5 w-5" />
             </div>
             <div>
-              <p className="font-semibold">Your portfolio is outperforming the market</p>
-              <p className="text-sm text-white/70">You're in the top 8% of Caprock investors this quarter</p>
+              <p className="font-semibold">
+                Your portfolio is outperforming the market
+              </p>
+              <p className="text-sm text-white/70">
+                You're in the top 8% of Caprock investors this quarter
+              </p>
             </div>
           </div>
           <motion.button
@@ -46,5 +50,5 @@ export function Dashboard() {
         </div>
       </div>
     </DashboardLayout>
-  )
+  );
 }

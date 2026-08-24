@@ -1305,7 +1305,7 @@ const hasCompleteApplicantProof = (
   hasAddressEvidence(documents) &&
   hasPersonalDetailsEvidence(documents);
 
-export function Onboarding() {
+export default function Onboarding() {
   const navigate = useNavigate();
   const [loggedUserEmail] = useState(
     () =>

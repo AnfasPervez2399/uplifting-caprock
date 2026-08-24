@@ -52,7 +52,7 @@ const applicationOptions = [
   },
 ];
 
-export function SignUp() {
+export default function SignUp() {
   const navigate = useNavigate();
 
   const [step, setStep] = useState(1);

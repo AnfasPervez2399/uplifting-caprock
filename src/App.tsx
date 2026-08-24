@@ -1,22 +1,35 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { AuthLayout } from './components/layout/AuthLayout'
-import { Login } from './pages/Login'
-import { SignUp } from './pages/SignUp'
-import { Onboarding } from './pages/Onboarding'
-import { Dashboard } from './pages/Dashboard'
+import { Route, Routes, BrowserRouter } from "react-router-dom";
+import { AuthLayout } from "./components/layout/AuthLayout";
+import { LoaderProvider } from "./components/ui/LoaderProvider";
+import Dashboard from "./pages/Dashboard";
+import Login from "./pages/Login";
+import NotFound from "./pages/NotFound";
+import Onboarding from "./pages/Onboarding";
+import SignUp from "./pages/SignUp";
 
-export default function App() {
+function AppRoutes() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Navigate to="/login" replace />} />
-        <Route element={<AuthLayout />}>
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<SignUp />} />
-        </Route>
-        <Route path="/onboarding" element={<Onboarding />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-      </Routes>
-    </BrowserRouter>
-  )
+    <Routes>
+      <Route element={<AuthLayout />}>
+        <Route index element={<Login />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<SignUp />} />
+      </Route>
+      <Route path="/onboarding" element={<Onboarding />} />
+      <Route path="/dashboard" element={<Dashboard />} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
 }
+
+export function App() {
+  return (
+    <LoaderProvider>
+      <BrowserRouter>
+        <AppRoutes />
+      </BrowserRouter>
+    </LoaderProvider>
+  );
+}
+
+export default App;
