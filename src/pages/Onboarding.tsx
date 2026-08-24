@@ -6,6 +6,7 @@ import {
   Banknote,
   BriefcaseBusiness,
   Building2,
+  Camera,
   Check,
   CheckCircle2,
   CircleUserRound,
@@ -23,6 +24,7 @@ import {
   Phone,
   Plus,
   Save,
+  ScanFace,
   Send,
   ShieldCheck,
   Trash2,
@@ -40,10 +42,16 @@ import {
   useState,
 } from "react";
 import { CustomSelect, type SelectOption } from "../components/ui/CustomSelect";
+import {
+  DatePicker,
+  isAtLeastAge,
+  minimumAgeCondition,
+} from "../components/ui/DatePicker";
 
 type StepId =
   | "personal"
   | "business"
+  | "identity"
   | "bank"
   | "signature"
   | "documents"
@@ -158,6 +166,10 @@ interface SignatureState {
   dateOfBirth: string;
 }
 
+interface IdentityState {
+  selfie?: UploadedDocument;
+}
+
 interface ApplicantDocuments {
   licenceFront?: UploadedDocument;
   licenceBack?: UploadedDocument;
@@ -170,6 +182,7 @@ interface FormState {
   personal: PersonalState;
   jointApplicants: JointApplicant[];
   business: BusinessState;
+  identity: IdentityState;
   bankAccounts: BankAccount[];
   signature: SignatureState;
   documents: Record<string, ApplicantDocuments>;
@@ -193,6 +206,13 @@ const allSteps: StepDefinition[] = [
     label: "Business",
     description: "Assessment, tax and activity",
     icon: BriefcaseBusiness,
+  },
+  {
+    id: "identity",
+    shortLabel: "Selfie",
+    label: "Prove It’s You",
+    description: "Live identity selfie",
+    icon: ScanFace,
   },
   {
     id: "bank",
@@ -540,6 +560,7 @@ const initialFormState: FormState = {
     intendedTransactions: "",
     beneficialOwnership: "",
   },
+  identity: {},
   bankAccounts: [],
   signature: {
     name: "",
@@ -751,6 +772,117 @@ function DocumentUpload({
   );
 }
 
+function SelfieUpload({
+  value,
+  error,
+  onChange,
+}: {
+  value?: UploadedDocument;
+  error?: string;
+  onChange: (file?: File) => void;
+}) {
+  const handleFile = (event: ChangeEvent<HTMLInputElement>) => {
+    onChange(event.target.files?.[0]);
+    event.target.value = "";
+  };
+
+  return (
+    <div
+      className={`overflow-hidden rounded-2xl border bg-white transition ${
+        error
+          ? "border-red-300 ring-4 ring-red-500/[0.05]"
+          : value
+            ? "border-[rgba(0,52,120,0.2)]"
+            : "border-slate-200"
+      }`}
+    >
+      <div className="flex flex-col items-center px-5 py-8 text-center sm:px-8 sm:py-10">
+        <div
+          className={`grid h-20 w-20 place-items-center rounded-[26px] ${
+            value
+              ? "bg-[#dce7f2] text-[#003478]"
+              : "bg-slate-100 text-slate-500"
+          }`}
+        >
+          {value ? (
+            <CheckCircle2 className="h-9 w-9" />
+          ) : (
+            <ScanFace className="h-9 w-9" />
+          )}
+        </div>
+        <h3 className="mt-5 text-base font-semibold text-slate-950">
+          {value
+            ? "Selfie ready for verification"
+            : "Add a clear, current selfie"}
+        </h3>
+        <p className="mt-2 max-w-md text-sm leading-6 text-slate-500">
+          Use your front-facing camera now or choose a recent selfie from this
+          device.
+        </p>
+
+        {value ? (
+          <div className="mt-5 flex w-full max-w-md items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-left">
+            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-white text-[#003478] ring-1 ring-slate-200">
+              <Camera className="h-4 w-4" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-xs font-semibold text-slate-800">
+                {value.name}
+              </p>
+              <p className="mt-0.5 text-[10px] text-slate-400">
+                {(value.size / 1024 / 1024).toFixed(2)} MB · Image ready
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => onChange(undefined)}
+              className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-slate-400 transition hover:bg-white hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003478]/20"
+              aria-label="Remove selfie"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        ) : null}
+
+        <div className="mt-5 flex w-full max-w-md flex-col gap-2.5 sm:flex-row sm:justify-center">
+          <label
+            htmlFor="selfieCamera"
+            className="inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#003478] px-4 text-xs font-semibold text-white shadow-sm transition hover:bg-[#002b63] focus-within:ring-4 focus-within:ring-[#003478]/15"
+          >
+            <Camera className="h-4 w-4" />
+            Take a selfie
+            <input
+              id="selfieCamera"
+              type="file"
+              accept="image/*"
+              capture="user"
+              onChange={handleFile}
+              className="sr-only"
+            />
+          </label>
+          <label
+            htmlFor="selfieDevice"
+            className="inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:text-[#003478] focus-within:ring-4 focus-within:ring-[#003478]/10"
+          >
+            <UploadCloud className="h-4 w-4" />
+            Choose from device
+            <input
+              id="selfieDevice"
+              type="file"
+              accept="image/*"
+              onChange={handleFile}
+              className="sr-only"
+            />
+          </label>
+        </div>
+        {error ? (
+          <p className="mt-3 text-xs font-medium text-red-600">{error}</p>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 function BinaryChoice({
   value,
   onChange,
@@ -880,6 +1012,15 @@ const documentFromFile = (file?: File): UploadedDocument | undefined =>
 
 const isValidEmail = (email: string) => /^\S+@\S+\.\S+$/.test(email);
 
+const ADULT_DATE_CONDITIONS = [
+  minimumAgeCondition(18, "The selected person must be at least 18 years old."),
+] as const;
+
+const DOB_HELPER_TEXT =
+  "Select the month and search for the year directly. Applicants must be at least 18 years old.";
+const DOB_MAX_YEAR = new Date().getFullYear();
+const DOB_MIN_YEAR = DOB_MAX_YEAR - 120;
+
 const isCompleteJointPersonal = (
   applicant: JointApplicant,
   sharedAddress: boolean,
@@ -891,7 +1032,7 @@ const isCompleteJointPersonal = (
     applicant.firstName.trim() &&
     applicant.lastName.trim() &&
     applicant.formerNames.trim() &&
-    applicant.dateOfBirth &&
+    isAtLeastAge(applicant.dateOfBirth, 18) &&
     isValidEmail(applicant.email) &&
     (sharedAddress || applicant.residentialAddress.trim()),
   );
@@ -981,7 +1122,7 @@ export function Onboarding() {
       form.personal.firstName.trim() &&
       form.personal.lastName.trim() &&
       form.personal.formerNames.trim() &&
-      form.personal.dateOfBirth &&
+      isAtLeastAge(form.personal.dateOfBirth, 18) &&
       form.personal.residentialAddress.trim() &&
       form.personal.investmentCurrency &&
       form.personal.expectedInvestment,
@@ -1034,6 +1175,8 @@ export function Onboarding() {
     return foreignSoleTraderComplete;
   }, [form.business, foreignSoleTraderComplete, isSoleTrader]);
 
+  const identityComplete = Boolean(form.identity.selfie);
+
   const bankComplete = useMemo(
     () =>
       form.bankAccounts.length > 0 &&
@@ -1056,7 +1199,7 @@ export function Onboarding() {
         form.signature.name.trim() &&
         isValidEmail(form.signature.email) &&
         form.signature.phone.trim() &&
-        form.signature.dateOfBirth,
+        isAtLeastAge(form.signature.dateOfBirth, 18),
       ),
     [form.signature],
   );
@@ -1078,6 +1221,7 @@ export function Onboarding() {
   const allApplicationSectionsComplete =
     personalComplete &&
     businessComplete &&
+    identityComplete &&
     bankComplete &&
     signatureComplete &&
     documentsComplete;
@@ -1085,6 +1229,7 @@ export function Onboarding() {
   const completion: Record<StepId, boolean> = {
     personal: personalComplete,
     business: businessComplete,
+    identity: identityComplete,
     bank: bankComplete,
     signature: signatureComplete,
     documents: documentsComplete,
@@ -1317,9 +1462,21 @@ export function Onboarding() {
       : jointDraft.firstName.trim() &&
         jointDraft.lastName.trim() &&
         jointDraft.formerNames.trim() &&
-        jointDraft.dateOfBirth &&
+        isAtLeastAge(jointDraft.dateOfBirth, 18) &&
         isValidEmail(jointDraft.email) &&
         address.trim();
+
+    if (
+      !isExisting &&
+      jointDraft.dateOfBirth &&
+      !isAtLeastAge(jointDraft.dateOfBirth, 18)
+    ) {
+      setErrors((current) => ({
+        ...current,
+        jointApplicants: "The joint applicant must be at least 18 years old.",
+      }));
+      return;
+    }
 
     if (!valid) {
       setErrors((current) => ({
@@ -1431,6 +1588,35 @@ export function Onboarding() {
     }
   };
 
+  const updateSelfie = (file?: File) => {
+    if (!file) {
+      setForm((current) => ({ ...current, identity: {} }));
+      setErrors((current) => ({ ...current, identity: "" }));
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      setErrors((current) => ({
+        ...current,
+        identity: "Choose a JPG, PNG, HEIC or other image file.",
+      }));
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setErrors((current) => ({
+        ...current,
+        identity: "The selfie must be 10 MB or smaller.",
+      }));
+      return;
+    }
+
+    setForm((current) => ({
+      ...current,
+      identity: { selfie: documentFromFile(file) },
+    }));
+    setErrors((current) => ({ ...current, identity: "" }));
+  };
+
   const updateApplicantDocument = (
     applicantKey: string,
     field: ProofField,
@@ -1464,8 +1650,11 @@ export function Onboarding() {
       if (!form.personal.formerNames.trim())
         nextErrors.formerNames =
           "Enter former names, or “None” if not applicable.";
-      if (!form.personal.dateOfBirth)
+      if (!form.personal.dateOfBirth) {
         nextErrors.dateOfBirth = "Enter the applicant’s date of birth.";
+      } else if (!isAtLeastAge(form.personal.dateOfBirth, 18)) {
+        nextErrors.dateOfBirth = "The applicant must be at least 18 years old.";
+      }
       if (!form.personal.residentialAddress.trim())
         nextErrors.residentialAddress = "Enter the residential address.";
       if (!form.personal.investmentCurrency)
@@ -1473,7 +1662,16 @@ export function Onboarding() {
       if (!form.personal.expectedInvestment)
         nextErrors.expectedInvestment =
           "Select the expected investment amount.";
-      if (
+      const hasUnderageJointApplicant = form.jointApplicants.some(
+        (applicant) =>
+          applicant.method === "new" &&
+          Boolean(applicant.dateOfBirth) &&
+          !isAtLeastAge(applicant.dateOfBirth, 18),
+      );
+      if (isJoint && hasUnderageJointApplicant) {
+        nextErrors.jointApplicants =
+          "Every joint applicant must be at least 18 years old.";
+      } else if (
         isJoint &&
         (form.jointApplicants.length === 0 ||
           form.jointApplicants.some(
@@ -1550,6 +1748,11 @@ export function Onboarding() {
       }
     }
 
+    if (stepId === "identity" && !identityComplete) {
+      nextErrors.identity =
+        "Take a selfie or choose a clear selfie image from your device.";
+    }
+
     if (stepId === "bank" && !bankComplete) {
       nextErrors.bank =
         "Add at least one complete, verified external bank account.";
@@ -1562,9 +1765,13 @@ export function Onboarding() {
         nextErrors.signatureEmail = "Enter a valid email address.";
       if (!form.signature.phone.trim())
         nextErrors.signaturePhone = "Enter a phone number.";
-      if (!form.signature.dateOfBirth)
+      if (!form.signature.dateOfBirth) {
         nextErrors.signatureDateOfBirth =
           "Enter the signatory’s date of birth.";
+      } else if (!isAtLeastAge(form.signature.dateOfBirth, 18)) {
+        nextErrors.signatureDateOfBirth =
+          "The authorised signatory must be at least 18 years old.";
+      }
     }
 
     if (stepId === "documents" && !documentsComplete) {
@@ -1717,8 +1924,8 @@ export function Onboarding() {
             <div className="sm:col-span-2 lg:col-span-3">
               <DocumentUpload
                 id="profilePicture"
-                title="Profile image (optional)"
-                description="Upload a clear recent image in PDF, JPG or PNG format."
+                title="Account profile image (optional)"
+                description="Optional for your account profile. This does not replace the required identity selfie in Prove It’s You."
                 value={form.personal.profilePicture}
                 onChange={(file) =>
                   updatePersonal("profilePicture", documentFromFile(file))
@@ -1781,19 +1988,16 @@ export function Onboarding() {
                 className={inputClass(Boolean(errors.formerNames))}
               />
             </Field>
-            <Field
-              label="Date of birth"
-              htmlFor="dateOfBirth"
-              error={errors.dateOfBirth}
-            >
-              <input
+            <Field label="Date of birth" htmlFor="dateOfBirth">
+              <DatePicker
                 id="dateOfBirth"
-                type="date"
                 value={form.personal.dateOfBirth}
-                onChange={(event) =>
-                  updatePersonal("dateOfBirth", event.target.value)
-                }
-                className={inputClass(Boolean(errors.dateOfBirth))}
+                onChange={(value) => updatePersonal("dateOfBirth", value)}
+                errorMessage={errors.dateOfBirth}
+                helperText={DOB_HELPER_TEXT}
+                conditions={ADULT_DATE_CONDITIONS}
+                minYear={DOB_MIN_YEAR}
+                maxYear={DOB_MAX_YEAR}
               />
             </Field>
             <div className="sm:col-span-2 lg:col-span-3">
@@ -2014,14 +2218,23 @@ export function Onboarding() {
                       />
                     </Field>
                     <Field label="Date of birth" htmlFor="jointDateOfBirth">
-                      <input
+                      <DatePicker
                         id="jointDateOfBirth"
-                        type="date"
                         value={jointDraft.dateOfBirth}
-                        onChange={(event) =>
-                          updateJointDraft("dateOfBirth", event.target.value)
+                        onChange={(value) =>
+                          updateJointDraft("dateOfBirth", value)
                         }
-                        className={inputClass()}
+                        errorMessage={
+                          errors.jointApplicants &&
+                          jointDraft.dateOfBirth &&
+                          !isAtLeastAge(jointDraft.dateOfBirth, 18)
+                            ? "The joint applicant must be at least 18 years old."
+                            : undefined
+                        }
+                        helperText={DOB_HELPER_TEXT}
+                        conditions={ADULT_DATE_CONDITIONS}
+                        minYear={DOB_MIN_YEAR}
+                        maxYear={DOB_MAX_YEAR}
                       />
                     </Field>
                     <Field label="Email address" htmlFor="jointEmail">
@@ -2468,6 +2681,78 @@ export function Onboarding() {
     </div>
   );
 
+  const renderIdentity = () => {
+    const selfieGuidance = [
+      "Face the camera directly and keep your full face inside the frame.",
+      "Remove sunglasses or tinted glasses and avoid glare on prescription lenses.",
+      "Do not wear a face mask or anything that covers your face.",
+      "Use even lighting with no strong shadows across your face.",
+      "Stand in front of a plain, light-coloured and uncluttered background.",
+      "Make sure only you appear in the image and that the photo is current.",
+    ];
+
+    return (
+      <div className="animate-[fadeUp_.35s_ease-out]">
+        <SectionIntro
+          eyebrow={sectionEyebrow("identity")}
+          title="Prove It’s You"
+          description="Add a clear selfie so the identity team can compare your face with the identification documents supplied later in this application."
+          icon={ScanFace}
+        />
+
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(280px,0.8fr)]">
+          <section>
+            <SubsectionHeading
+              title="Your identity selfie"
+              description="Take a new photo with your camera or select a suitable image already saved on this device."
+            />
+            <SelfieUpload
+              value={form.identity.selfie}
+              error={errors.identity}
+              onChange={updateSelfie}
+            />
+          </section>
+
+          <aside className="rounded-2xl border border-slate-200 bg-slate-50/70 p-5 sm:p-6">
+            <div className="flex items-center gap-3">
+              <div className="grid h-10 w-10 place-items-center rounded-xl bg-[#dce7f2] text-[#003478]">
+                <Camera className="h-4 w-4" />
+              </div>
+              <div>
+                <h2 className="text-sm font-semibold text-slate-950">
+                  Selfie guidance
+                </h2>
+                <p className="mt-0.5 text-xs text-slate-500">
+                  For a faster identity check
+                </p>
+              </div>
+            </div>
+            <ul className="mt-5 space-y-3.5">
+              {selfieGuidance.map((guidance) => (
+                <li
+                  key={guidance}
+                  className="flex items-start gap-2.5 text-xs leading-5 text-slate-600"
+                >
+                  <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-white text-[#003478] ring-1 ring-slate-200">
+                    <Check className="h-3 w-3" strokeWidth={2.5} />
+                  </span>
+                  {guidance}
+                </li>
+              ))}
+            </ul>
+          </aside>
+        </div>
+
+        <div className="mt-6 flex items-start gap-3 rounded-2xl border border-[rgba(0,52,120,0.13)] bg-[rgba(0,52,120,0.035)] p-4 text-sm leading-6 text-slate-600">
+          <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-[#003478]" />
+          Your selfie is handled as sensitive identity information and is used
+          only for identity and compliance verification. Images must be 10 MB or
+          smaller.
+        </div>
+      </div>
+    );
+  };
+
   const renderBank = () => (
     <div className="animate-[fadeUp_.35s_ease-out]">
       <SectionIntro
@@ -2788,19 +3073,16 @@ export function Onboarding() {
                 />
               </div>
             </Field>
-            <Field
-              label="Date of birth"
-              htmlFor="signatureDateOfBirth"
-              error={errors.signatureDateOfBirth}
-            >
-              <input
+            <Field label="Date of birth" htmlFor="signatureDateOfBirth">
+              <DatePicker
                 id="signatureDateOfBirth"
-                type="date"
                 value={form.signature.dateOfBirth}
-                onChange={(event) =>
-                  updateSignature("dateOfBirth", event.target.value)
-                }
-                className={inputClass(Boolean(errors.signatureDateOfBirth))}
+                onChange={(value) => updateSignature("dateOfBirth", value)}
+                errorMessage={errors.signatureDateOfBirth}
+                helperText={DOB_HELPER_TEXT}
+                conditions={ADULT_DATE_CONDITIONS}
+                minYear={DOB_MIN_YEAR}
+                maxYear={DOB_MAX_YEAR}
               />
             </Field>
           </div>
@@ -3161,6 +3443,27 @@ export function Onboarding() {
           ) : null}
 
           <ReviewSection
+            title="Prove It’s You"
+            icon={ScanFace}
+            onEdit={() => goToStep("identity")}
+          >
+            <dl className="grid gap-x-6 gap-y-5 sm:grid-cols-2">
+              <SummaryItem
+                label="Selfie image"
+                value={form.identity.selfie?.name || "Not provided"}
+              />
+              <SummaryItem
+                label="Identity selfie status"
+                value={
+                  form.identity.selfie
+                    ? "Ready for identity review"
+                    : "Incomplete"
+                }
+              />
+            </dl>
+          </ReviewSection>
+
+          <ReviewSection
             title="External Bank Account"
             icon={Landmark}
             onEdit={() => goToStep("bank")}
@@ -3291,6 +3594,8 @@ export function Onboarding() {
         return renderPersonal();
       case "business":
         return renderBusiness();
+      case "identity":
+        return renderIdentity();
       case "bank":
         return renderBank();
       case "signature":
