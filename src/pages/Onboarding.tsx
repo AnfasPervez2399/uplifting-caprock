@@ -238,7 +238,7 @@ const allSteps: StepDefinition[] = [
   {
     id: "personal",
     shortLabel: "Personal",
-    label: "Personal",
+    label: "Personal Information",
     description: "Applicant and investment details",
     icon: CircleUserRound,
   },
@@ -2417,7 +2417,7 @@ export function Onboarding() {
     <div className="animate-[fadeUp_.35s_ease-out]">
       <SectionIntro
         eyebrow={sectionEyebrow("personal")}
-        title="Personal"
+        title="Personal Information"
         description="Tell us who is applying and provide the investment profile details required for this application."
         icon={CircleUserRound}
       />
@@ -4251,7 +4251,7 @@ export function Onboarding() {
 
         <div className="space-y-4">
           <ReviewSection
-            title="Personal"
+            title="Personal Information"
             icon={CircleUserRound}
             onEdit={() => goToStep("personal")}
           >
