@@ -245,18 +245,18 @@ const allSteps: StepDefinition[] = [
     icon: Banknote,
   },
   {
-    id: "signature",
-    shortLabel: "E-Signature",
-    label: "E-Signature",
-    description: "Authorised signatory details",
-    icon: Fingerprint,
-  },
-  {
     id: "documents",
     shortLabel: "Proof",
     label: "Upload Proof",
     description: "Identity and address evidence",
     icon: FileCheck2,
+  },
+  {
+    id: "signature",
+    shortLabel: "E-Signature",
+    label: "E-Signature",
+    description: "Authorised signatory details",
+    icon: Fingerprint,
   },
   {
     id: "review",
@@ -636,17 +636,30 @@ const inputClass = (hasError = false) =>
 const textareaClass = (hasError = false) =>
   `${inputClass(hasError)} h-auto min-h-24 resize-y py-3 leading-6`;
 
+function RequiredIndicator() {
+  return (
+    <>
+      <span aria-hidden="true" className="ml-0.5 font-bold text-red-600">
+        *
+      </span>
+      <span className="sr-only"> (required)</span>
+    </>
+  );
+}
+
 function Field({
   label,
   htmlFor,
   error,
   hint,
+  required = true,
   children,
 }: {
   label: string;
   htmlFor: string;
   error?: string;
   hint?: string;
+  required?: boolean;
   children: ReactNode;
 }) {
   return (
@@ -656,6 +669,11 @@ function Field({
         className="mb-2 block text-[13px] font-semibold text-slate-800"
       >
         {label}
+        {required ? (
+          <RequiredIndicator />
+        ) : (
+          <span className="ml-1 font-normal text-slate-400">(optional)</span>
+        )}
       </label>
       {children}
       {error ? (
@@ -694,6 +712,13 @@ function SectionIntro({
         </h1>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
           {description}
+        </p>
+        <p className="mt-2.5 text-[11px] font-medium text-slate-400">
+          <span aria-hidden="true" className="font-bold text-red-600">
+            *
+          </span>
+          <span className="sr-only">Asterisk:</span> Required field · Optional
+          fields are labelled
         </p>
       </div>
     </div>
@@ -758,7 +783,10 @@ function DocumentUpload({
           )}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-slate-900">{title}</p>
+          <p className="text-sm font-semibold text-slate-900">
+            {title}
+            <RequiredIndicator />
+          </p>
           <p className="mt-1 text-xs leading-5 text-slate-500">{description}</p>
           {value ? (
             <div className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-white px-3 py-2.5 ring-1 ring-slate-200/80">
@@ -843,6 +871,7 @@ function SelfieUpload({
           {value
             ? "Selfie ready for verification"
             : "Add a clear, current selfie"}
+          <RequiredIndicator />
         </h3>
         <p className="mt-2 max-w-md text-sm leading-6 text-slate-500">
           Use your front-facing camera now or choose a recent selfie from this
@@ -2038,8 +2067,9 @@ export function Onboarding() {
           />
           <div className="grid gap-5 sm:grid-cols-2">
             <Field
-              label="Caprock reference number (optional)"
+              label="Caprock reference number"
               htmlFor="referenceNumber"
+              required={false}
               hint="Assigned automatically when available."
             >
               <input
@@ -2051,8 +2081,9 @@ export function Onboarding() {
               />
             </Field>
             <Field
-              label="Adviser reference number (optional)"
+              label="Adviser reference number"
               htmlFor="advisorReferenceNumber"
+              required={false}
               hint="Supplied by your adviser when applicable."
             >
               <input
@@ -2099,7 +2130,7 @@ export function Onboarding() {
                 className={inputClass(Boolean(errors.firstName))}
               />
             </Field>
-            <Field label="Middle name (optional)" htmlFor="middleName">
+            <Field label="Middle name" htmlFor="middleName" required={false}>
               <input
                 id="middleName"
                 value={form.personal.middleName}
@@ -2329,8 +2360,9 @@ export function Onboarding() {
                       />
                     </Field>
                     <Field
-                      label="Middle name (optional)"
+                      label="Middle name"
                       htmlFor="jointMiddleName"
+                      required={false}
                     >
                       <input
                         id="jointMiddleName"
@@ -3046,8 +3078,9 @@ export function Onboarding() {
                 </Field>
               </div>
               <Field
-                label="Australian BSB (optional)"
+                label="Australian BSB"
                 htmlFor="bsb"
+                required={false}
                 hint="Complete this field for Australian bank accounts."
               >
                 <input
@@ -3799,22 +3832,6 @@ export function Onboarding() {
           </ReviewSection>
 
           <ReviewSection
-            title="E-Signature"
-            icon={Fingerprint}
-            onEdit={() => goToStep("signature")}
-          >
-            <dl className="grid gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-4">
-              <SummaryItem label="Signatory" value={form.signature.name} />
-              <SummaryItem label="Email" value={form.signature.email} />
-              <SummaryItem label="Phone" value={form.signature.phone} />
-              <SummaryItem
-                label="Date of birth"
-                value={form.signature.dateOfBirth}
-              />
-            </dl>
-          </ReviewSection>
-
-          <ReviewSection
             title="Upload Proof"
             icon={FileCheck2}
             onEdit={() => goToStep("documents")}
@@ -3829,6 +3846,22 @@ export function Onboarding() {
                 label={`${applicantProfiles.length} applicant proof set${applicantProfiles.length === 1 ? "" : "s"} complete`}
               />
             </div>
+          </ReviewSection>
+
+          <ReviewSection
+            title="E-Signature"
+            icon={Fingerprint}
+            onEdit={() => goToStep("signature")}
+          >
+            <dl className="grid gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-4">
+              <SummaryItem label="Signatory" value={form.signature.name} />
+              <SummaryItem label="Email" value={form.signature.email} />
+              <SummaryItem label="Phone" value={form.signature.phone} />
+              <SummaryItem
+                label="Date of birth"
+                value={form.signature.dateOfBirth}
+              />
+            </dl>
           </ReviewSection>
         </div>
 
@@ -3858,6 +3891,7 @@ export function Onboarding() {
               <span className="text-sm leading-6 text-slate-700">
                 I confirm that the information and documents supplied are
                 complete, current and accurate.
+                <RequiredIndicator />
               </span>
             </label>
             <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-white p-4 transition hover:border-slate-300">
@@ -3878,6 +3912,7 @@ export function Onboarding() {
               <span className="text-sm leading-6 text-slate-700">
                 I consent to identity, bank and compliance verification and to
                 receiving the electronic signature request.
+                <RequiredIndicator />
               </span>
             </label>
           </div>
@@ -3903,10 +3938,10 @@ export function Onboarding() {
         return renderBank();
       case "cash":
         return renderCashAccounts();
-      case "signature":
-        return renderSignature();
       case "documents":
         return renderDocuments();
+      case "signature":
+        return renderSignature();
       case "review":
         return renderReview();
       default:
