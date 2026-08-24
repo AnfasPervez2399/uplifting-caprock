@@ -47,9 +47,9 @@ import {
   useState,
 } from "react";
 import { useNavigate } from "react-router-dom";
+import { useLoader } from "../components/ui/LoaderProvider";
 import { CustomSelect, type SelectOption } from "../components/ui/CustomSelect";
 import { CustomMultiSelect } from "../components/ui/CustomMultiSelect";
-import { useLoader } from "../components/ui/LoaderProvider";
 import {
   DatePicker,
   isAtLeastAge,
@@ -1208,11 +1208,7 @@ const isCompleteJointPersonal = (
   return Boolean(
     applicant.confirmed &&
     applicant.firstName.trim() &&
-    applicant.lastName.trim() &&
-    applicant.formerNames.trim() &&
-    isAtLeastAge(applicant.dateOfBirth, 18) &&
     isValidEmail(applicant.email) &&
-    applicant.applicantCountry &&
     (sharedAddress || applicant.residentialAddress.trim()),
   );
 };
@@ -1912,31 +1908,17 @@ export function Onboarding() {
     const valid = isExisting
       ? lookupState === "found" && jointDraft.clientId.trim()
       : jointDraft.firstName.trim() &&
-        jointDraft.lastName.trim() &&
-        jointDraft.formerNames.trim() &&
-        isAtLeastAge(jointDraft.dateOfBirth, 18) &&
         isValidEmail(jointDraft.email) &&
-        jointDraft.applicantCountry &&
         address.trim();
-
-    if (
-      !isExisting &&
-      jointDraft.dateOfBirth &&
-      !isAtLeastAge(jointDraft.dateOfBirth, 18)
-    ) {
-      setErrors((current) => ({
-        ...current,
-        jointApplicants: "The joint applicant must be at least 18 years old.",
-      }));
-      return;
-    }
 
     if (!valid) {
       setErrors((current) => ({
         ...current,
         jointApplicants: isExisting
           ? "Verify the Caprock client ID before adding this applicant."
-          : "Complete the applicant’s name, former names, date of birth, country, email and required address.",
+          : sharedAddress
+            ? "Enter the applicant’s full name and a valid email address."
+            : "Enter the applicant’s full name, a valid email address and residential address.",
       }));
       return;
     }
@@ -1948,16 +1930,12 @@ export function Onboarding() {
       firstName: isExisting
         ? `Verified client · ${jointDraft.clientId.trim().toUpperCase()}`
         : jointDraft.firstName.trim(),
-      middleName: isExisting ? "" : jointDraft.middleName.trim(),
-      lastName: isExisting ? "" : jointDraft.lastName.trim(),
-      formerNames: isExisting
-        ? "Verified on file"
-        : jointDraft.formerNames.trim(),
+      middleName: "",
+      lastName: "",
+      formerNames: isExisting ? "Verified on file" : "",
       email: isExisting ? "" : jointDraft.email.trim(),
-      dateOfBirth: isExisting ? "" : jointDraft.dateOfBirth,
-      applicantCountry: isExisting
-        ? form.personal.applicantCountry
-        : jointDraft.applicantCountry,
+      dateOfBirth: "",
+      applicantCountry: form.personal.applicantCountry,
       residentialAddress: isExisting ? "Verified on file" : address.trim(),
       confirmed: true,
     };
@@ -2215,16 +2193,7 @@ export function Onboarding() {
       if (!form.personal.expectedInvestment)
         nextErrors.expectedInvestment =
           "Select the expected investment amount.";
-      const hasUnderageJointApplicant = form.jointApplicants.some(
-        (applicant) =>
-          applicant.method === "new" &&
-          Boolean(applicant.dateOfBirth) &&
-          !isAtLeastAge(applicant.dateOfBirth, 18),
-      );
-      if (isJoint && hasUnderageJointApplicant) {
-        nextErrors.jointApplicants =
-          "Every joint applicant must be at least 18 years old.";
-      } else if (
+      if (
         isJoint &&
         (form.jointApplicants.length === 0 ||
           form.jointApplicants.some(
@@ -2232,7 +2201,7 @@ export function Onboarding() {
           ))
       ) {
         nextErrors.jointApplicants =
-          "Add at least one complete joint applicant.";
+          "Add at least one complete joint applicant invitation.";
       }
     }
 
@@ -2643,7 +2612,7 @@ export function Onboarding() {
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <SubsectionHeading
                 title="Joint applicants"
-                description="Add each applicant using an existing Caprock client ID or invite them as a new client."
+                description="Add an existing client or send a simple invitation with their name and email. An address is only needed when applicants live separately."
               />
               {!showJointComposer ? (
                 <button
@@ -2680,7 +2649,7 @@ export function Onboarding() {
                       </p>
                     </div>
                     <span className="hidden rounded-full bg-[#dce7f2] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-800 sm:inline-flex">
-                      Added
+                      {applicant.method === "existing" ? "Added" : "Invited"}
                     </span>
                     <button
                       type="button"
@@ -2837,77 +2806,17 @@ export function Onboarding() {
                     ) : null}
                   </div>
                 ) : (
-                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    <Field label="First name" htmlFor="jointFirstName">
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <Field label="Full name" htmlFor="jointFullName">
                       <input
-                        id="jointFirstName"
+                        id="jointFullName"
                         value={jointDraft.firstName}
                         onChange={(event) =>
                           updateJointDraft("firstName", event.target.value)
                         }
-                        placeholder="Legal first name"
+                        autoComplete="name"
+                        placeholder="Applicant’s full legal name"
                         className={inputClass()}
-                      />
-                    </Field>
-                    <Field
-                      label="Middle name"
-                      htmlFor="jointMiddleName"
-                      required={false}
-                    >
-                      <input
-                        id="jointMiddleName"
-                        value={jointDraft.middleName}
-                        onChange={(event) =>
-                          updateJointDraft("middleName", event.target.value)
-                        }
-                        placeholder="Legal middle name"
-                        className={inputClass()}
-                      />
-                    </Field>
-                    <Field label="Last name" htmlFor="jointLastName">
-                      <input
-                        id="jointLastName"
-                        value={jointDraft.lastName}
-                        onChange={(event) =>
-                          updateJointDraft("lastName", event.target.value)
-                        }
-                        placeholder="Legal last name"
-                        className={inputClass()}
-                      />
-                    </Field>
-                    <Field
-                      label="Former name(s)"
-                      htmlFor="jointFormerNames"
-                      hint="Enter “None” if not applicable."
-                    >
-                      <input
-                        id="jointFormerNames"
-                        value={jointDraft.formerNames}
-                        onChange={(event) =>
-                          updateJointDraft("formerNames", event.target.value)
-                        }
-                        placeholder="Former names or None"
-                        className={inputClass()}
-                      />
-                    </Field>
-                    <Field label="Date of birth" htmlFor="jointDateOfBirth">
-                      <DatePicker
-                        id="jointDateOfBirth"
-                        value={jointDraft.dateOfBirth}
-                        onChange={(value) =>
-                          updateJointDraft("dateOfBirth", value)
-                        }
-                        errorMessage={
-                          errors.jointApplicants &&
-                          jointDraft.dateOfBirth &&
-                          !isAtLeastAge(jointDraft.dateOfBirth, 18)
-                            ? "The joint applicant must be at least 18 years old."
-                            : undefined
-                        }
-                        helperText={DOB_HELPER_TEXT}
-                        conditions={ADULT_DATE_CONDITIONS}
-                        minYear={DOB_MIN_YEAR}
-                        maxYear={DOB_MAX_YEAR}
                       />
                     </Field>
                     <Field label="Email address" htmlFor="jointEmail">
@@ -2918,33 +2827,18 @@ export function Onboarding() {
                         onChange={(event) =>
                           updateJointDraft("email", event.target.value)
                         }
+                        autoComplete="email"
                         placeholder="name@example.com"
                         className={inputClass()}
                       />
                     </Field>
-                    <Field
-                      label="Applicant’s country"
-                      htmlFor="jointApplicantCountry"
-                    >
-                      <CustomSelect
-                        id="jointApplicantCountry"
-                        value={jointDraft.applicantCountry}
-                        onChange={(value) =>
-                          updateJointDraft("applicantCountry", value)
-                        }
-                        options={COUNTRY_OPTIONS}
-                        placeholder="Select country"
-                        searchable
-                        searchPlaceholder="Search countries"
-                      />
-                    </Field>
                     {sharedAddress ? (
-                      <div className="sm:col-span-2 lg:col-span-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-xs leading-5 text-slate-600">
-                        This account type uses the main applicant’s residential
-                        address for this joint applicant.
+                      <div className="sm:col-span-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-xs leading-5 text-slate-600">
+                        This applicant will use the main applicant’s residential
+                        address.
                       </div>
                     ) : (
-                      <div className="sm:col-span-2 lg:col-span-3">
+                      <div className="sm:col-span-2">
                         <Field
                           label="Residential address"
                           htmlFor="jointResidentialAddress"
@@ -2958,6 +2852,7 @@ export function Onboarding() {
                                 event.target.value,
                               )
                             }
+                            autoComplete="street-address"
                             placeholder="Street, suburb or city, state or region, postcode and country"
                             className={textareaClass()}
                           />
@@ -2981,7 +2876,7 @@ export function Onboarding() {
                     <UserPlus className="h-4 w-4" />
                     {jointDraft.method === "existing"
                       ? "Add verified client"
-                      : "Add and invite"}
+                      : "Send invitation"}
                   </button>
                 </div>
               </div>
@@ -4432,9 +4327,8 @@ export function Onboarding() {
                       </span>
                       <span className="text-xs text-slate-500">
                         {applicant.method === "existing"
-                          ? `Client ID ${applicant.clientId}`
-                          : applicant.email}{" "}
-                        · {applicant.applicantCountry}
+                          ? `Client ID ${applicant.clientId} · ${applicant.applicantCountry}`
+                          : applicant.email}
                       </span>
                     </div>
                   ))}
