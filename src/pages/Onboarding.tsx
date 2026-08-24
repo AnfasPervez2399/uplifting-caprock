@@ -49,6 +49,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { CustomSelect, type SelectOption } from "../components/ui/CustomSelect";
 import { CustomMultiSelect } from "../components/ui/CustomMultiSelect";
+import { useLoader } from "../components/ui/LoaderProvider";
 import {
   DatePicker,
   isAtLeastAge,
@@ -1305,8 +1306,9 @@ const hasCompleteApplicantProof = (
   hasAddressEvidence(documents) &&
   hasPersonalDetailsEvidence(documents);
 
-export default function Onboarding() {
+export function Onboarding() {
   const navigate = useNavigate();
+  const { withLoader } = useLoader();
   const [loggedUserEmail] = useState(
     () =>
       sessionStorage.getItem("caprockUserEmail") || "alex.morgan@example.com",
@@ -2423,13 +2425,23 @@ export default function Onboarding() {
     window.setTimeout(() => setIsSaving(false), 900);
   };
 
-  const submitApplication = () => {
+  const submitApplication = async () => {
     if (!validateStep("review")) return;
     setIsSubmitting(true);
-    window.setTimeout(() => {
-      setIsSubmitting(false);
+
+    try {
+      await withLoader(
+        // Replace this promise with the secure application-submission request.
+        new Promise<void>((resolve) => window.setTimeout(resolve, 1400)),
+      );
       setSubmitted(true);
-    }, 1400);
+    } catch {
+      setNotice(
+        "We could not submit your application. Your progress is safe—please try again.",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const renderPersonal = () => (
@@ -5606,3 +5618,5 @@ export default function Onboarding() {
     </div>
   );
 }
+
+export default Onboarding;

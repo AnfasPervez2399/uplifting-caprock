@@ -1,4 +1,4 @@
-import { ShieldCheck } from "lucide-react";
+import { Send } from "lucide-react";
 
 interface FullScreenLoaderProps {
   message?: string;
@@ -6,77 +6,96 @@ interface FullScreenLoaderProps {
 }
 
 export function FullScreenLoader({
-  message = "Preparing your secure workspace",
-  detail = "Loading your application and encrypted documents",
+  message = "Please wait",
 }: FullScreenLoaderProps) {
   return (
     <div
       role="status"
       aria-live="polite"
       aria-label={message}
-      className="fixed inset-0 z-[200] grid min-h-screen place-items-center overflow-hidden bg-[#f7f9fc] px-6 text-slate-950"
+      aria-busy="true"
+      className="pointer-events-auto fixed inset-0 grid h-[100dvh] min-h-screen w-screen place-items-center overflow-hidden bg-slate-950/15 px-4 py-6 text-slate-950 backdrop-blur-[12px]"
+      style={{ zIndex: 2147483647 }}
     >
       <style>{`
+        @keyframes caprock-loader-enter {
+          from { opacity: 0; transform: translateY(10px) scale(.98); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
         @keyframes caprock-loader-spin {
           to { transform: rotate(360deg); }
         }
-        @keyframes caprock-loader-progress {
-          0% { transform: translateX(-105%); }
-          55% { transform: translateX(45%); }
-          100% { transform: translateX(215%); }
+        @keyframes caprock-loader-ripple {
+          0% { opacity: .35; transform: scale(.72); }
+          80%, 100% { opacity: 0; transform: scale(1.38); }
         }
-        @keyframes caprock-loader-pulse {
-          0%, 100% { opacity: .45; transform: scale(.96); }
-          50% { opacity: 1; transform: scale(1); }
+        @keyframes caprock-loader-bar {
+          0%, 100% { height: 8px; opacity: .55; }
+          50% { height: 21px; opacity: 1; }
+        }
+        @keyframes caprock-loader-line {
+          0% { transform: translateX(-120%); }
+          55%, 100% { transform: translateX(250%); }
+        }
+        @keyframes caprock-loader-travel {
+          0% { left: 0%; opacity: 0; transform: translate(-50%, -50%) scale(.76) rotate(-8deg); }
+          10% { opacity: 1; }
+          48% { transform: translate(-50%, -58%) scale(1) rotate(2deg); }
+          90% { opacity: 1; }
+          100% { left: 100%; opacity: 0; transform: translate(-50%, -50%) scale(.8) rotate(-8deg); }
         }
         @media (prefers-reduced-motion: reduce) {
+          .caprock-loader-enter,
           .caprock-loader-spin,
-          .caprock-loader-progress,
-          .caprock-loader-pulse { animation: none !important; }
+          .caprock-loader-ripple,
+          .caprock-loader-bar,
+          .caprock-loader-line,
+          .caprock-loader-travel { animation: none !important; }
+          .caprock-loader-travel { left: 65% !important; opacity: 1 !important; }
         }
       `}</style>
 
-      <div className="absolute inset-x-0 top-0 h-1 bg-slate-100">
-        <div className="caprock-loader-progress h-full w-1/3 bg-[#003478] [animation:caprock-loader-progress_1.35s_ease-in-out_infinite]" />
-      </div>
-
-      <div className="absolute left-5 top-5 sm:left-8 sm:top-7">
-        <img
-          src="/company-logo.svg"
-          alt="Caprock"
-          className="h-8 w-auto sm:h-9"
-        />
-      </div>
-
-      <div className="w-full max-w-sm text-center">
-        <div className="relative mx-auto h-20 w-20">
-          <div className="caprock-loader-spin absolute inset-0 rounded-[24px] border border-slate-200 border-t-[#003478] [animation:caprock-loader-spin_1.1s_linear_infinite]" />
-          <div className="absolute inset-2 grid place-items-center rounded-[19px] bg-white text-[#003478] shadow-[0_12px_35px_rgba(15,23,42,0.08)] ring-1 ring-slate-200/80">
-            <ShieldCheck className="h-7 w-7" />
-          </div>
-          <span className="caprock-loader-pulse absolute -right-1 -top-1 h-3 w-3 rounded-full bg-[#003478] ring-4 ring-[#dce7f2] [animation:caprock-loader-pulse_1.4s_ease-in-out_infinite]" />
+      <section className="caprock-loader-enter w-full max-w-[360px] rounded-[28px] border border-white/80 bg-white/[0.9] px-6 py-8 text-center shadow-[0_28px_90px_rgba(15,23,42,0.2),0_4px_16px_rgba(15,23,42,0.07)] backdrop-blur-2xl [animation:caprock-loader-enter_.28s_cubic-bezier(.22,1,.36,1)_both] sm:px-8 sm:py-9">
+        <div className="relative mx-auto h-24 w-24" aria-hidden="true">
+          <span className="caprock-loader-ripple absolute inset-1 rounded-[30px] border border-[#003478]/25 [animation:caprock-loader-ripple_1.8s_ease-out_infinite]" />
+          <span className="caprock-loader-spin absolute inset-1 rounded-[30px] border border-slate-200 border-r-[#003478] border-t-[#003478] [animation:caprock-loader-spin_1.35s_linear_infinite]" />
+          <span className="absolute inset-[14px] flex items-center justify-center gap-1 rounded-[22px] bg-[#003478] shadow-[0_14px_32px_rgba(0,52,120,0.24)]">
+            {[0, 160, 320].map((delay) => (
+              <span
+                key={delay}
+                className="caprock-loader-bar w-1.5 rounded-full bg-white [animation:caprock-loader-bar_1.15s_ease-in-out_infinite]"
+                style={{ animationDelay: `${delay}ms` }}
+              />
+            ))}
+          </span>
         </div>
 
-        <p className="mt-7 text-[10px] font-bold uppercase tracking-[0.18em] text-[#003478]">
-          Secure session
-        </p>
-        <h1 className="mt-2 text-xl font-semibold tracking-[-0.025em] text-slate-950 sm:text-2xl">
+        <h1 className="mt-6 text-[22px] font-semibold tracking-[-0.035em] text-slate-950 sm:text-[24px]">
           {message}
         </h1>
-        <p className="mx-auto mt-2 max-w-xs text-sm leading-6 text-slate-500">
-          {detail}
-        </p>
 
-        <div className="mx-auto mt-7 h-1.5 max-w-[260px] overflow-hidden rounded-full bg-slate-200/80">
-          <div className="caprock-loader-progress h-full w-2/5 rounded-full bg-[#003478] [animation:caprock-loader-progress_1.35s_ease-in-out_infinite]" />
+        <div
+          className="relative mx-auto mt-7 h-10 max-w-[260px]"
+          aria-hidden="true"
+        >
+          <div className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 overflow-hidden bg-slate-200">
+            <span className="caprock-loader-line block h-full w-2/5 bg-[#003478] [animation:caprock-loader-line_1.8s_cubic-bezier(.45,0,.2,1)_infinite]" />
+          </div>
+          <span className="absolute left-0 top-1/2 h-2 w-2 -translate-y-1/2 rounded-full bg-[#003478]/30" />
+          <span className="absolute right-0 top-1/2 h-2 w-2 -translate-y-1/2 rounded-full bg-[#003478]/30" />
+          <span className="caprock-loader-travel absolute top-1/2 grid h-8 w-8 place-items-center rounded-xl bg-[#003478] text-white shadow-[0_7px_18px_rgba(0,52,120,0.28)] [animation:caprock-loader-travel_2.4s_cubic-bezier(.4,0,.2,1)_infinite]">
+            <Send
+              className="h-3.5 w-3.5 -rotate-6"
+              fill="currentColor"
+              strokeWidth={1.5}
+            />
+          </span>
         </div>
-        <span className="sr-only">Loading</span>
-      </div>
 
-      <div className="absolute inset-x-0 bottom-7 flex items-center justify-center gap-2 text-[10px] font-medium text-slate-400">
-        <ShieldCheck className="h-3.5 w-3.5 text-[#003478]" />
-        Encrypted connection active
-      </div>
+        <span className="sr-only">Loading. Please wait.</span>
+      </section>
     </div>
   );
 }
+
+export default FullScreenLoader;

@@ -234,12 +234,7 @@ export function Login() {
           await wait(450);
           navigate("/onboarding");
         },
-        {
-          message: "Signing you in securely",
-          detail:
-            "Verifying your account and preparing your onboarding workspace.",
-          minimumDuration: 800,
-        },
+        { minimumDuration: 800 },
       );
     } catch {
       setStatus("idle");
