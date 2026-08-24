@@ -39,9 +39,11 @@ import {
   type ReactNode,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { CustomSelect, type SelectOption } from "../components/ui/CustomSelect";
+import { CustomMultiSelect } from "../components/ui/CustomMultiSelect";
 import {
   DatePicker,
   isAtLeastAge,
@@ -53,6 +55,7 @@ type StepId =
   | "business"
   | "identity"
   | "bank"
+  | "cash"
   | "signature"
   | "documents"
   | "review";
@@ -170,6 +173,17 @@ interface IdentityState {
   selfie?: UploadedDocument;
 }
 
+interface AdviserAccess {
+  name: string;
+  email: string;
+  invitedAt: string;
+}
+
+interface AdviserDraft {
+  name: string;
+  email: string;
+}
+
 interface ApplicantDocuments {
   licenceFront?: UploadedDocument;
   licenceBack?: UploadedDocument;
@@ -184,6 +198,8 @@ interface FormState {
   business: BusinessState;
   identity: IdentityState;
   bankAccounts: BankAccount[];
+  cashAccounts: string[];
+  adviserAccess?: AdviserAccess;
   signature: SignatureState;
   documents: Record<string, ApplicantDocuments>;
   agreements: {
@@ -220,6 +236,13 @@ const allSteps: StepDefinition[] = [
     label: "External Bank Account",
     description: "Settlement account verification",
     icon: Landmark,
+  },
+  {
+    id: "cash",
+    shortLabel: "Cash",
+    label: "Cash Accounts",
+    description: "Select account currencies",
+    icon: Banknote,
   },
   {
     id: "signature",
@@ -562,6 +585,7 @@ const initialFormState: FormState = {
   },
   identity: {},
   bankAccounts: [],
+  cashAccounts: [],
   signature: {
     name: "",
     email: "",
@@ -573,6 +597,11 @@ const initialFormState: FormState = {
     accurate: false,
     consent: false,
   },
+};
+
+const emptyAdviserDraft: AdviserDraft = {
+  name: "",
+  email: "",
 };
 
 const emptyJointDraft: JointApplicantDraft = {
@@ -1059,7 +1088,16 @@ export function Onboarding() {
   const [editingBankId, setEditingBankId] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [notice, setNotice] = useState("");
+  const [successNotice, setSuccessNotice] = useState("");
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [showAdviserInvite, setShowAdviserInvite] = useState(false);
+  const [adviserDraft, setAdviserDraft] =
+    useState<AdviserDraft>(emptyAdviserDraft);
+  const [adviserError, setAdviserError] = useState("");
+  const adviserDialogRef = useRef<HTMLDivElement>(null);
+  const adviserNameInputRef = useRef<HTMLInputElement>(null);
+  const adviserReturnFocusRef = useRef<HTMLElement | null>(null);
+  const [isInvitingAdviser, setIsInvitingAdviser] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -1077,7 +1115,7 @@ export function Onboarding() {
   const activeStepIndex = visibleSteps.findIndex(
     (step) => step.id === activeStepId,
   );
-  const primaryFullName = formatApplicantName(form.personal);
+  const mainApplicantFullName = formatApplicantName(form.personal);
   const selectedApplicationType =
     APPLICATION_OPTIONS.find(
       (option) => option.value === form.personal.applicationType,
@@ -1088,17 +1126,17 @@ export function Onboarding() {
     : form.personal.applicantCountry === "Australia"
       ? "australian"
       : "foreign";
-  const primaryAssessmentNature = isSoleTrader
+  const mainApplicantAssessmentNature = isSoleTrader
     ? form.business.assessmentNature
     : countryAssessmentNature;
 
   const applicantProfiles = useMemo(
     () => [
       {
-        key: "primary",
-        label: "Primary applicant",
-        name: primaryFullName || "Primary applicant",
-        assessmentNature: primaryAssessmentNature,
+        key: "main",
+        label: "Main applicant",
+        name: mainApplicantFullName || "Main applicant",
+        assessmentNature: mainApplicantAssessmentNature,
       },
       ...form.jointApplicants.map((applicant, index) => ({
         key: applicant.id,
@@ -1110,13 +1148,13 @@ export function Onboarding() {
     [
       countryAssessmentNature,
       form.jointApplicants,
-      primaryAssessmentNature,
-      primaryFullName,
+      mainApplicantAssessmentNature,
+      mainApplicantFullName,
     ],
   );
 
   const personalComplete = useMemo(() => {
-    const primaryComplete = Boolean(
+    const mainApplicantComplete = Boolean(
       form.personal.applicationType &&
       form.personal.applicantCountry &&
       form.personal.firstName.trim() &&
@@ -1127,7 +1165,7 @@ export function Onboarding() {
       form.personal.investmentCurrency &&
       form.personal.expectedInvestment,
     );
-    if (!primaryComplete) return false;
+    if (!mainApplicantComplete) return false;
     if (!isJoint) return true;
     return (
       form.jointApplicants.length > 0 &&
@@ -1193,6 +1231,10 @@ export function Onboarding() {
     [form.bankAccounts],
   );
 
+  const cashAccountsComplete =
+    form.cashAccounts.length > 0 &&
+    new Set(form.cashAccounts).size === form.cashAccounts.length;
+
   const signatureComplete = useMemo(
     () =>
       Boolean(
@@ -1223,6 +1265,7 @@ export function Onboarding() {
     businessComplete &&
     identityComplete &&
     bankComplete &&
+    cashAccountsComplete &&
     signatureComplete &&
     documentsComplete;
 
@@ -1231,6 +1274,7 @@ export function Onboarding() {
     business: businessComplete,
     identity: identityComplete,
     bank: bankComplete,
+    cash: cashAccountsComplete,
     signature: signatureComplete,
     documents: documentsComplete,
     review:
@@ -1254,7 +1298,53 @@ export function Onboarding() {
     window.scrollTo({ top: 0, behavior: "smooth" });
     setErrors({});
     setNotice("");
+    setSuccessNotice("");
   }, [activeStepId]);
+
+  useEffect(() => {
+    if (!showAdviserInvite) return;
+
+    adviserReturnFocusRef.current =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.requestAnimationFrame(() => adviserNameInputRef.current?.focus());
+
+    const handleDialogKeyDown = (event: globalThis.KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setShowAdviserInvite(false);
+        return;
+      }
+      if (event.key !== "Tab") return;
+
+      const focusable = Array.from(
+        adviserDialogRef.current?.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), input:not([disabled]), [href], [tabindex]:not([tabindex="-1"])',
+        ) || [],
+      ).filter((element) => element.getClientRects().length > 0);
+      if (!focusable.length) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener("keydown", handleDialogKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleDialogKeyDown);
+      document.body.style.overflow = previousOverflow;
+      adviserReturnFocusRef.current?.focus();
+    };
+  }, [showAdviserInvite]);
 
   const updatePersonal = <K extends keyof PersonalState>(
     key: K,
@@ -1265,6 +1355,17 @@ export function Onboarding() {
       personal: { ...current.personal, [key]: value },
     }));
     setErrors((current) => ({ ...current, [key]: "" }));
+  };
+
+  const updateCashAccounts = (currencies: string[]) => {
+    const allowedCurrencies = new Set(
+      BANK_CURRENCY_OPTIONS.map((option) => option.value),
+    );
+    const uniqueCurrencies = [...new Set(currencies)].filter((currency) =>
+      allowedCurrencies.has(currency),
+    );
+    setForm((current) => ({ ...current, cashAccounts: uniqueCurrencies }));
+    setErrors((current) => ({ ...current, cashAccounts: "" }));
   };
 
   const updateBusiness = <K extends keyof BusinessState>(
@@ -1422,7 +1523,7 @@ export function Onboarding() {
         : [],
       documents: isJointType(applicationType)
         ? current.documents
-        : { primary: current.documents.primary || {} },
+        : { main: current.documents.main || {} },
     }));
     setErrors((current) => ({ ...current, applicationType: "" }));
     if (!isJointType(applicationType)) {
@@ -1758,6 +1859,11 @@ export function Onboarding() {
         "Add at least one complete, verified external bank account.";
     }
 
+    if (stepId === "cash" && !cashAccountsComplete) {
+      nextErrors.cashAccounts =
+        "Select at least one currency for a cash account.";
+    }
+
     if (stepId === "signature") {
       if (!form.signature.name.trim())
         nextErrors.signatureName = "Enter the authorised signatory’s name.";
@@ -1815,6 +1921,51 @@ export function Onboarding() {
     goToStep(
       visibleSteps[Math.min(activeStepIndex + 1, visibleSteps.length - 1)].id,
     );
+  };
+
+  const openAdviserInvite = () => {
+    setAdviserDraft(
+      form.adviserAccess
+        ? { name: form.adviserAccess.name, email: form.adviserAccess.email }
+        : emptyAdviserDraft,
+    );
+    setAdviserError("");
+    setShowAdviserInvite(true);
+  };
+
+  const inviteAdviser = () => {
+    if (!adviserDraft.name.trim()) {
+      setAdviserError("Enter the adviser’s name.");
+      return;
+    }
+    if (!isValidEmail(adviserDraft.email)) {
+      setAdviserError("Enter a valid adviser email address.");
+      return;
+    }
+
+    setIsInvitingAdviser(true);
+    window.setTimeout(() => {
+      setForm((current) => ({
+        ...current,
+        adviserAccess: {
+          name: adviserDraft.name.trim(),
+          email: adviserDraft.email.trim(),
+          invitedAt: new Date().toISOString(),
+        },
+      }));
+      setIsInvitingAdviser(false);
+      setShowAdviserInvite(false);
+      setSuccessNotice(
+        "Adviser invitation sent. They can help complete any section of this application on your behalf.",
+      );
+    }, 700);
+  };
+
+  const revokeAdviserAccess = () => {
+    setForm((current) => ({ ...current, adviserAccess: undefined }));
+    setAdviserDraft(emptyAdviserDraft);
+    setShowAdviserInvite(false);
+    setSuccessNotice("Adviser access has been revoked.");
   };
 
   const saveDraft = () => {
@@ -1917,7 +2068,7 @@ export function Onboarding() {
 
         <section>
           <SubsectionHeading
-            title="Primary applicant"
+            title="Main applicant"
             description="Use legal identity details exactly as they appear on official documents."
           />
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -2251,8 +2402,8 @@ export function Onboarding() {
                     </Field>
                     {sharedAddress ? (
                       <div className="sm:col-span-2 lg:col-span-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-xs leading-5 text-slate-600">
-                        This account type uses the primary applicant’s
-                        residential address for this joint applicant.
+                        This account type uses the main applicant’s residential
+                        address for this joint applicant.
                       </div>
                     ) : (
                       <div className="sm:col-span-2 lg:col-span-3">
@@ -2982,6 +3133,112 @@ export function Onboarding() {
     </div>
   );
 
+  const renderCashAccounts = () => (
+    <div className="animate-[fadeUp_.35s_ease-out]">
+      <SectionIntro
+        eyebrow={sectionEyebrow("cash")}
+        title="Cash Accounts"
+        description="Choose the currencies you want available after your external bank account has been linked."
+        icon={Banknote}
+      />
+
+      <div className="space-y-7">
+        <section>
+          <SubsectionHeading
+            title="Select account currencies"
+            description="Select one or more currencies. Each selected currency creates one cash account only."
+          />
+          <Field
+            label="Cash account currencies"
+            htmlFor="cashAccountCurrencies"
+            error={errors.cashAccounts}
+          >
+            <CustomMultiSelect
+              id="cashAccountCurrencies"
+              values={form.cashAccounts}
+              onChange={updateCashAccounts}
+              options={BANK_CURRENCY_OPTIONS}
+              placeholder="Select currencies"
+              searchable
+              searchPlaceholder="Search currencies"
+              error={Boolean(errors.cashAccounts)}
+            />
+          </Field>
+        </section>
+
+        {form.cashAccounts.length ? (
+          <section>
+            <div className="mb-3 flex items-center justify-between gap-4">
+              <h2 className="text-sm font-semibold text-slate-950">
+                Selected cash accounts
+              </h2>
+              <span className="rounded-full bg-[#dce7f2] px-2.5 py-1 text-[10px] font-bold text-slate-800">
+                {form.cashAccounts.length} selected
+              </span>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {form.cashAccounts.map((currency) => {
+                const currencyLabel =
+                  BANK_CURRENCY_OPTIONS.find(
+                    (option) => option.value === currency,
+                  )?.label || currency;
+                return (
+                  <div
+                    key={currency}
+                    className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50/70 p-4"
+                  >
+                    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white text-[#003478] ring-1 ring-slate-200">
+                      <Banknote className="h-4 w-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-slate-900">
+                        {currencyLabel}
+                      </p>
+                      <p className="mt-0.5 text-[11px] text-slate-500">
+                        One {currency} cash account
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        updateCashAccounts(
+                          form.cashAccounts.filter(
+                            (value) => value !== currency,
+                          ),
+                        )
+                      }
+                      aria-label={`Remove ${currency} cash account`}
+                      className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-slate-400 transition hover:bg-white hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003478]/20"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        ) : (
+          <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 px-5 py-7 text-center">
+            <Banknote className="mx-auto h-6 w-6 text-slate-300" />
+            <p className="mt-3 text-sm font-semibold text-slate-700">
+              No currencies selected
+            </p>
+            <p className="mt-1 text-xs text-slate-500">
+              Use the multi-selector above to add cash-account currencies.
+            </p>
+          </div>
+        )}
+
+        <div className="flex items-start gap-3 rounded-2xl border border-[rgba(0,52,120,0.13)] bg-[rgba(0,52,120,0.035)] p-4 text-sm leading-6 text-slate-600">
+          <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-[#003478]" />
+          No account numbers or additional account details are required here.
+          Selecting a currency requests exactly one cash account in that
+          currency.
+        </div>
+      </div>
+    </div>
+  );
+
   const renderSignature = () => (
     <div className="animate-[fadeUp_.35s_ease-out]">
       <SectionIntro
@@ -3013,7 +3270,7 @@ export function Onboarding() {
               className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:text-[#003478]"
             >
               <CircleUserRound className="h-4 w-4" />
-              Use primary details
+              Use main applicant details
             </button>
           </div>
           <div className="grid gap-5 sm:grid-cols-2">
@@ -3125,7 +3382,7 @@ export function Onboarding() {
               <div className="mb-5 flex items-start justify-between gap-4 border-b border-slate-100 pb-5">
                 <div className="flex min-w-0 items-center gap-3">
                   <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#dce7f2] text-[#003478]">
-                    {applicant.key === "primary" ? (
+                    {applicant.key === "main" ? (
                       <CircleUserRound className="h-4 w-4" />
                     ) : (
                       <Users className="h-4 w-4" />
@@ -3319,6 +3576,28 @@ export function Onboarding() {
                 />
               </div>
             </dl>
+            {form.adviserAccess ? (
+              <div className="mt-5 flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.09em] text-slate-400">
+                    Application adviser
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-slate-800">
+                    {form.adviserAccess.name}
+                  </p>
+                  <p className="mt-0.5 text-xs text-slate-500">
+                    {form.adviserAccess.email} · full application access
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={openAdviserInvite}
+                  className="inline-flex h-9 items-center justify-center rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:text-[#003478]"
+                >
+                  Manage access
+                </button>
+              </div>
+            ) : null}
             {isJoint ? (
               <div className="mt-5 border-t border-slate-100 pt-5">
                 <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.09em] text-slate-400">
@@ -3496,6 +3775,30 @@ export function Onboarding() {
           </ReviewSection>
 
           <ReviewSection
+            title="Cash Accounts"
+            icon={Banknote}
+            onEdit={() => goToStep("cash")}
+          >
+            {form.cashAccounts.length ? (
+              <div className="flex flex-wrap gap-2">
+                {form.cashAccounts.map((currency) => (
+                  <span
+                    key={currency}
+                    className="inline-flex items-center gap-2 rounded-xl bg-[#dce7f2] px-3 py-2 text-xs font-semibold text-slate-800"
+                  >
+                    <Banknote className="h-3.5 w-3.5 text-[#003478]" />
+                    {currency} · one cash account
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-slate-500">
+                No cash-account currencies selected.
+              </p>
+            )}
+          </ReviewSection>
+
+          <ReviewSection
             title="E-Signature"
             icon={Fingerprint}
             onEdit={() => goToStep("signature")}
@@ -3598,6 +3901,8 @@ export function Onboarding() {
         return renderIdentity();
       case "bank":
         return renderBank();
+      case "cash":
+        return renderCashAccounts();
       case "signature":
         return renderSignature();
       case "documents":
@@ -3702,6 +4007,25 @@ export function Onboarding() {
               <ShieldCheck className="h-4 w-4 text-[#003478]" />
               Encrypted session
             </div>
+            <button
+              type="button"
+              onClick={openAdviserInvite}
+              aria-label={
+                form.adviserAccess
+                  ? "Manage adviser access"
+                  : "Invite an adviser"
+              }
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:text-[#003478] sm:px-3.5"
+            >
+              {form.adviserAccess ? (
+                <CheckCircle2 className="h-4 w-4 text-[#003478]" />
+              ) : (
+                <UserPlus className="h-4 w-4" />
+              )}
+              <span className="hidden lg:inline">
+                {form.adviserAccess ? "Adviser invited" : "Invite adviser"}
+              </span>
+            </button>
             <button
               type="button"
               onClick={saveDraft}
@@ -3895,6 +4219,15 @@ export function Onboarding() {
             </div>
 
             <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_12px_45px_rgba(15,23,42,0.045)] sm:p-8 lg:p-10">
+              {successNotice ? (
+                <div
+                  role="status"
+                  className="mb-6 flex items-start gap-3 rounded-2xl border border-[rgba(0,52,120,0.13)] bg-[rgba(0,52,120,0.035)] p-4 text-sm leading-6 text-slate-700"
+                >
+                  <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-[#003478]" />
+                  {successNotice}
+                </div>
+              ) : null}
               {notice ? (
                 <div
                   role="alert"
@@ -3972,6 +4305,170 @@ export function Onboarding() {
           </div>
         </div>
       </main>
+
+      {showAdviserInvite ? (
+        <div
+          className="fixed inset-0 z-[120] grid place-items-center bg-slate-950/35 px-4 py-8 backdrop-blur-[2px]"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget && !isInvitingAdviser)
+              setShowAdviserInvite(false);
+          }}
+        >
+          <div
+            ref={adviserDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="adviser-dialog-title"
+            aria-describedby="adviser-dialog-description"
+            className="max-h-full w-full max-w-lg overflow-y-auto rounded-3xl border border-slate-200 bg-white shadow-[0_28px_80px_rgba(15,23,42,0.2)]"
+          >
+            <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-5 sm:px-6">
+              <div className="flex items-start gap-3.5">
+                <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[#dce7f2] text-[#003478]">
+                  <UserPlus className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#003478]">
+                    Application support
+                  </p>
+                  <h2
+                    id="adviser-dialog-title"
+                    className="mt-1 text-lg font-semibold tracking-[-0.02em] text-slate-950"
+                  >
+                    {form.adviserAccess
+                      ? "Manage adviser access"
+                      : "Invite an adviser"}
+                  </h2>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAdviserInvite(false)}
+                disabled={isInvitingAdviser}
+                aria-label="Close adviser invitation"
+                className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:opacity-50"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="space-y-5 px-5 py-6 sm:px-6">
+              <p
+                id="adviser-dialog-description"
+                className="text-sm leading-6 text-slate-600"
+              >
+                Invite a trusted adviser to complete or update any section of
+                this application on your behalf. You remain responsible for
+                reviewing and approving the information before submission.
+              </p>
+
+              {form.adviserAccess ? (
+                <div className="flex items-start gap-3 rounded-2xl border border-[rgba(0,52,120,0.14)] bg-[rgba(0,52,120,0.035)] p-4">
+                  <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-[#003478]" />
+                  <div>
+                    <p className="text-xs font-semibold text-slate-900">
+                      Access currently enabled
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-slate-500">
+                      {form.adviserAccess.name} · {form.adviserAccess.email}
+                    </p>
+                  </div>
+                </div>
+              ) : null}
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Adviser’s name" htmlFor="adviserName">
+                  <input
+                    ref={adviserNameInputRef}
+                    id="adviserName"
+                    value={adviserDraft.name}
+                    onChange={(event) => {
+                      setAdviserDraft((current) => ({
+                        ...current,
+                        name: event.target.value,
+                      }));
+                      setAdviserError("");
+                    }}
+                    placeholder="Full name"
+                    autoComplete="name"
+                    className={inputClass(
+                      Boolean(adviserError && !adviserDraft.name.trim()),
+                    )}
+                  />
+                </Field>
+                <Field label="Adviser’s email" htmlFor="adviserEmail">
+                  <input
+                    id="adviserEmail"
+                    type="email"
+                    value={adviserDraft.email}
+                    onChange={(event) => {
+                      setAdviserDraft((current) => ({
+                        ...current,
+                        email: event.target.value,
+                      }));
+                      setAdviserError("");
+                    }}
+                    placeholder="adviser@example.com"
+                    autoComplete="email"
+                    className={inputClass(
+                      Boolean(adviserError && adviserDraft.name.trim()),
+                    )}
+                  />
+                </Field>
+              </div>
+              {adviserError ? (
+                <p role="alert" className="text-xs font-medium text-red-600">
+                  {adviserError}
+                </p>
+              ) : null}
+
+              <div className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-xs leading-5 text-slate-600">
+                <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#003478]" />
+                Adviser access applies to the full application, is recorded for
+                audit purposes and can be revoked here at any time.
+              </div>
+            </div>
+
+            <div className="flex flex-col-reverse gap-2 border-t border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+              <div>
+                {form.adviserAccess ? (
+                  <button
+                    type="button"
+                    onClick={revokeAdviserAccess}
+                    disabled={isInvitingAdviser}
+                    className="inline-flex h-10 items-center justify-center rounded-xl px-3 text-xs font-semibold text-red-600 transition hover:bg-red-50 disabled:opacity-50"
+                  >
+                    Revoke access
+                  </button>
+                ) : null}
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAdviserInvite(false)}
+                  disabled={isInvitingAdviser}
+                  className="h-10 rounded-xl border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-700 transition hover:border-slate-300 disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={inviteAdviser}
+                  disabled={isInvitingAdviser}
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-[#003478] px-4 text-xs font-semibold text-white transition hover:bg-[#002b63] disabled:cursor-wait disabled:opacity-70"
+                >
+                  {isInvitingAdviser ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
+                  {form.adviserAccess ? "Update invitation" : "Send invitation"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
