@@ -81,19 +81,19 @@ export const APPLICATION_OPTIONS: ApplicationOption[] = [
     value: "joint-same",
     label: "Husband-and-wife joint account — same address",
     description: "Joint applicants who share a residential address",
-    headerTitle: "Joint application",
+    headerTitle: "Joint Account application",
   },
   {
     value: "joint-different-name",
     label: "Different-surname joint account — same address",
     description: "Joint applicants with different surnames at one address",
-    headerTitle: "Joint application",
+    headerTitle: "Joint Account application",
   },
   {
     value: "joint-different-address",
     label: "Joint account — different addresses",
     description: "Joint applicants who have separate residential addresses",
-    headerTitle: "Joint application",
+    headerTitle: "Joint Account application",
   },
   {
     value: "sole-trader",
