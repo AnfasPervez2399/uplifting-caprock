@@ -124,6 +124,7 @@ interface JointApplicantDraft {
 
 interface BusinessState {
   assessmentNature: AssessmentNature;
+  foreignBusinessCountry: string;
   businessName: string;
   principalBusinessAddress: string;
   abn: string;
@@ -288,22 +289,205 @@ const INVESTMENT_AMOUNT_OPTIONS: SelectOption[] = [
 ];
 
 const COUNTRY_OPTIONS: SelectOption[] = [
+  "Afghanistan",
+  "Albania",
+  "Algeria",
+  "Andorra",
+  "Angola",
+  "Antigua and Barbuda",
+  "Argentina",
+  "Armenia",
   "Australia",
+  "Austria",
+  "Azerbaijan",
+  "Bahamas",
+  "Bahrain",
+  "Bangladesh",
+  "Barbados",
+  "Belarus",
+  "Belgium",
+  "Belize",
+  "Benin",
+  "Bhutan",
+  "Bolivia",
+  "Bosnia and Herzegovina",
+  "Botswana",
+  "Brazil",
+  "Brunei",
+  "Bulgaria",
+  "Burkina Faso",
+  "Burundi",
+  "Cabo Verde",
+  "Cambodia",
+  "Cameroon",
   "Canada",
+  "Central African Republic",
+  "Chad",
+  "Chile",
   "China",
+  "Colombia",
+  "Comoros",
+  "Costa Rica",
+  "Croatia",
+  "Cuba",
+  "Cyprus",
+  "Czechia",
+  "Democratic Republic of the Congo",
+  "Denmark",
+  "Djibouti",
+  "Dominica",
+  "Dominican Republic",
+  "Ecuador",
+  "Egypt",
+  "El Salvador",
+  "Equatorial Guinea",
+  "Eritrea",
+  "Estonia",
+  "Eswatini",
+  "Ethiopia",
+  "Fiji",
+  "Finland",
   "France",
+  "Gabon",
+  "Gambia",
+  "Georgia",
   "Germany",
+  "Ghana",
+  "Greece",
+  "Grenada",
+  "Guatemala",
+  "Guinea",
+  "Guinea-Bissau",
+  "Guyana",
+  "Haiti",
+  "Honduras",
   "Hong Kong",
+  "Hungary",
+  "Iceland",
   "India",
   "Indonesia",
+  "Iran",
+  "Iraq",
+  "Ireland",
+  "Israel",
+  "Italy",
+  "Ivory Coast",
+  "Jamaica",
   "Japan",
+  "Jordan",
+  "Kazakhstan",
+  "Kenya",
+  "Kiribati",
+  "Kosovo",
+  "Kuwait",
+  "Kyrgyzstan",
+  "Laos",
+  "Latvia",
+  "Lebanon",
+  "Lesotho",
+  "Liberia",
+  "Libya",
+  "Liechtenstein",
+  "Lithuania",
+  "Luxembourg",
+  "Macao",
+  "Madagascar",
+  "Malawi",
+  "Malaysia",
+  "Maldives",
+  "Mali",
+  "Malta",
+  "Marshall Islands",
+  "Mauritania",
+  "Mauritius",
+  "Mexico",
+  "Micronesia",
+  "Moldova",
+  "Monaco",
+  "Mongolia",
+  "Montenegro",
+  "Morocco",
+  "Mozambique",
+  "Myanmar",
+  "Namibia",
+  "Nauru",
+  "Nepal",
+  "Netherlands",
   "New Zealand",
+  "Nicaragua",
+  "Niger",
+  "Nigeria",
+  "North Korea",
+  "North Macedonia",
+  "Norway",
+  "Oman",
+  "Pakistan",
+  "Palau",
+  "Palestine",
+  "Panama",
+  "Papua New Guinea",
+  "Paraguay",
+  "Peru",
+  "Philippines",
+  "Poland",
+  "Portugal",
+  "Qatar",
+  "Republic of the Congo",
+  "Romania",
+  "Russia",
+  "Rwanda",
+  "Saint Kitts and Nevis",
+  "Saint Lucia",
+  "Saint Vincent and the Grenadines",
+  "Samoa",
+  "San Marino",
+  "São Tomé and Príncipe",
+  "Saudi Arabia",
+  "Senegal",
+  "Serbia",
+  "Seychelles",
+  "Sierra Leone",
   "Singapore",
+  "Slovakia",
+  "Slovenia",
+  "Solomon Islands",
+  "Somalia",
+  "South Africa",
   "South Korea",
+  "South Sudan",
+  "Spain",
+  "Sri Lanka",
+  "Sudan",
+  "Suriname",
+  "Sweden",
   "Switzerland",
+  "Syria",
+  "Taiwan",
+  "Tajikistan",
+  "Tanzania",
+  "Thailand",
+  "Timor-Leste",
+  "Togo",
+  "Tonga",
+  "Trinidad and Tobago",
+  "Tunisia",
+  "Türkiye",
+  "Turkmenistan",
+  "Tuvalu",
+  "Uganda",
+  "Ukraine",
   "United Arab Emirates",
   "United Kingdom",
   "United States",
+  "Uruguay",
+  "Uzbekistan",
+  "Vanuatu",
+  "Vatican City",
+  "Venezuela",
+  "Vietnam",
+  "Yemen",
+  "Zambia",
+  "Zimbabwe",
   "Other",
 ].map((country) => ({ value: country, label: country }));
 
@@ -341,6 +525,7 @@ const initialFormState: FormState = {
   jointApplicants: [],
   business: {
     assessmentNature: "",
+    foreignBusinessCountry: "",
     businessName: "",
     principalBusinessAddress: "",
     abn: "",
@@ -814,7 +999,10 @@ export function Onboarding() {
   const foreignSoleTraderComplete = useMemo(() => {
     if (!isSoleTrader || form.business.assessmentNature !== "foreign")
       return true;
+    const isUnitedStates =
+      form.business.foreignBusinessCountry === "United States";
     return Boolean(
+      form.business.foreignBusinessCountry &&
       form.business.investorClassification &&
       form.business.businessActivity &&
       (form.business.businessActivity !== "Other" ||
@@ -822,12 +1010,13 @@ export function Onboarding() {
       form.business.sourceOfFunds.trim() &&
       form.business.intendedTransactions.trim() &&
       form.business.beneficialOwnership.trim() &&
-      form.business.usCitizen &&
-      (form.business.usCitizen !== "yes" ||
-        form.business.socialSecurityNumber.trim()) &&
-      form.business.usTaxResident &&
-      (form.business.usTaxResident !== "yes" ||
-        form.business.taxIdentificationNumber.trim()),
+      (!isUnitedStates ||
+        (form.business.usCitizen &&
+          (form.business.usCitizen !== "yes" ||
+            form.business.socialSecurityNumber.trim()) &&
+          form.business.usTaxResident &&
+          (form.business.usTaxResident !== "yes" ||
+            form.business.taxIdentificationNumber.trim()))),
     );
   }, [form.business, isSoleTrader]);
 
@@ -942,6 +1131,129 @@ export function Onboarding() {
       business: { ...current.business, [key]: value },
     }));
     setErrors((current) => ({ ...current, [key]: "" }));
+  };
+
+  const handleAssessmentNatureChange = (value: string) => {
+    const assessmentNature = value as AssessmentNature;
+    setForm((current) => ({
+      ...current,
+      business: {
+        ...current.business,
+        assessmentNature,
+        ...(assessmentNature === "australian"
+          ? {
+              foreignBusinessCountry: "",
+              investorClassification: "",
+              businessActivity: "",
+              businessActivityOther: "",
+              sourceOfFunds: "",
+              intendedTransactions: "",
+              beneficialOwnership: "",
+              usCitizen: "" as YesNo,
+              socialSecurityNumber: "",
+              usTaxResident: "" as YesNo,
+              taxIdentificationNumber: "",
+            }
+          : { abn: "" }),
+      },
+    }));
+    setErrors((current) => ({
+      ...current,
+      assessmentNature: "",
+      abn: "",
+      foreignBusinessCountry: "",
+      investorClassification: "",
+      businessActivity: "",
+      businessActivityOther: "",
+      sourceOfFunds: "",
+      intendedTransactions: "",
+      beneficialOwnership: "",
+      usCitizen: "",
+      socialSecurityNumber: "",
+      usTaxResident: "",
+      taxIdentificationNumber: "",
+    }));
+  };
+
+  const handleForeignBusinessCountryChange = (value: string) => {
+    setForm((current) => ({
+      ...current,
+      business: {
+        ...current.business,
+        foreignBusinessCountry: value,
+        ...(value === "United States"
+          ? {}
+          : {
+              usCitizen: "" as YesNo,
+              socialSecurityNumber: "",
+              usTaxResident: "" as YesNo,
+              taxIdentificationNumber: "",
+            }),
+      },
+    }));
+    setErrors((current) => ({
+      ...current,
+      foreignBusinessCountry: "",
+      usCitizen: "",
+      socialSecurityNumber: "",
+      usTaxResident: "",
+      taxIdentificationNumber: "",
+    }));
+  };
+
+  const handleBusinessActivityChange = (value: string) => {
+    setForm((current) => ({
+      ...current,
+      business: {
+        ...current.business,
+        businessActivity: value,
+        businessActivityOther:
+          value === "Other" ? current.business.businessActivityOther : "",
+      },
+    }));
+    setErrors((current) => ({
+      ...current,
+      businessActivity: "",
+      businessActivityOther: "",
+    }));
+  };
+
+  const handleUsCitizenChange = (value: string) => {
+    const usCitizen = value as YesNo;
+    setForm((current) => ({
+      ...current,
+      business: {
+        ...current.business,
+        usCitizen,
+        socialSecurityNumber:
+          usCitizen === "yes" ? current.business.socialSecurityNumber : "",
+      },
+    }));
+    setErrors((current) => ({
+      ...current,
+      usCitizen: "",
+      socialSecurityNumber: "",
+    }));
+  };
+
+  const handleUsTaxResidentChange = (value: string) => {
+    const usTaxResident = value as YesNo;
+    setForm((current) => ({
+      ...current,
+      business: {
+        ...current.business,
+        usTaxResident,
+        taxIdentificationNumber:
+          usTaxResident === "yes"
+            ? current.business.taxIdentificationNumber
+            : "",
+      },
+    }));
+    setErrors((current) => ({
+      ...current,
+      usTaxResident: "",
+      taxIdentificationNumber: "",
+    }));
   };
 
   const updateSignature = <K extends keyof SignatureState>(
@@ -1190,6 +1502,10 @@ export function Onboarding() {
         nextErrors.abn = "Enter the Australian Business Number.";
       }
       if (form.business.assessmentNature === "foreign") {
+        if (!form.business.foreignBusinessCountry) {
+          nextErrors.foreignBusinessCountry =
+            "Select the country of foreign business.";
+        }
         if (!form.business.investorClassification)
           nextErrors.investorClassification =
             "Select the major business nature.";
@@ -1211,22 +1527,25 @@ export function Onboarding() {
           nextErrors.beneficialOwnership =
             "Describe the beneficial ownership of the funds.";
         }
-        if (!form.business.usCitizen)
-          nextErrors.usCitizen = "Confirm U.S. citizenship status.";
-        if (
-          form.business.usCitizen === "yes" &&
-          !form.business.socialSecurityNumber.trim()
-        ) {
-          nextErrors.socialSecurityNumber = "Enter the Social Security Number.";
-        }
-        if (!form.business.usTaxResident)
-          nextErrors.usTaxResident = "Confirm U.S. tax residency status.";
-        if (
-          form.business.usTaxResident === "yes" &&
-          !form.business.taxIdentificationNumber.trim()
-        ) {
-          nextErrors.taxIdentificationNumber =
-            "Enter the tax identification number.";
+        if (form.business.foreignBusinessCountry === "United States") {
+          if (!form.business.usCitizen)
+            nextErrors.usCitizen = "Confirm U.S. citizenship status.";
+          if (
+            form.business.usCitizen === "yes" &&
+            !form.business.socialSecurityNumber.trim()
+          ) {
+            nextErrors.socialSecurityNumber =
+              "Enter the Social Security Number.";
+          }
+          if (!form.business.usTaxResident)
+            nextErrors.usTaxResident = "Confirm U.S. tax residency status.";
+          if (
+            form.business.usTaxResident === "yes" &&
+            !form.business.taxIdentificationNumber.trim()
+          ) {
+            nextErrors.taxIdentificationNumber =
+              "Enter the tax identification number.";
+          }
         }
       }
     }
@@ -1346,6 +1665,8 @@ export function Onboarding() {
                 onChange={(value) => updatePersonal("applicantCountry", value)}
                 options={COUNTRY_OPTIONS}
                 placeholder="Select country"
+                searchable
+                searchPlaceholder="Search countries"
                 error={Boolean(errors.applicantCountry)}
               />
             </Field>
@@ -1832,34 +2153,46 @@ export function Onboarding() {
             description="Confirm whether the Sole Trader is assessed as Australian or foreign. Additional fields appear where required."
           />
           <div className="grid gap-5 sm:grid-cols-2">
-            <Field
-              label="Individual assessment nature"
-              htmlFor="assessmentNature"
-              error={errors.assessmentNature}
+            <div
+              className={
+                form.business.assessmentNature === "foreign"
+                  ? ""
+                  : "sm:col-span-2"
+              }
             >
-              <CustomSelect
-                id="assessmentNature"
-                value={form.business.assessmentNature}
-                onChange={(value) =>
-                  updateBusiness("assessmentNature", value as AssessmentNature)
-                }
-                options={ASSESSMENT_OPTIONS}
-                placeholder="Select Australian or foreign"
-                error={Boolean(errors.assessmentNature)}
-              />
-            </Field>
-            <Field
-              label="Type of individual"
-              htmlFor="individualType"
-              hint="Set from the application type selected in Personal."
-            >
-              <input
-                id="individualType"
-                value="Sole Trader"
-                readOnly
-                className={`${inputClass()} cursor-not-allowed bg-slate-100/80 text-slate-600`}
-              />
-            </Field>
+              <Field
+                label="Individual assessment nature"
+                htmlFor="assessmentNature"
+                error={errors.assessmentNature}
+              >
+                <CustomSelect
+                  id="assessmentNature"
+                  value={form.business.assessmentNature}
+                  onChange={handleAssessmentNatureChange}
+                  options={ASSESSMENT_OPTIONS}
+                  placeholder="Select Australian or foreign"
+                  error={Boolean(errors.assessmentNature)}
+                />
+              </Field>
+            </div>
+            {form.business.assessmentNature === "foreign" ? (
+              <Field
+                label="Country of foreign business"
+                htmlFor="foreignBusinessCountry"
+                error={errors.foreignBusinessCountry}
+              >
+                <CustomSelect
+                  id="foreignBusinessCountry"
+                  value={form.business.foreignBusinessCountry}
+                  onChange={handleForeignBusinessCountryChange}
+                  options={COUNTRY_OPTIONS}
+                  placeholder="Select a country"
+                  searchable
+                  searchPlaceholder="Search countries"
+                  error={Boolean(errors.foreignBusinessCountry)}
+                />
+              </Field>
+            ) : null}
           </div>
         </section>
 
@@ -1959,9 +2292,7 @@ export function Onboarding() {
                   <CustomSelect
                     id="businessActivity"
                     value={form.business.businessActivity}
-                    onChange={(value) =>
-                      updateBusiness("businessActivity", value)
-                    }
+                    onChange={handleBusinessActivityChange}
                     options={BUSINESS_ACTIVITY_OPTIONS}
                     placeholder="Select business activity"
                     error={Boolean(errors.businessActivity)}
@@ -2055,80 +2386,82 @@ export function Onboarding() {
               </div>
             </section>
 
-            <section className="rounded-2xl border border-slate-200 bg-slate-50/55 p-5 sm:p-6">
-              <SubsectionHeading
-                title="U.S. tax status"
-                description="Complete the Sole Trader’s U.S. citizenship and tax-residency declarations."
-              />
-              <div className="grid gap-6 sm:grid-cols-2">
-                <Field
-                  label="Are you a U.S. citizen?"
-                  htmlFor="usCitizen"
-                  error={errors.usCitizen}
-                >
-                  <BinaryChoice
-                    value={form.business.usCitizen}
-                    onChange={(value) => updateBusiness("usCitizen", value)}
-                    ariaLabel="U.S. citizenship status"
-                  />
-                </Field>
-                <Field
-                  label="Are you a U.S. tax resident?"
-                  htmlFor="usTaxResident"
-                  error={errors.usTaxResident}
-                >
-                  <BinaryChoice
-                    value={form.business.usTaxResident}
-                    onChange={(value) => updateBusiness("usTaxResident", value)}
-                    ariaLabel="U.S. tax residency status"
-                  />
-                </Field>
-                {form.business.usCitizen === "yes" ? (
+            {form.business.foreignBusinessCountry === "United States" ? (
+              <section className="rounded-2xl border border-slate-200 bg-slate-50/55 p-5 sm:p-6">
+                <SubsectionHeading
+                  title="U.S. tax status"
+                  description="Complete the Sole Trader’s U.S. citizenship and tax-residency declarations."
+                />
+                <div className="grid gap-6 sm:grid-cols-2">
                   <Field
-                    label="Social Security Number"
-                    htmlFor="socialSecurityNumber"
-                    error={errors.socialSecurityNumber}
+                    label="Are you a U.S. citizen?"
+                    htmlFor="usCitizen"
+                    error={errors.usCitizen}
                   >
-                    <input
-                      id="socialSecurityNumber"
-                      value={form.business.socialSecurityNumber}
-                      onChange={(event) =>
-                        updateBusiness(
-                          "socialSecurityNumber",
-                          event.target.value,
-                        )
-                      }
-                      placeholder="Enter Social Security Number"
-                      className={inputClass(
-                        Boolean(errors.socialSecurityNumber),
-                      )}
+                    <BinaryChoice
+                      value={form.business.usCitizen}
+                      onChange={handleUsCitizenChange}
+                      ariaLabel="U.S. citizenship status"
                     />
                   </Field>
-                ) : null}
-                {form.business.usTaxResident === "yes" ? (
                   <Field
-                    label="U.S. tax identification number"
-                    htmlFor="taxIdentificationNumber"
-                    error={errors.taxIdentificationNumber}
+                    label="Are you a U.S. tax resident?"
+                    htmlFor="usTaxResident"
+                    error={errors.usTaxResident}
                   >
-                    <input
-                      id="taxIdentificationNumber"
-                      value={form.business.taxIdentificationNumber}
-                      onChange={(event) =>
-                        updateBusiness(
-                          "taxIdentificationNumber",
-                          event.target.value,
-                        )
-                      }
-                      placeholder="Enter tax identification number"
-                      className={inputClass(
-                        Boolean(errors.taxIdentificationNumber),
-                      )}
+                    <BinaryChoice
+                      value={form.business.usTaxResident}
+                      onChange={handleUsTaxResidentChange}
+                      ariaLabel="U.S. tax residency status"
                     />
                   </Field>
-                ) : null}
-              </div>
-            </section>
+                  {form.business.usCitizen === "yes" ? (
+                    <Field
+                      label="Social Security Number"
+                      htmlFor="socialSecurityNumber"
+                      error={errors.socialSecurityNumber}
+                    >
+                      <input
+                        id="socialSecurityNumber"
+                        value={form.business.socialSecurityNumber}
+                        onChange={(event) =>
+                          updateBusiness(
+                            "socialSecurityNumber",
+                            event.target.value,
+                          )
+                        }
+                        placeholder="Enter Social Security Number"
+                        className={inputClass(
+                          Boolean(errors.socialSecurityNumber),
+                        )}
+                      />
+                    </Field>
+                  ) : null}
+                  {form.business.usTaxResident === "yes" ? (
+                    <Field
+                      label="U.S. tax identification number"
+                      htmlFor="taxIdentificationNumber"
+                      error={errors.taxIdentificationNumber}
+                    >
+                      <input
+                        id="taxIdentificationNumber"
+                        value={form.business.taxIdentificationNumber}
+                        onChange={(event) =>
+                          updateBusiness(
+                            "taxIdentificationNumber",
+                            event.target.value,
+                          )
+                        }
+                        placeholder="Enter tax identification number"
+                        className={inputClass(
+                          Boolean(errors.taxIdentificationNumber),
+                        )}
+                      />
+                    </Field>
+                  ) : null}
+                </div>
+              </section>
+            ) : null}
           </>
         ) : null}
       </div>
@@ -2747,7 +3080,6 @@ export function Onboarding() {
                         : "Not selected"
                   }
                 />
-                <SummaryItem label="Type of individual" value="Sole Trader" />
                 <SummaryItem
                   label="Business name"
                   value={form.business.businessName}
@@ -2756,12 +3088,15 @@ export function Onboarding() {
                   label="Principal business address"
                   value={form.business.principalBusinessAddress}
                 />
-                <SummaryItem
-                  label="ABN"
-                  value={form.business.abn || "Not applicable"}
-                />
+                {form.business.assessmentNature === "australian" ? (
+                  <SummaryItem label="ABN" value={form.business.abn} />
+                ) : null}
                 {form.business.assessmentNature === "foreign" ? (
                   <>
+                    <SummaryItem
+                      label="Country of foreign business"
+                      value={form.business.foreignBusinessCountry}
+                    />
                     <SummaryItem
                       label="Business nature"
                       value={form.business.investorClassification}
@@ -2786,16 +3121,39 @@ export function Onboarding() {
                       label="Beneficial ownership"
                       value={form.business.beneficialOwnership}
                     />
-                    <SummaryItem
-                      label="U.S. citizen"
-                      value={form.business.usCitizen === "yes" ? "Yes" : "No"}
-                    />
-                    <SummaryItem
-                      label="U.S. tax resident"
-                      value={
-                        form.business.usTaxResident === "yes" ? "Yes" : "No"
-                      }
-                    />
+                    {form.business.foreignBusinessCountry ===
+                    "United States" ? (
+                      <>
+                        <SummaryItem
+                          label="U.S. citizen"
+                          value={
+                            form.business.usCitizen === "yes" ? "Yes" : "No"
+                          }
+                        />
+                        <SummaryItem
+                          label="Social Security Number"
+                          value={
+                            form.business.socialSecurityNumber
+                              ? "Provided securely"
+                              : "Not required"
+                          }
+                        />
+                        <SummaryItem
+                          label="U.S. tax resident"
+                          value={
+                            form.business.usTaxResident === "yes" ? "Yes" : "No"
+                          }
+                        />
+                        <SummaryItem
+                          label="Tax identification number"
+                          value={
+                            form.business.taxIdentificationNumber
+                              ? "Provided securely"
+                              : "Not required"
+                          }
+                        />
+                      </>
+                    ) : null}
                   </>
                 ) : null}
               </dl>
