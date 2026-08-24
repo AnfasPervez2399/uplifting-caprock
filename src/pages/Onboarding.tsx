@@ -47,9 +47,9 @@ import {
   useState,
 } from "react";
 import { useNavigate } from "react-router-dom";
-import { useLoader } from "../components/ui/LoaderProvider";
 import { CustomSelect, type SelectOption } from "../components/ui/CustomSelect";
 import { CustomMultiSelect } from "../components/ui/CustomMultiSelect";
+import { useLoader } from "../components/ui/LoaderProvider";
 import {
   DatePicker,
   isAtLeastAge,
@@ -238,7 +238,7 @@ const allSteps: StepDefinition[] = [
   {
     id: "personal",
     shortLabel: "Personal",
-    label: "Personal Information",
+    label: "Personal",
     description: "Applicant and investment details",
     icon: CircleUserRound,
   },
@@ -1528,9 +1528,8 @@ export function Onboarding() {
   const completedSectionCount = visibleSteps
     .slice(0, -1)
     .filter((step) => completion[step.id]).length;
-  const progressPercent = Math.max(
-    6,
-    Math.round(((activeStepIndex + 1) / visibleSteps.length) * 100),
+  const progressPercent = Math.round(
+    (completedSectionCount / Math.max(1, applicationSectionCount)) * 100,
   );
   const sectionEyebrow = (stepId: StepId) =>
     `Section ${visibleSteps.findIndex((step) => step.id === stepId) + 1} of ${visibleSteps.length}`;
@@ -2417,7 +2416,7 @@ export function Onboarding() {
     <div className="animate-[fadeUp_.35s_ease-out]">
       <SectionIntro
         eyebrow={sectionEyebrow("personal")}
-        title="Personal Information"
+        title="Personal"
         description="Tell us who is applying and provide the investment profile details required for this application."
         icon={CircleUserRound}
       />
@@ -2643,13 +2642,12 @@ export function Onboarding() {
                       <p className="mt-0.5 text-xs text-slate-500">
                         Applicant {index + 1} ·{" "}
                         {applicant.method === "existing"
-                          ? "Existing Caprock client"
-                          : applicant.email}{" "}
-                        · {applicant.applicantCountry}
+                          ? `Existing Caprock client · ${applicant.applicantCountry}`
+                          : applicant.email}
                       </p>
                     </div>
                     <span className="hidden rounded-full bg-[#dce7f2] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-800 sm:inline-flex">
-                      {applicant.method === "existing" ? "Added" : "Invited"}
+                      Added
                     </span>
                     <button
                       type="button"
@@ -4251,7 +4249,7 @@ export function Onboarding() {
 
         <div className="space-y-4">
           <ReviewSection
-            title="Personal Information"
+            title="Personal"
             icon={CircleUserRound}
             onEdit={() => goToStep("personal")}
           >
@@ -4327,8 +4325,9 @@ export function Onboarding() {
                       </span>
                       <span className="text-xs text-slate-500">
                         {applicant.method === "existing"
-                          ? `Client ID ${applicant.clientId} · ${applicant.applicantCountry}`
-                          : applicant.email}
+                          ? `Client ID ${applicant.clientId}`
+                          : applicant.email}{" "}
+                        · {applicant.applicantCountry}
                       </span>
                     </div>
                   ))}
@@ -4978,11 +4977,11 @@ export function Onboarding() {
 
       {mobileNavOpen ? (
         <div
-          className="fixed inset-0 top-[68px] z-30 bg-slate-950/20 backdrop-blur-[2px] lg:hidden"
+          className="fixed inset-0 top-[68px] z-30 cursor-pointer bg-slate-950/20 backdrop-blur-[2px] lg:hidden"
           onClick={() => setMobileNavOpen(false)}
         >
           <nav
-            className="h-full w-[min(88vw,360px)] overflow-y-auto border-r border-slate-200 bg-white p-4 shadow-xl"
+            className="h-full w-[min(88vw,360px)] cursor-default overflow-y-auto border-r border-slate-200 bg-white p-4 shadow-xl"
             onClick={(event) => event.stopPropagation()}
             aria-label="Application sections"
           >
@@ -4999,17 +4998,30 @@ export function Onboarding() {
                     key={step.id}
                     type="button"
                     onClick={() => goToStep(step.id)}
-                    className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition ${
+                    aria-current={active ? "step" : undefined}
+                    aria-label={`${step.label}${done ? ", completed" : active ? ", current section" : ""}`}
+                    className={`group flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition-all duration-300 ease-out motion-reduce:transition-none ${
                       active
-                        ? "bg-[#dce7f2] text-slate-950"
-                        : "text-slate-600 hover:bg-slate-50"
+                        ? "border-[#dce7f2] bg-[#dce7f2] text-[#0f172a] shadow-sm"
+                        : done
+                          ? "border-[#dce7f2] bg-[#f7fafd] text-[#0f172a] hover:bg-[#eef4f9]"
+                          : "border-transparent text-slate-600 hover:bg-slate-50"
                     }`}
                   >
                     <span
-                      className={`grid h-9 w-9 place-items-center rounded-xl ${active ? "bg-white text-[#003478]" : "bg-slate-100 text-slate-500"}`}
+                      className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl transition-all duration-300 ${
+                        done
+                          ? "bg-[#003478] text-white shadow-sm"
+                          : active
+                            ? "bg-white text-[#003478] shadow-sm"
+                            : "bg-slate-100 text-slate-500"
+                      }`}
                     >
-                      {done && !active ? (
-                        <Check className="h-4 w-4" />
+                      {done ? (
+                        <Check
+                          className="h-4 w-4 [animation:caprock-complete-in_.32s_cubic-bezier(.22,1,.36,1)_both] motion-reduce:animate-none"
+                          strokeWidth={2.7}
+                        />
                       ) : (
                         <Icon className="h-4 w-4" />
                       )}
@@ -5018,13 +5030,25 @@ export function Onboarding() {
                       <span className="block text-sm font-semibold">
                         {step.label}
                       </span>
-                      <span className="mt-0.5 block truncate text-[11px] text-slate-500">
-                        {step.description}
+                      <span
+                        className={`mt-0.5 block truncate text-[11px] ${done ? "font-medium text-[#003478]" : "text-slate-500"}`}
+                      >
+                        {done ? "Section completed" : step.description}
                       </span>
                     </span>
-                    <span className="text-[10px] font-bold text-slate-400">
-                      {index + 1}
-                    </span>
+                    {done ? (
+                      <span className="rounded-full bg-[#dce7f2] px-2 py-1 text-[9px] font-bold uppercase tracking-[0.06em] text-[#0f172a]">
+                        Completed
+                      </span>
+                    ) : active ? (
+                      <span className="rounded-full bg-white px-2 py-1 text-[9px] font-bold uppercase tracking-[0.06em] text-[#003478]">
+                        Current
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-bold text-slate-400">
+                        {index + 1}
+                      </span>
+                    )}
                   </button>
                 );
               })}
@@ -5050,6 +5074,22 @@ export function Onboarding() {
                   sections complete
                 </p>
               </div>
+              <div
+                className="mt-4 h-1.5 overflow-hidden rounded-full bg-slate-200/80"
+                role="progressbar"
+                aria-label="Completed application sections"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={progressPercent}
+              >
+                <div
+                  className="h-full rounded-full bg-[#003478] transition-[width] duration-500 ease-out motion-reduce:transition-none"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
+              <p className="mt-2 text-right text-[10px] font-semibold text-[#003478]">
+                {progressPercent}% completed
+              </p>
             </div>
 
             <nav className="space-y-1.5" aria-label="Application sections">
@@ -5063,23 +5103,29 @@ export function Onboarding() {
                     type="button"
                     onClick={() => goToStep(step.id)}
                     aria-current={active ? "step" : undefined}
-                    className={`group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition ${
+                    aria-label={`${step.label}${done ? ", completed" : active ? ", current section" : ""}`}
+                    className={`group flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition-all duration-300 ease-out motion-reduce:transition-none ${
                       active
-                        ? "bg-[#dce7f2] text-slate-950"
-                        : "text-slate-600 hover:bg-white hover:text-slate-900"
+                        ? "border-[#dce7f2] bg-[#dce7f2] text-[#0f172a] shadow-sm"
+                        : done
+                          ? "border-[#dce7f2] bg-white/90 text-[#0f172a] shadow-[0_3px_12px_rgba(15,23,42,0.035)] hover:bg-[#f7fafd]"
+                          : "border-transparent text-slate-600 hover:bg-white hover:text-slate-900"
                     }`}
                   >
                     <span
-                      className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl transition ${
-                        active
-                          ? "bg-white text-[#003478] shadow-sm ring-1 ring-slate-200/60"
-                          : done
-                            ? "bg-[rgba(0,52,120,0.08)] text-[#003478]"
+                      className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl transition-all duration-300 ${
+                        done
+                          ? "bg-[#003478] text-white shadow-sm ring-4 ring-[#dce7f2]"
+                          : active
+                            ? "bg-white text-[#003478] shadow-sm ring-1 ring-slate-200/60"
                             : "bg-slate-100 text-slate-400 group-hover:bg-slate-50"
                       }`}
                     >
-                      {done && !active ? (
-                        <Check className="h-4 w-4" strokeWidth={2.5} />
+                      {done ? (
+                        <Check
+                          className="h-4 w-4 [animation:caprock-complete-in_.32s_cubic-bezier(.22,1,.36,1)_both] motion-reduce:animate-none"
+                          strokeWidth={2.7}
+                        />
                       ) : (
                         <Icon className="h-4 w-4" />
                       )}
@@ -5088,15 +5134,25 @@ export function Onboarding() {
                       <span className="block text-[13px] font-semibold">
                         {step.label}
                       </span>
-                      <span className="mt-0.5 block truncate text-[10px] text-slate-400">
-                        {step.description}
+                      <span
+                        className={`mt-0.5 block truncate text-[10px] ${done ? "font-semibold text-[#003478]" : "text-slate-400"}`}
+                      >
+                        {done ? "Section completed" : step.description}
                       </span>
                     </span>
-                    <span
-                      className={`text-[10px] font-bold ${active ? "text-[#003478]" : "text-slate-300"}`}
-                    >
-                      {index + 1}
-                    </span>
+                    {done ? (
+                      <span className="rounded-full bg-[#dce7f2] px-2 py-1 text-[8px] font-bold uppercase tracking-[0.05em] text-[#0f172a]">
+                        Completed
+                      </span>
+                    ) : active ? (
+                      <span className="rounded-full bg-white px-2 py-1 text-[8px] font-bold uppercase tracking-[0.05em] text-[#003478]">
+                        Current
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-bold text-slate-300">
+                        {index + 1}
+                      </span>
+                    )}
                   </button>
                 );
               })}

@@ -6,6 +6,7 @@ import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import Onboarding from "./pages/Onboarding";
 import SignUp from "./pages/SignUp";
+import "./styles.css";
 
 function AppRoutes() {
   return (
