@@ -9,21 +9,14 @@ interface SubmittedApplicationProps {
 function SubmissionDetail({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
-      <dt className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400">
-        {label}
-      </dt>
-      <dd className="mt-1.5 truncate text-sm font-semibold text-slate-800">
-        {value}
-      </dd>
+      <dt className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400">{label}</dt>
+      <dd className="mt-1.5 truncate text-sm font-semibold text-slate-800">{value}</dd>
     </div>
   );
 }
 
-export function SubmittedApplication({
-  controller,
-}: SubmittedApplicationProps) {
-  const { form, selectedApplicationType, setSubmissionConfirmationOpen } =
-    controller;
+export function SubmittedApplication({ controller }: SubmittedApplicationProps) {
+  const { form, selectedApplicationType, setSubmissionConfirmationOpen } = controller;
   const [reference] = useState(
     () => `CR-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`,
   );
@@ -44,10 +37,9 @@ export function SubmittedApplication({
       }
 
       if (event.key !== "Tab") return;
-      const focusableElements =
-        dialogRef.current?.querySelectorAll<HTMLElement>(
-          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
-        );
+      const focusableElements = dialogRef.current?.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      );
       if (!focusableElements?.length) return;
 
       const firstElement = focusableElements[0];
@@ -121,9 +113,7 @@ export function SubmittedApplication({
           </div>
 
           <div className="mt-6 text-center">
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#003478]">
-              Application submitted
-            </p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#003478]">Application submitted</p>
             <h1
               id="submission-confirmation-title"
               className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-slate-950 sm:text-[36px]"
@@ -134,8 +124,7 @@ export function SubmittedApplication({
               id="submission-confirmation-description"
               className="mx-auto mt-3 max-w-xl text-sm leading-7 text-slate-500"
             >
-              Your application was securely received. A confirmation and any
-              future updates will be sent to {form.signature.email}.
+              Your application was securely received. A confirmation and any future updates will be sent to {form.signature.email}.
             </p>
           </div>
 
@@ -146,16 +135,13 @@ export function SubmittedApplication({
               </div>
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="text-sm font-semibold text-slate-950">
-                    The Caprock onboarding team is reviewing your application
-                  </h2>
+                  <h2 className="text-sm font-semibold text-slate-950">The Caprock onboarding team is reviewing your application</h2>
                   <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-[#003478] ring-1 ring-[rgba(0,52,120,0.12)]">
                     Under review
                   </span>
                 </div>
                 <p className="mt-1.5 text-xs leading-5 text-slate-600">
-                  We’ll contact you if any additional information is required
-                  and email you when the next step is ready.
+                  We’ll contact you if any additional information is required and email you when the next step is ready.
                 </p>
               </div>
             </div>
@@ -163,10 +149,7 @@ export function SubmittedApplication({
 
           <dl className="mt-5 grid gap-4 rounded-2xl border border-slate-200 bg-slate-50/70 p-4 text-left sm:grid-cols-3 sm:p-5">
             <SubmissionDetail label="Reference" value={reference} />
-            <SubmissionDetail
-              label="Application"
-              value={selectedApplicationType}
-            />
+            <SubmissionDetail label="Application" value={selectedApplicationType} />
             <SubmissionDetail label="Status" value="Under review" />
           </dl>
 

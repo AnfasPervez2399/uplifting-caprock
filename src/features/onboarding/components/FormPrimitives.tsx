@@ -27,9 +27,7 @@ export const textareaClass = (hasError = false) =>
 export function RequiredIndicator() {
   return (
     <>
-      <span aria-hidden="true" className="ml-0.5 font-bold text-red-600">
-        *
-      </span>
+      <span aria-hidden="true" className="ml-0.5 font-bold text-red-600">*</span>
       <span className="sr-only"> (required)</span>
     </>
   );
@@ -52,16 +50,9 @@ export function Field({
 }) {
   return (
     <div>
-      <label
-        htmlFor={htmlFor}
-        className="mb-2 block text-[13px] font-semibold text-slate-800"
-      >
+      <label htmlFor={htmlFor} className="mb-2 block text-[13px] font-semibold text-slate-800">
         {label}
-        {required ? (
-          <RequiredIndicator />
-        ) : (
-          <span className="ml-1 font-normal text-slate-400">(optional)</span>
-        )}
+        {required ? <RequiredIndicator /> : <span className="ml-1 font-normal text-slate-400">(optional)</span>}
       </label>
       {children}
       {error ? (
@@ -92,21 +83,14 @@ export function SectionIntro({
         <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
       </div>
       <div className="min-w-0">
-        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#003478]">
-          {eyebrow}
-        </p>
+        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#003478]">{eyebrow}</p>
         <h1 className="mt-1.5 text-2xl font-semibold tracking-[-0.035em] text-slate-950 sm:text-[30px]">
           {title}
         </h1>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-          {description}
-        </p>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">{description}</p>
         <p className="mt-2.5 text-[11px] font-medium text-slate-400">
-          <span aria-hidden="true" className="font-bold text-red-600">
-            *
-          </span>
-          <span className="sr-only">Asterisk:</span> Required field · Optional
-          fields are labelled
+          <span aria-hidden="true" className="font-bold text-red-600">*</span>
+          <span className="sr-only">Asterisk:</span> Required field · Optional fields are labelled
         </p>
       </div>
     </div>
@@ -122,12 +106,8 @@ export function SubsectionHeading({
 }) {
   return (
     <div className="mb-5">
-      <h2 className="text-base font-semibold tracking-[-0.015em] text-slate-950">
-        {title}
-      </h2>
-      {description ? (
-        <p className="mt-1 text-sm leading-6 text-slate-500">{description}</p>
-      ) : null}
+      <h2 className="text-base font-semibold tracking-[-0.015em] text-slate-950">{title}</h2>
+      {description ? <p className="mt-1 text-sm leading-6 text-slate-500">{description}</p> : null}
     </div>
   );
 }
@@ -170,22 +150,12 @@ export function DocumentUpload({
             value ? "bg-[#003478] text-white" : "bg-slate-100 text-slate-500"
           }`}
         >
-          {value ? (
-            <Check className="h-4 w-4" strokeWidth={2.5} />
-          ) : (
-            <FileText className="h-4 w-4" />
-          )}
+          {value ? <Check className="h-4 w-4" strokeWidth={2.5} /> : <FileText className="h-4 w-4" />}
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold text-slate-900">
             {title}
-            {required ? (
-              <RequiredIndicator />
-            ) : (
-              <span className="ml-1 font-normal text-slate-400">
-                (optional)
-              </span>
-            )}
+            {required ? <RequiredIndicator /> : <span className="ml-1 font-normal text-slate-400">(optional)</span>}
           </p>
           <p className="mt-1 text-xs leading-5 text-slate-500">{description}</p>
           {value ? (
@@ -200,9 +170,7 @@ export function DocumentUpload({
                   <Eye className="h-4 w-4" />
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-xs font-semibold text-slate-800 group-hover/file:text-[#003478]">
-                    {value.name}
-                  </span>
+                  <span className="block truncate text-xs font-semibold text-slate-800 group-hover/file:text-[#003478]">{value.name}</span>
                   <span className="mt-0.5 block text-[10px] text-slate-400">
                     {(value.size / 1024 / 1024).toFixed(2)} MB · Click to open
                   </span>
@@ -268,26 +236,16 @@ export function SelfieUpload({
       <div className="flex flex-col items-center px-5 py-8 text-center sm:px-8 sm:py-10">
         <div
           className={`grid h-20 w-20 place-items-center rounded-[26px] ${
-            value
-              ? "bg-[#dce7f2] text-[#003478]"
-              : "bg-slate-100 text-slate-500"
+            value ? "bg-[#dce7f2] text-[#003478]" : "bg-slate-100 text-slate-500"
           }`}
         >
-          {value ? (
-            <CheckCircle2 className="h-9 w-9" />
-          ) : (
-            <ScanFace className="h-9 w-9" />
-          )}
+          {value ? <CheckCircle2 className="h-9 w-9" /> : <ScanFace className="h-9 w-9" />}
         </div>
         <h3 className="mt-5 text-base font-semibold text-slate-950">
-          {value
-            ? "Selfie ready for verification"
-            : "Add a clear, current selfie"}
-          <RequiredIndicator />
+          {value ? "Selfie ready for verification" : "Add a clear, current selfie"}<RequiredIndicator />
         </h3>
         <p className="mt-2 max-w-md text-sm leading-6 text-slate-500">
-          Use your front-facing camera now or choose a recent selfie from this
-          device.
+          Use your front-facing camera now or choose a recent selfie from this device.
         </p>
 
         {value ? (
@@ -302,9 +260,7 @@ export function SelfieUpload({
                 <Eye className="h-4 w-4" />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-xs font-semibold text-slate-800 group-hover/file:text-[#003478]">
-                  {value.name}
-                </span>
+                <span className="block truncate text-xs font-semibold text-slate-800 group-hover/file:text-[#003478]">{value.name}</span>
                 <span className="mt-0.5 block text-[10px] text-slate-400">
                   {(value.size / 1024 / 1024).toFixed(2)} MB · Click to open
                 </span>
@@ -352,9 +308,7 @@ export function SelfieUpload({
             />
           </label>
         </div>
-        {error ? (
-          <p className="mt-3 text-xs font-medium text-red-600">{error}</p>
-        ) : null}
+        {error ? <p className="mt-3 text-xs font-medium text-red-600">{error}</p> : null}
       </div>
     </div>
   );
@@ -427,32 +381,16 @@ export function ReviewSection({
   );
 }
 
-export function SummaryItem({
-  label,
-  value,
-}: {
-  label: string;
-  value: ReactNode;
-}) {
+export function SummaryItem({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div>
-      <dt className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-400">
-        {label}
-      </dt>
-      <dd className="mt-1.5 break-words text-sm font-medium leading-6 text-slate-800">
-        {value || "Not provided"}
-      </dd>
+      <dt className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-400">{label}</dt>
+      <dd className="mt-1.5 break-words text-sm font-medium leading-6 text-slate-800">{value || "Not provided"}</dd>
     </div>
   );
 }
 
-export function CheckRow({
-  checked,
-  label,
-}: {
-  checked: boolean;
-  label: string;
-}) {
+export function CheckRow({ checked, label }: { checked: boolean; label: string }) {
   return (
     <div className="flex items-center gap-2.5 text-sm text-slate-600">
       <span
@@ -460,13 +398,10 @@ export function CheckRow({
           checked ? "bg-[#003478] text-white" : "bg-slate-100 text-slate-400"
         }`}
       >
-        {checked ? (
-          <Check className="h-3 w-3" strokeWidth={3} />
-        ) : (
-          <Clock3 className="h-3 w-3" />
-        )}
+        {checked ? <Check className="h-3 w-3" strokeWidth={3} /> : <Clock3 className="h-3 w-3" />}
       </span>
       {label}
     </div>
   );
 }
+

@@ -39,7 +39,7 @@ export function BusinessStep({ controller }: StepProps) {
     <div className="animate-[fadeUp_.35s_ease-out]">
       <SectionIntro
         eyebrow={sectionEyebrow("business")}
-        title="Business Information"
+        title="Business"
         description="Provide the Sole Trader assessment and business information required for this application."
         icon={BriefcaseBusiness}
       />
@@ -51,18 +51,8 @@ export function BusinessStep({ controller }: StepProps) {
             description="Confirm whether the Sole Trader is assessed as Australian or foreign. Additional fields appear where required."
           />
           <div className="grid gap-5 sm:grid-cols-2">
-            <div
-              className={
-                form.business.assessmentNature === "foreign"
-                  ? ""
-                  : "sm:col-span-2"
-              }
-            >
-              <Field
-                label="Individual assessment nature"
-                htmlFor="assessmentNature"
-                error={errors.assessmentNature}
-              >
+            <div className={form.business.assessmentNature === "foreign" ? "" : "sm:col-span-2"}>
+              <Field label="Individual assessment nature" htmlFor="assessmentNature" error={errors.assessmentNature}>
                 <CustomSelect
                   id="assessmentNature"
                   value={form.business.assessmentNature}
@@ -74,11 +64,7 @@ export function BusinessStep({ controller }: StepProps) {
               </Field>
             </div>
             {form.business.assessmentNature === "foreign" ? (
-              <Field
-                label="Country of foreign business"
-                htmlFor="foreignBusinessCountry"
-                error={errors.foreignBusinessCountry}
-              >
+              <Field label="Country of foreign business" htmlFor="foreignBusinessCountry" error={errors.foreignBusinessCountry}>
                 <CustomSelect
                   id="foreignBusinessCountry"
                   value={form.business.foreignBusinessCountry}
@@ -100,33 +86,21 @@ export function BusinessStep({ controller }: StepProps) {
             description="Enter the legal business details used by the Sole Trader."
           />
           <div className="grid gap-5 sm:grid-cols-2">
-            <Field
-              label="Business name"
-              htmlFor="businessName"
-              error={errors.businessName}
-            >
+            <Field label="Business name" htmlFor="businessName" error={errors.businessName}>
               <input
                 id="businessName"
                 value={form.business.businessName}
-                onChange={(event) =>
-                  updateBusiness("businessName", event.target.value)
-                }
+                onChange={(event) => updateBusiness("businessName", event.target.value)}
                 placeholder="Name under which the business is carried out"
                 className={inputClass(Boolean(errors.businessName))}
               />
             </Field>
             {form.business.assessmentNature === "australian" ? (
-              <Field
-                label="Australian Business Number (ABN)"
-                htmlFor="abn"
-                error={errors.abn}
-              >
+              <Field label="Australian Business Number (ABN)" htmlFor="abn" error={errors.abn}>
                 <input
                   id="abn"
                   value={form.business.abn}
-                  onChange={(event) =>
-                    updateBusiness("abn", event.target.value)
-                  }
+                  onChange={(event) => updateBusiness("abn", event.target.value)}
                   inputMode="numeric"
                   placeholder="11-digit ABN"
                   className={inputClass(Boolean(errors.abn))}
@@ -134,24 +108,13 @@ export function BusinessStep({ controller }: StepProps) {
               </Field>
             ) : null}
             <div className="sm:col-span-2">
-              <Field
-                label="Address of principal place of business"
-                htmlFor="principalBusinessAddress"
-                error={errors.principalBusinessAddress}
-              >
+              <Field label="Address of principal place of business" htmlFor="principalBusinessAddress" error={errors.principalBusinessAddress}>
                 <textarea
                   id="principalBusinessAddress"
                   value={form.business.principalBusinessAddress}
-                  onChange={(event) =>
-                    updateBusiness(
-                      "principalBusinessAddress",
-                      event.target.value,
-                    )
-                  }
+                  onChange={(event) => updateBusiness("principalBusinessAddress", event.target.value)}
                   placeholder="Principal place of business"
-                  className={textareaClass(
-                    Boolean(errors.principalBusinessAddress),
-                  )}
+                  className={textareaClass(Boolean(errors.principalBusinessAddress))}
                 />
               </Field>
             </div>
@@ -166,27 +129,17 @@ export function BusinessStep({ controller }: StepProps) {
                 description="Provide the major business nature, activity and intended account use documented for a foreign Sole Trader."
               />
               <div className="grid gap-5 sm:grid-cols-2">
-                <Field
-                  label="Business nature (major business)"
-                  htmlFor="investorClassification"
-                  error={errors.investorClassification}
-                >
+                <Field label="Business nature (major business)" htmlFor="investorClassification" error={errors.investorClassification}>
                   <CustomSelect
                     id="investorClassification"
                     value={form.business.investorClassification}
-                    onChange={(value) =>
-                      updateBusiness("investorClassification", value)
-                    }
+                    onChange={(value) => updateBusiness("investorClassification", value)}
                     options={BUSINESS_NATURE_OPTIONS}
                     placeholder="Select business nature"
                     error={Boolean(errors.investorClassification)}
                   />
                 </Field>
-                <Field
-                  label="Describe the business activity"
-                  htmlFor="businessActivity"
-                  error={errors.businessActivity}
-                >
+                <Field label="Describe the business activity" htmlFor="businessActivity" error={errors.businessActivity}>
                   <CustomSelect
                     id="businessActivity"
                     value={form.business.businessActivity}
@@ -198,86 +151,47 @@ export function BusinessStep({ controller }: StepProps) {
                 </Field>
                 {form.business.businessActivity === "Other" ? (
                   <div className="sm:col-span-2">
-                    <Field
-                      label="Please specify the business activity"
-                      htmlFor="businessActivityOther"
-                      error={errors.businessActivityOther}
-                    >
+                    <Field label="Please specify the business activity" htmlFor="businessActivityOther" error={errors.businessActivityOther}>
                       <input
                         id="businessActivityOther"
                         value={form.business.businessActivityOther}
-                        onChange={(event) =>
-                          updateBusiness(
-                            "businessActivityOther",
-                            event.target.value,
-                          )
-                        }
+                        onChange={(event) => updateBusiness("businessActivityOther", event.target.value)}
                         placeholder="For example, IT services"
-                        className={inputClass(
-                          Boolean(errors.businessActivityOther),
-                        )}
+                        className={inputClass(Boolean(errors.businessActivityOther))}
                       />
                     </Field>
                   </div>
                 ) : null}
                 <div className="sm:col-span-2">
-                  <Field
-                    label="Source of funds, including origin"
-                    htmlFor="sourceOfFunds"
-                    error={errors.sourceOfFunds}
-                  >
+                  <Field label="Source of funds, including origin" htmlFor="sourceOfFunds" error={errors.sourceOfFunds}>
                     <textarea
                       id="sourceOfFunds"
                       value={form.business.sourceOfFunds}
-                      onChange={(event) =>
-                        updateBusiness("sourceOfFunds", event.target.value)
-                      }
+                      onChange={(event) => updateBusiness("sourceOfFunds", event.target.value)}
                       placeholder="Describe where the funds came from and their origin"
                       className={textareaClass(Boolean(errors.sourceOfFunds))}
                     />
                   </Field>
                 </div>
                 <div className="sm:col-span-2">
-                  <Field
-                    label="Nature and level of intended transaction behaviour"
-                    htmlFor="intendedTransactions"
-                    error={errors.intendedTransactions}
-                  >
+                  <Field label="Nature and level of intended transaction behaviour" htmlFor="intendedTransactions" error={errors.intendedTransactions}>
                     <textarea
                       id="intendedTransactions"
                       value={form.business.intendedTransactions}
-                      onChange={(event) =>
-                        updateBusiness(
-                          "intendedTransactions",
-                          event.target.value,
-                        )
-                      }
+                      onChange={(event) => updateBusiness("intendedTransactions", event.target.value)}
                       placeholder="Describe the expected type, frequency and level of transactions"
-                      className={textareaClass(
-                        Boolean(errors.intendedTransactions),
-                      )}
+                      className={textareaClass(Boolean(errors.intendedTransactions))}
                     />
                   </Field>
                 </div>
                 <div className="sm:col-span-2">
-                  <Field
-                    label="Beneficial ownership of funds used by this account"
-                    htmlFor="beneficialOwnership"
-                    error={errors.beneficialOwnership}
-                  >
+                  <Field label="Beneficial ownership of funds used by this account" htmlFor="beneficialOwnership" error={errors.beneficialOwnership}>
                     <textarea
                       id="beneficialOwnership"
                       value={form.business.beneficialOwnership}
-                      onChange={(event) =>
-                        updateBusiness(
-                          "beneficialOwnership",
-                          event.target.value,
-                        )
-                      }
+                      onChange={(event) => updateBusiness("beneficialOwnership", event.target.value)}
                       placeholder="Describe who beneficially owns the funds"
-                      className={textareaClass(
-                        Boolean(errors.beneficialOwnership),
-                      )}
+                      className={textareaClass(Boolean(errors.beneficialOwnership))}
                     />
                   </Field>
                 </div>
@@ -286,78 +200,48 @@ export function BusinessStep({ controller }: StepProps) {
 
             {form.business.foreignBusinessCountry === "United States" ? (
               <section className="rounded-2xl border border-slate-200 bg-slate-50/55 p-5 sm:p-6">
-                <SubsectionHeading
-                  title="U.S. tax status"
-                  description="Complete the Sole Trader’s U.S. citizenship and tax-residency declarations."
-                />
-                <div className="grid gap-6 sm:grid-cols-2">
-                  <Field
-                    label="Are you a U.S. citizen?"
-                    htmlFor="usCitizen"
-                    error={errors.usCitizen}
-                  >
-                    <BinaryChoice
-                      value={form.business.usCitizen}
-                      onChange={handleUsCitizenChange}
-                      ariaLabel="U.S. citizenship status"
+              <SubsectionHeading
+                title="U.S. tax status"
+                description="Complete the Sole Trader’s U.S. citizenship and tax-residency declarations."
+              />
+              <div className="grid gap-6 sm:grid-cols-2">
+                <Field label="Are you a U.S. citizen?" htmlFor="usCitizen" error={errors.usCitizen}>
+                  <BinaryChoice
+                    value={form.business.usCitizen}
+                    onChange={handleUsCitizenChange}
+                    ariaLabel="U.S. citizenship status"
+                  />
+                </Field>
+                <Field label="Are you a U.S. tax resident?" htmlFor="usTaxResident" error={errors.usTaxResident}>
+                  <BinaryChoice
+                    value={form.business.usTaxResident}
+                    onChange={handleUsTaxResidentChange}
+                    ariaLabel="U.S. tax residency status"
+                  />
+                </Field>
+                {form.business.usCitizen === "yes" ? (
+                  <Field label="Social Security Number" htmlFor="socialSecurityNumber" error={errors.socialSecurityNumber}>
+                    <input
+                      id="socialSecurityNumber"
+                      value={form.business.socialSecurityNumber}
+                      onChange={(event) => updateBusiness("socialSecurityNumber", event.target.value)}
+                      placeholder="Enter Social Security Number"
+                      className={inputClass(Boolean(errors.socialSecurityNumber))}
                     />
                   </Field>
-                  <Field
-                    label="Are you a U.S. tax resident?"
-                    htmlFor="usTaxResident"
-                    error={errors.usTaxResident}
-                  >
-                    <BinaryChoice
-                      value={form.business.usTaxResident}
-                      onChange={handleUsTaxResidentChange}
-                      ariaLabel="U.S. tax residency status"
+                ) : null}
+                {form.business.usTaxResident === "yes" ? (
+                  <Field label="U.S. tax identification number" htmlFor="taxIdentificationNumber" error={errors.taxIdentificationNumber}>
+                    <input
+                      id="taxIdentificationNumber"
+                      value={form.business.taxIdentificationNumber}
+                      onChange={(event) => updateBusiness("taxIdentificationNumber", event.target.value)}
+                      placeholder="Enter tax identification number"
+                      className={inputClass(Boolean(errors.taxIdentificationNumber))}
                     />
                   </Field>
-                  {form.business.usCitizen === "yes" ? (
-                    <Field
-                      label="Social Security Number"
-                      htmlFor="socialSecurityNumber"
-                      error={errors.socialSecurityNumber}
-                    >
-                      <input
-                        id="socialSecurityNumber"
-                        value={form.business.socialSecurityNumber}
-                        onChange={(event) =>
-                          updateBusiness(
-                            "socialSecurityNumber",
-                            event.target.value,
-                          )
-                        }
-                        placeholder="Enter Social Security Number"
-                        className={inputClass(
-                          Boolean(errors.socialSecurityNumber),
-                        )}
-                      />
-                    </Field>
-                  ) : null}
-                  {form.business.usTaxResident === "yes" ? (
-                    <Field
-                      label="U.S. tax identification number"
-                      htmlFor="taxIdentificationNumber"
-                      error={errors.taxIdentificationNumber}
-                    >
-                      <input
-                        id="taxIdentificationNumber"
-                        value={form.business.taxIdentificationNumber}
-                        onChange={(event) =>
-                          updateBusiness(
-                            "taxIdentificationNumber",
-                            event.target.value,
-                          )
-                        }
-                        placeholder="Enter tax identification number"
-                        className={inputClass(
-                          Boolean(errors.taxIdentificationNumber),
-                        )}
-                      />
-                    </Field>
-                  ) : null}
-                </div>
+                ) : null}
+              </div>
               </section>
             ) : null}
           </>

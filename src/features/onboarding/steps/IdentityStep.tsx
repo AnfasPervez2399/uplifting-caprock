@@ -1,10 +1,11 @@
-import { Camera, Check, ScanFace, ShieldCheck } from "lucide-react";
-
 import {
-  SectionIntro,
-  SelfieUpload,
-  SubsectionHeading,
-} from "../components/FormPrimitives";
+  Camera,
+  Check,
+  ScanFace,
+  ShieldCheck,
+} from "lucide-react";
+
+import { SectionIntro, SelfieUpload, SubsectionHeading } from "../components/FormPrimitives";
 
 import type { OnboardingController } from "../useOnboardingController";
 
@@ -13,8 +14,13 @@ interface StepProps {
 }
 
 export function IdentityStep({ controller }: StepProps) {
-  const { form, errors, sectionEyebrow, openDocumentPreview, updateSelfie } =
-    controller;
+  const {
+    form,
+    errors,
+    sectionEyebrow,
+    openDocumentPreview,
+    updateSelfie,
+  } = controller;
 
   const renderIdentity = () => {
     const selfieGuidance = [
@@ -55,20 +61,13 @@ export function IdentityStep({ controller }: StepProps) {
                 <Camera className="h-4 w-4" />
               </div>
               <div>
-                <h2 className="text-sm font-semibold text-slate-950">
-                  Selfie guidance
-                </h2>
-                <p className="mt-0.5 text-xs text-slate-500">
-                  For a faster identity check
-                </p>
+                <h2 className="text-sm font-semibold text-slate-950">Selfie guidance</h2>
+                <p className="mt-0.5 text-xs text-slate-500">For a faster identity check</p>
               </div>
             </div>
             <ul className="mt-5 space-y-3.5">
               {selfieGuidance.map((guidance) => (
-                <li
-                  key={guidance}
-                  className="flex items-start gap-2.5 text-xs leading-5 text-slate-600"
-                >
+                <li key={guidance} className="flex items-start gap-2.5 text-xs leading-5 text-slate-600">
                   <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-white text-[#003478] ring-1 ring-slate-200">
                     <Check className="h-3 w-3" strokeWidth={2.5} />
                   </span>
@@ -81,9 +80,7 @@ export function IdentityStep({ controller }: StepProps) {
 
         <div className="mt-6 flex items-start gap-3 rounded-2xl border border-[rgba(0,52,120,0.13)] bg-[rgba(0,52,120,0.035)] p-4 text-sm leading-6 text-slate-600">
           <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-[#003478]" />
-          Your selfie is handled as sensitive identity information and is used
-          only for identity and compliance verification. Images must be 10 MB or
-          smaller.
+          Your selfie is handled as sensitive identity information and is used only for identity and compliance verification. Images must be 10 MB or smaller.
         </div>
       </div>
     );

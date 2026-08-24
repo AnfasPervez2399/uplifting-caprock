@@ -29,7 +29,13 @@ interface StepProps {
 }
 
 export function SignatureStep({ controller }: StepProps) {
-  const { form, setForm, errors, sectionEyebrow, updateSignature } = controller;
+  const {
+    form,
+    setForm,
+    errors,
+    sectionEyebrow,
+    updateSignature,
+  } = controller;
 
   const renderSignature = () => (
     <div className="animate-[fadeUp_.35s_ease-out]">
@@ -66,56 +72,38 @@ export function SignatureStep({ controller }: StepProps) {
             </button>
           </div>
           <div className="grid gap-5 sm:grid-cols-2">
-            <Field
-              label="Full name"
-              htmlFor="signatureName"
-              error={errors.signatureName}
-            >
+            <Field label="Full name" htmlFor="signatureName" error={errors.signatureName}>
               <input
                 id="signatureName"
                 value={form.signature.name}
-                onChange={(event) =>
-                  updateSignature("name", event.target.value)
-                }
+                onChange={(event) => updateSignature("name", event.target.value)}
                 autoComplete="name"
                 placeholder="Authorised signatory’s full name"
                 className={inputClass(Boolean(errors.signatureName))}
               />
             </Field>
-            <Field
-              label="Email address"
-              htmlFor="signatureEmail"
-              error={errors.signatureEmail}
-            >
+            <Field label="Email address" htmlFor="signatureEmail" error={errors.signatureEmail}>
               <div className="relative">
                 <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <input
                   id="signatureEmail"
                   type="email"
                   value={form.signature.email}
-                  onChange={(event) =>
-                    updateSignature("email", event.target.value)
-                  }
+                  onChange={(event) => updateSignature("email", event.target.value)}
                   autoComplete="email"
                   placeholder="name@example.com"
                   className={`${inputClass(Boolean(errors.signatureEmail))} pl-10`}
                 />
               </div>
             </Field>
-            <Field
-              label="Phone number"
-              htmlFor="signaturePhone"
-              error={errors.signaturePhone}
-            >
+            <Field label="Phone number" htmlFor="signaturePhone" error={errors.signaturePhone}>
               <div className="relative">
                 <Phone className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <input
                   id="signaturePhone"
                   type="tel"
                   value={form.signature.phone}
-                  onChange={(event) =>
-                    updateSignature("phone", event.target.value)
-                  }
+                  onChange={(event) => updateSignature("phone", event.target.value)}
                   autoComplete="tel"
                   placeholder="+61 400 000 000"
                   className={`${inputClass(Boolean(errors.signaturePhone))} pl-10`}
@@ -139,8 +127,7 @@ export function SignatureStep({ controller }: StepProps) {
 
         <div className="flex items-start gap-3 rounded-2xl border border-[rgba(0,52,120,0.13)] bg-[rgba(0,52,120,0.035)] p-4 text-sm leading-6 text-slate-600">
           <LockKeyhole className="mt-0.5 h-5 w-5 shrink-0 text-[#003478]" />
-          An electronic signature request will be sent to this email and phone
-          number after the application passes its initial review.
+          An electronic signature request will be sent to this email and phone number after the application passes its initial review.
         </div>
       </div>
     </div>

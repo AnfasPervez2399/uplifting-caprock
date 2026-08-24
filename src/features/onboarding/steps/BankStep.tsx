@@ -59,10 +59,7 @@ export function BankStep({ controller }: StepProps) {
         {form.bankAccounts.length > 0 ? (
           <section>
             <div className="mb-4 flex items-center justify-between gap-4">
-              <SubsectionHeading
-                title="Saved bank accounts"
-                description="Each account requires independent verification evidence."
-              />
+              <SubsectionHeading title="Saved bank accounts" description="Each account requires independent verification evidence." />
               {!bankDraft ? (
                 <button
                   type="button"
@@ -76,33 +73,21 @@ export function BankStep({ controller }: StepProps) {
             </div>
             <div className="space-y-3">
               {form.bankAccounts.map((account, index) => (
-                <div
-                  key={account.id}
-                  className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-4 sm:flex-row sm:items-center"
-                >
+                <div key={account.id} className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-4 sm:flex-row sm:items-center">
                   <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[#dce7f2] text-[#003478]">
                     <Landmark className="h-5 w-5" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold text-slate-950">
-                      {account.bankName}
-                    </p>
+                    <p className="truncate text-sm font-semibold text-slate-950">{account.bankName}</p>
                     <p className="mt-1 text-xs text-slate-500">
-                      {account.currency} · ••••{" "}
-                      {account.accountNumber.slice(-4)} · SWIFT{" "}
-                      {account.swiftCode}
+                      {account.currency} · •••• {account.accountNumber.slice(-4)} · SWIFT {account.swiftCode}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
                     {account.verificationDocument ? (
                       <button
                         type="button"
-                        onClick={() =>
-                          openDocumentPreview(
-                            account.verificationDocument!,
-                            "Bank verification document",
-                          )
-                        }
+                        onClick={() => openDocumentPreview(account.verificationDocument!, "Bank verification document")}
                         className="mr-auto inline-flex items-center gap-1.5 rounded-full bg-[#dce7f2] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-800 transition hover:text-[#003478] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003478]/20 sm:mr-2"
                       >
                         <Eye className="h-3 w-3" /> Open verified file
@@ -135,13 +120,7 @@ export function BankStep({ controller }: StepProps) {
           <section className="rounded-2xl border border-[rgba(0,52,120,0.15)] bg-[rgba(0,52,120,0.025)] p-5 sm:p-6">
             <div className="flex items-start justify-between gap-4">
               <SubsectionHeading
-                title={
-                  editingBankId
-                    ? "Edit external account"
-                    : form.bankAccounts.length
-                      ? "Add another external account"
-                      : "External account details"
-                }
+                title={editingBankId ? "Edit external account" : form.bankAccounts.length ? "Add another external account" : "External account details"}
                 description="Enter the details exactly as they appear on the bank record."
               />
               {form.bankAccounts.length > 0 ? (
@@ -164,9 +143,7 @@ export function BankStep({ controller }: StepProps) {
                 <input
                   id="bankName"
                   value={bankDraft.bankName}
-                  onChange={(event) =>
-                    updateBankDraft("bankName", event.target.value)
-                  }
+                  onChange={(event) => updateBankDraft("bankName", event.target.value)}
                   placeholder="Financial institution name"
                   className={inputClass()}
                 />
@@ -175,12 +152,7 @@ export function BankStep({ controller }: StepProps) {
                 <input
                   id="swiftCode"
                   value={bankDraft.swiftCode}
-                  onChange={(event) =>
-                    updateBankDraft(
-                      "swiftCode",
-                      event.target.value.toUpperCase(),
-                    )
-                  }
+                  onChange={(event) => updateBankDraft("swiftCode", event.target.value.toUpperCase())}
                   placeholder="8 or 11 characters"
                   className={inputClass()}
                 />
@@ -190,26 +162,17 @@ export function BankStep({ controller }: StepProps) {
                   <textarea
                     id="bankAddress"
                     value={bankDraft.bankAddress}
-                    onChange={(event) =>
-                      updateBankDraft("bankAddress", event.target.value)
-                    }
+                    onChange={(event) => updateBankDraft("bankAddress", event.target.value)}
                     placeholder="Branch or registered bank address"
                     className={textareaClass()}
                   />
                 </Field>
               </div>
-              <Field
-                label="Australian BSB"
-                htmlFor="bsb"
-                required={false}
-                hint="Complete this field for Australian bank accounts."
-              >
+              <Field label="Australian BSB" htmlFor="bsb" required={false} hint="Complete this field for Australian bank accounts.">
                 <input
                   id="bsb"
                   value={bankDraft.bsb}
-                  onChange={(event) =>
-                    updateBankDraft("bsb", event.target.value)
-                  }
+                  onChange={(event) => updateBankDraft("bsb", event.target.value)}
                   inputMode="numeric"
                   placeholder="000-000"
                   className={inputClass()}
@@ -219,9 +182,7 @@ export function BankStep({ controller }: StepProps) {
                 <input
                   id="accountNumber"
                   value={bankDraft.accountNumber}
-                  onChange={(event) =>
-                    updateBankDraft("accountNumber", event.target.value)
-                  }
+                  onChange={(event) => updateBankDraft("accountNumber", event.target.value)}
                   placeholder="Account number or IBAN"
                   className={inputClass()}
                 />
@@ -243,12 +204,7 @@ export function BankStep({ controller }: StepProps) {
                   title="Bank verification document"
                   description="Upload a recent bank statement or official bank letter showing the account holder and account details."
                   value={bankDraft.verificationDocument}
-                  onChange={(file) =>
-                    updateBankDraft(
-                      "verificationDocument",
-                      documentFromFile(file),
-                    )
-                  }
+                  onChange={(file) => updateBankDraft("verificationDocument", documentFromFile(file))}
                   onPreview={openDocumentPreview}
                 />
               </div>
@@ -274,15 +230,11 @@ export function BankStep({ controller }: StepProps) {
           </section>
         ) : null}
 
-        {errors.bank ? (
-          <p className="text-xs font-medium text-red-600">{errors.bank}</p>
-        ) : null}
+        {errors.bank ? <p className="text-xs font-medium text-red-600">{errors.bank}</p> : null}
 
         <div className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-xs leading-5 text-slate-500">
           <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-[#003478]" />
-          Bank details and supporting evidence are encrypted in transit.
-          Accounts are used only for approved application transfers and
-          settlement.
+          Bank details and supporting evidence are encrypted in transit. Accounts are used only for approved application transfers and settlement.
         </div>
       </div>
     </div>

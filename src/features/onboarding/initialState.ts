@@ -1,8 +1,11 @@
 import type {
   AdviserDraft,
   BankAccount,
+  CompanyDirector,
+  CompanyShareholder,
   FormState,
   JointApplicantDraft,
+  TrustParty,
 } from "./types";
 
 export const initialFormState: FormState = {
@@ -38,26 +41,59 @@ export const initialFormState: FormState = {
     intendedTransactions: "",
     beneficialOwnership: "",
   },
+  company: {
+    name: "",
+    website: "",
+    registrationNumber: "",
+    arbn: "",
+    investmentCurrency: "",
+    expectedInvestment: "",
+    stateOrTerritory: "",
+    companyType: "",
+    incorporationDate: "",
+    registeredAddress: "",
+    registrationType: "",
+    acn: "",
+    amlActivity: "",
+    principalAddress: "",
+    country: "",
+    registeredByRelevantBody: "",
+    usRegistered: "",
+    usTaxId: "",
+    identificationNumber: "",
+    domicileCountry: "",
+    directorCount: "",
+    shareholderCount: "",
+    defaultRecipientId: "",
+  },
+  directors: [],
+  shareholders: [],
+  trust: {
+    name: "",
+    trusteeBusinessName: "",
+    establishedCountry: "",
+    investmentCurrency: "",
+    expectedInvestment: "",
+    afsLicenseNumber: "",
+    settlorName: "",
+    address: "",
+    applicantCountry: "",
+    trusteeCount: "",
+    beneficiaryCount: "",
+    defaultRecipientId: "",
+  },
+  trustees: [],
+  beneficiaries: [],
   identity: {},
   bankAccounts: [],
   cashAccounts: [],
-  signature: {
-    name: "",
-    email: "",
-    phone: "",
-    dateOfBirth: "",
-  },
+  signature: { name: "", email: "", phone: "", dateOfBirth: "" },
   documents: {},
-  agreements: {
-    accurate: false,
-    consent: false,
-  },
+  entityDocuments: {},
+  agreements: { accurate: false, consent: false },
 };
 
-export const emptyAdviserDraft: AdviserDraft = {
-  name: "",
-  email: "",
-};
+export const emptyAdviserDraft: AdviserDraft = { name: "", email: "" };
 
 export const emptyJointDraft: JointApplicantDraft = {
   method: "existing",
@@ -72,12 +108,24 @@ export const emptyJointDraft: JointApplicantDraft = {
   residentialAddress: "",
 };
 
+const createId = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+
 export const createEmptyBank = (): BankAccount => ({
-  id: `bank-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+  id: createId("bank"),
   bankName: "",
   swiftCode: "",
   bankAddress: "",
   bsb: "",
   accountNumber: "",
   currency: "",
+});
+
+export const createEmptyDirector = (): CompanyDirector => ({ id: createId("director"), name: "", email: "", phone: "" });
+
+export const createEmptyShareholder = (): CompanyShareholder => ({
+  id: createId("shareholder"), type: "", companyType: "", percentage: "", name: "", email: "", phone: "",
+});
+
+export const createEmptyTrustParty = (prefix = "party"): TrustParty => ({
+  id: createId(prefix), type: "", companyType: "", name: "", email: "", phone: "", directors: [],
 });

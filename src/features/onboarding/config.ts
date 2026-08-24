@@ -2,118 +2,157 @@ import {
   BadgeCheck,
   Banknote,
   BriefcaseBusiness,
+  Building2,
   CircleUserRound,
   FileCheck2,
   Fingerprint,
   Landmark,
   ScanFace,
+  ShieldCheck,
+  Sparkles,
+  UsersRound,
 } from "lucide-react";
 import type { SelectOption } from "../../components/ui/CustomSelect";
-import type { ApplicationOption, StepDefinition } from "./types";
+import type {
+  ApplicationOption,
+  ApplicationType,
+  CompanyStructure,
+  EntityDocumentDefinition,
+  StepDefinition,
+  StepId,
+} from "./types";
 
 export const allSteps: StepDefinition[] = [
-  {
-    id: "personal",
-    shortLabel: "Personal",
-    label: "Personal Information",
-    description: "Applicant and investment details",
-    icon: CircleUserRound,
-  },
-  {
-    id: "business",
-    shortLabel: "Business",
-    label: "Business Information",
-    description: "Assessment, tax and activity",
-    icon: BriefcaseBusiness,
-  },
-  {
-    id: "identity",
-    shortLabel: "Selfie",
-    label: "Prove It’s You",
-    description: "Live identity selfie",
-    icon: ScanFace,
-  },
-  {
-    id: "bank",
-    shortLabel: "Bank",
-    label: "External Bank Account",
-    description: "Settlement account verification",
-    icon: Landmark,
-  },
-  {
-    id: "cash",
-    shortLabel: "Cash",
-    label: "Cash Accounts",
-    description: "Select account currencies",
-    icon: Banknote,
-  },
-  {
-    id: "documents",
-    shortLabel: "Proof",
-    label: "Upload Proof",
-    description: "Identity and address evidence",
-    icon: FileCheck2,
-  },
-  {
-    id: "signature",
-    shortLabel: "E-Signature",
-    label: "E-Signature",
-    description: "Authorised signatory details",
-    icon: Fingerprint,
-  },
-  {
-    id: "review",
-    shortLabel: "Review",
-    label: "Review and Submit",
-    description: "Confirm and securely submit",
-    icon: BadgeCheck,
-  },
+  { id: "application", shortLabel: "Type", label: "Application Type", description: "Choose who is applying", icon: Sparkles },
+  { id: "personal", shortLabel: "Personal", label: "Personal", description: "Applicant and investment details", icon: CircleUserRound },
+  { id: "entity", shortLabel: "Company", label: "Company Profile", description: "Registration and investment details", icon: Building2 },
+  { id: "trust", shortLabel: "Trust", label: "Trust Profile", description: "Trust and trustee details", icon: ShieldCheck },
+  { id: "business", shortLabel: "Business", label: "Business", description: "Registration, tax and activity", icon: BriefcaseBusiness },
+  { id: "directors", shortLabel: "Directors", label: "M.D. & Owners", description: "Directors and communication recipient", icon: UsersRound },
+  { id: "shareholders", shortLabel: "Shareholders", label: "Shareholders", description: "Ownership and shareholder contacts", icon: UsersRound },
+  { id: "trustees", shortLabel: "Trustees", label: "Trustees", description: "Trustee contacts and structures", icon: UsersRound },
+  { id: "beneficiaries", shortLabel: "Beneficiaries", label: "Beneficiaries", description: "Trust beneficiary details", icon: UsersRound },
+  { id: "identity", shortLabel: "Selfie", label: "Prove It’s You", description: "Live identity selfie", icon: ScanFace },
+  { id: "bank", shortLabel: "Bank", label: "External Bank Account", description: "Settlement account verification", icon: Landmark },
+  { id: "cash", shortLabel: "Cash", label: "Cash Accounts", description: "Select account currencies", icon: Banknote },
+  { id: "documents", shortLabel: "Proof", label: "Upload Proof", description: "Required identity or entity evidence", icon: FileCheck2 },
+  { id: "signature", shortLabel: "E-Signature", label: "E-Signature", description: "Authorised signatory details", icon: Fingerprint },
+  { id: "review", shortLabel: "Review", label: "Review and Submit", description: "Confirm and securely submit", icon: BadgeCheck },
 ];
+
+const stepsByType: Record<Exclude<ApplicationType, "">, StepId[]> = {
+  individual: ["application", "personal", "identity", "bank", "cash", "documents", "signature", "review"],
+  "joint-same": ["application", "personal", "identity", "bank", "cash", "documents", "signature", "review"],
+  "joint-different-name": ["application", "personal", "identity", "bank", "cash", "documents", "signature", "review"],
+  "joint-different-address": ["application", "personal", "identity", "bank", "cash", "documents", "signature", "review"],
+  "sole-trader": ["application", "personal", "business", "identity", "bank", "cash", "documents", "signature", "review"],
+  "australian-company": ["application", "entity", "business", "directors", "shareholders", "bank", "cash", "documents", "signature", "review"],
+  "asic-non-australian-company": ["application", "entity", "business", "directors", "shareholders", "bank", "cash", "documents", "signature", "review"],
+  "non-australian-company": ["application", "entity", "business", "directors", "shareholders", "bank", "cash", "documents", "signature", "review"],
+  "regulated-trust": ["application", "trust", "business", "bank", "trustees", "beneficiaries", "cash", "documents", "signature", "review"],
+  "custodian-trust": ["application", "trust", "business", "bank", "trustees", "beneficiaries", "cash", "documents", "signature", "review"],
+  "non-custodian-trust": ["application", "trust", "business", "bank", "trustees", "beneficiaries", "cash", "documents", "signature", "review"],
+};
+
+export const getStepsForApplication = (type: ApplicationType): StepDefinition[] => {
+  const ids = type ? stepsByType[type] : ["application" as StepId];
+  return ids.map((id) => allSteps.find((step) => step.id === id)!).filter(Boolean);
+};
 
 export const APPLICATION_OPTIONS: ApplicationOption[] = [
-  {
-    value: "individual",
-    label: "Individual",
-    description: "An account held by one individual applicant",
-    headerTitle: "Individual application",
-  },
-  {
-    value: "joint-same",
-    label: "Husband-and-wife joint account — same address",
-    description: "Joint applicants who share a residential address",
-    headerTitle: "Joint Account application",
-  },
-  {
-    value: "joint-different-name",
-    label: "Different-surname joint account — same address",
-    description: "Joint applicants with different surnames at one address",
-    headerTitle: "Joint Account application",
-  },
-  {
-    value: "joint-different-address",
-    label: "Joint account — different addresses",
-    description: "Joint applicants who have separate residential addresses",
-    headerTitle: "Joint Account application",
-  },
-  {
-    value: "sole-trader",
-    label: "Sole Trader",
-    description: "An individual applying in their capacity as a sole trader",
-    headerTitle: "Sole trader application",
-  },
+  { value: "individual", label: "Individual", description: "An account held by one individual applicant", headerTitle: "Individual application", category: "individual" },
+  { value: "joint-same", label: "Husband-and-wife joint account — same address", description: "Joint applicants who share a residential address", headerTitle: "Joint application", category: "individual" },
+  { value: "joint-different-name", label: "Different-surname joint account — same address", description: "Joint applicants with different surnames at one address", headerTitle: "Joint application", category: "individual" },
+  { value: "joint-different-address", label: "Joint account — different addresses", description: "Joint applicants who have separate residential addresses", headerTitle: "Joint application", category: "individual" },
+  { value: "sole-trader", label: "Sole Trader", description: "An individual applying in their capacity as a sole trader", headerTitle: "Sole trader application", category: "individual" },
+  { value: "australian-company", label: "Australian Domestic Company", description: "A company formed, incorporated or registered in Australia", headerTitle: "Australian company application", category: "company" },
+  { value: "asic-non-australian-company", label: "ASIC-registered Non-Australian Company", description: "A foreign company registered with ASIC and issued an ARBN", headerTitle: "ASIC-registered foreign company application", category: "company" },
+  { value: "non-australian-company", label: "Non-Australian Company", description: "A company formed and registered outside Australia", headerTitle: "Non-Australian company application", category: "company" },
+  { value: "regulated-trust", label: "Regulated Trust", description: "A trust regulated by ASIC, APRA or another relevant regulator", headerTitle: "Regulated trust application", category: "trust" },
+  { value: "custodian-trust", label: "Trust acting as custodian", description: "A trust acting in a custodian capacity", headerTitle: "Custodian trust application", category: "trust" },
+  { value: "non-custodian-trust", label: "Trust not acting as custodian", description: "A trust that is not acting in a custodian capacity", headerTitle: "Non-custodian trust application", category: "trust" },
 ];
 
+export const AUSTRALIAN_STATE_OPTIONS: SelectOption[] = [
+  "Australian Capital Territory", "New South Wales", "Northern Territory", "Queensland", "South Australia", "Tasmania", "Victoria", "Western Australia",
+].map((label) => ({ value: label, label }));
+
+export const DOMESTIC_COMPANY_TYPE_OPTIONS: SelectOption[] = [
+  { value: "partnership", label: "Partnership" },
+  { value: "private", label: "Private" },
+  { value: "public", label: "Public" },
+];
+export const FOREIGN_COMPANY_TYPE_OPTIONS: SelectOption[] = [
+  { value: "private", label: "Private" },
+  { value: "public", label: "Public" },
+];
+export const NON_AUSTRALIAN_COMPANY_TYPE_OPTIONS: SelectOption[] = [
+  { value: "proprietor", label: "Proprietor" },
+  ...FOREIGN_COMPANY_TYPE_OPTIONS,
+];
+export const AUSTRALIAN_REGISTRATION_OPTIONS: SelectOption[] = [
+  { value: "public", label: "Public" },
+  { value: "proprietary", label: "Proprietary" },
+];
+export const PARTY_TYPE_OPTIONS: SelectOption[] = [
+  { value: "individual", label: "Individual" },
+  { value: "corporate", label: "Corporate" },
+];
+export const CORPORATE_ENTITY_TYPE_OPTIONS: SelectOption[] = [
+  { value: "australian-company", label: "Australian Domestic Company" },
+  { value: "asic-non-australian-company", label: "ASIC-registered Non-Australian Company" },
+  { value: "non-australian-company", label: "Non-Australian Company" },
+];
+
+const doc = (key: string, title: string, description: string, sourceField: string): EntityDocumentDefinition => ({ key, title, description, sourceField });
+const commonCompanyDocuments = [
+  doc("org_chart_share", "Organisational chart", "An organisational chart showing ownership by shareholding.", "org_chart_share"),
+  doc("association_article", "Articles of Association", "Current Articles of Association for the company.", "association_article"),
+];
+
+export const getRequiredEntityDocuments = (
+  type: ApplicationType,
+  companyType: CompanyStructure,
+): EntityDocumentDefinition[] => {
+  if (type === "australian-company") return [
+    doc("aus_stock_doc", "Australian Stock Exchange search", "A search of the relevant Australian Stock Exchange.", "aus_stock_doc"),
+    ...commonCompanyDocuments,
+    doc("asic_extract", "ASIC Extract", "A current ASIC company extract.", "asic_extract"),
+  ];
+  if (type === "asic-non-australian-company") return [
+    ...commonCompanyDocuments,
+    doc("asic_extract", "ASIC Extract", "A current ASIC company extract.", "asic_extract"),
+    ...(companyType === "public" ? [doc("aus_stock_doc", "Australian Stock Exchange search", "Required for a public company.", "aus_stock_doc")] : []),
+  ];
+  if (type === "non-australian-company") return [
+    doc("incorporation_certificate", "Certificate of incorporation", "Certificate issued when the company was formed or incorporated.", "incorporation_certificate"),
+    doc("org_chart_share", "Notarised organisational chart", "A notarised organisational chart showing ownership by shareholding.", "org_chart_share"),
+    doc("foreign_notarised_search", "Notarised foreign registration search", "A notarised search of the relevant foreign registration body.", "foreign_notarised_search"),
+    doc("association_article", "Notarised Articles of Association", "Current notarised Articles of Association.", "association_article"),
+    ...(companyType === "public" ? [doc("aus_stock_doc", "Australian Stock Exchange search", "Required for a public company.", "aus_stock_doc")] : []),
+  ];
+  if (type === "regulated-trust") return [
+    doc("trust_deed", "Trust deed or extract", "A trust deed or an extract of the trust deed.", "trust_deed"),
+    doc("search_of_database", "Regulator database search", "A search of the relevant ASIC, APRA or other regulator database.", "search_of_database"),
+  ];
+  if (type === "custodian-trust") return [
+    doc("trust_deed", "Trust deed or extract", "A trust deed or an extract of the trust deed.", "trust_deed"),
+    doc("search_of_database", "Regulator database search", "A search of the relevant ASIC, APRA or other regulator database.", "search_of_database"),
+    doc("trust_writing_confirmation", "Reporting Entities Roll confirmation", "Written confirmation that the name and enrolment details are entered on the Reporting Entities Roll.", "trust_writing_confirmation"),
+    doc("trust_reliable_electronic_data", "Reliable electronic trust data", "Reliable and independent electronic data relating to the trust.", "trust_reliable_electronic_data"),
+  ];
+  if (type === "non-custodian-trust") return [
+    doc("trust_deed", "Trust deed or extract", "A trust deed or an extract of the trust deed.", "trust_deed"),
+    doc("search_of_database", "Regulator database search", "A search of the relevant ASIC, APRA or other regulator database.", "search_of_database"),
+    doc("trust_reliable_documentation", "Reliable trust documentation", "Reliable and independent documentation relating to the trust.", "trust_reliable_documentation"),
+    doc("trust_reliable_electronic_data", "Reliable electronic trust data", "Reliable and independent electronic data relating to the trust.", "trust_reliable_electronic_data"),
+  ];
+  return [];
+};
+
 export const ASSESSMENT_OPTIONS: SelectOption[] = [
-  {
-    value: "australian",
-    label: "Australian",
-    description: "Australian customer assessment",
-  },
-  {
-    value: "foreign",
-    label: "Foreign",
-    description: "International customer assessment",
-  },
+  { value: "australian", label: "Australian", description: "Australian customer assessment" },
+  { value: "foreign", label: "Foreign", description: "International customer assessment" },
 ];
 
 export const INVESTMENT_CURRENCY_OPTIONS: SelectOption[] = [
@@ -134,39 +173,15 @@ export const BANK_CURRENCY_OPTIONS: SelectOption[] = [
 ];
 
 export const PHOTO_ID_OPTIONS: SelectOption[] = [
-  {
-    value: "passport",
-    label: "Passport",
-    description: "Passport identity page",
-  },
-  {
-    value: "driving-licence",
-    label: "Driving licence",
-    description: "Front and back of a current licence",
-  },
-  {
-    value: "photo-id",
-    label: "Photo ID",
-    description: "Other current government-issued photo identification",
-  },
+  { value: "passport", label: "Passport", description: "Passport identity page" },
+  { value: "driving-licence", label: "Driving licence", description: "Front and back of a current licence" },
+  { value: "photo-id", label: "Photo ID", description: "Other current government-issued photo identification" },
 ];
 
 export const ADDRESS_DOCUMENT_OPTIONS: SelectOption[] = [
-  {
-    value: "utility-bill",
-    label: "Utility bill",
-    description: "Recent electricity, gas, water or internet bill",
-  },
-  {
-    value: "lease-agreement",
-    label: "Lease agreement",
-    description: "Current residential tenancy or lease agreement",
-  },
-  {
-    value: "tax-document",
-    label: "Tax document",
-    description: "Recent government-issued tax assessment or notice",
-  },
+  { value: "utility-bill", label: "Utility bill", description: "Recent electricity, gas, water or internet bill" },
+  { value: "lease-agreement", label: "Lease agreement", description: "Current residential tenancy or lease agreement" },
+  { value: "tax-document", label: "Tax document", description: "Recent government-issued tax assessment or notice" },
 ];
 
 export const INVESTMENT_AMOUNT_OPTIONS: SelectOption[] = [
@@ -393,3 +408,4 @@ export const BUSINESS_ACTIVITY_OPTIONS: SelectOption[] = [
   { value: "Real Estate", label: "Real Estate" },
   { value: "Stock Market", label: "Stock Market" },
 ];
+
