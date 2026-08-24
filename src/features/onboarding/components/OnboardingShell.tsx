@@ -276,15 +276,6 @@ export function OnboardingShell({
                 </div>
               ) : null}
             </div>
-
-            <button
-              type="button"
-              aria-label="Help with application"
-              className="hidden h-10 w-10 place-items-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:border-slate-300 hover:text-[#003478] sm:grid"
-            >
-              <HelpCircle className="h-4 w-4" />
-            </button>
-
             <div ref={userMenuRef} className="relative">
               <button
                 type="button"

@@ -67,8 +67,7 @@ export const ADULT_DATE_CONDITIONS = [
   minimumAgeCondition(18, "The selected person must be at least 18 years old."),
 ] as const;
 
-export const DOB_HELPER_TEXT =
-  "Select the month and search for the year directly. Applicants must be at least 18 years old.";
+export const DOB_HELPER_TEXT = "Applicants must be at least 18 years old.";
 export const DOB_MAX_YEAR = new Date().getFullYear();
 export const DOB_MIN_YEAR = DOB_MAX_YEAR - 120;
 
