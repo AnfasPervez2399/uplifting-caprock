@@ -4,6 +4,7 @@ import {
   ArrowRight,
   BadgeCheck,
   Banknote,
+  Bell,
   BriefcaseBusiness,
   Building2,
   Camera,
@@ -11,6 +12,8 @@ import {
   CheckCircle2,
   CircleUserRound,
   Clock3,
+  Download,
+  Eye,
   FileCheck2,
   FileText,
   Fingerprint,
@@ -18,6 +21,7 @@ import {
   Landmark,
   Loader2,
   LockKeyhole,
+  LogOut,
   Mail,
   Menu,
   PencilLine,
@@ -42,6 +46,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useNavigate } from "react-router-dom";
 import { CustomSelect, type SelectOption } from "../components/ui/CustomSelect";
 import { CustomMultiSelect } from "../components/ui/CustomMultiSelect";
 import {
@@ -96,6 +101,12 @@ interface UploadedDocument {
   size: number;
   type: string;
   uploadedAt: string;
+  previewUrl: string;
+}
+
+interface DocumentPreview {
+  document: UploadedDocument;
+  label: string;
 }
 
 interface PersonalState {
@@ -801,6 +812,7 @@ function DocumentUpload({
   description,
   value,
   onChange,
+  onPreview,
   required = true,
   accept = ".pdf,.png,.jpg,.jpeg",
 }: {
@@ -809,6 +821,7 @@ function DocumentUpload({
   description: string;
   value?: UploadedDocument;
   onChange: (file?: File) => void;
+  onPreview: (document: UploadedDocument, label: string) => void;
   required?: boolean;
   accept?: string;
 }) {
@@ -850,20 +863,30 @@ function DocumentUpload({
           </p>
           <p className="mt-1 text-xs leading-5 text-slate-500">{description}</p>
           {value ? (
-            <div className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-white px-3 py-2.5 ring-1 ring-slate-200/80">
-              <div className="min-w-0">
-                <p className="truncate text-xs font-semibold text-slate-800">
-                  {value.name}
-                </p>
-                <p className="mt-0.5 text-[10px] text-slate-400">
-                  {(value.size / 1024 / 1024).toFixed(2)} MB · Ready
-                </p>
-              </div>
+            <div className="mt-3 flex items-center gap-2 rounded-xl bg-white p-1.5 ring-1 ring-slate-200/80">
+              <button
+                type="button"
+                onClick={() => onPreview(value, title)}
+                aria-label={`Open ${value.name}`}
+                className="group/file flex min-w-0 flex-1 items-center gap-3 rounded-lg px-2 py-1.5 text-left transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003478]/20"
+              >
+                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[#dce7f2] text-[#003478]">
+                  <Eye className="h-4 w-4" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-xs font-semibold text-slate-800 group-hover/file:text-[#003478]">
+                    {value.name}
+                  </span>
+                  <span className="mt-0.5 block text-[10px] text-slate-400">
+                    {(value.size / 1024 / 1024).toFixed(2)} MB · Click to open
+                  </span>
+                </span>
+              </button>
               <button
                 type="button"
                 onClick={() => onChange(undefined)}
                 aria-label={`Remove ${title}`}
-                className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003478]/20"
+                className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/20"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -894,10 +917,12 @@ function SelfieUpload({
   value,
   error,
   onChange,
+  onPreview,
 }: {
   value?: UploadedDocument;
   error?: string;
   onChange: (file?: File) => void;
+  onPreview: (document: UploadedDocument, label: string) => void;
 }) {
   const handleFile = (event: ChangeEvent<HTMLInputElement>) => {
     onChange(event.target.files?.[0]);
@@ -940,22 +965,29 @@ function SelfieUpload({
         </p>
 
         {value ? (
-          <div className="mt-5 flex w-full max-w-md items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-left">
-            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-white text-[#003478] ring-1 ring-slate-200">
-              <Camera className="h-4 w-4" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-xs font-semibold text-slate-800">
-                {value.name}
-              </p>
-              <p className="mt-0.5 text-[10px] text-slate-400">
-                {(value.size / 1024 / 1024).toFixed(2)} MB · Image ready
-              </p>
-            </div>
+          <div className="mt-5 flex w-full max-w-md items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-1.5 text-left">
+            <button
+              type="button"
+              onClick={() => onPreview(value, "Identity selfie")}
+              className="group/file flex min-w-0 flex-1 items-center gap-3 rounded-lg px-2 py-1.5 transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003478]/20"
+              aria-label={`Open ${value.name}`}
+            >
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-white text-[#003478] ring-1 ring-slate-200">
+                <Eye className="h-4 w-4" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-xs font-semibold text-slate-800 group-hover/file:text-[#003478]">
+                  {value.name}
+                </span>
+                <span className="mt-0.5 block text-[10px] text-slate-400">
+                  {(value.size / 1024 / 1024).toFixed(2)} MB · Click to open
+                </span>
+              </span>
+            </button>
             <button
               type="button"
               onClick={() => onChange(undefined)}
-              className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-slate-400 transition hover:bg-white hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003478]/20"
+              className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/20"
               aria-label="Remove selfie"
             >
               <X className="h-4 w-4" />
@@ -1126,10 +1158,20 @@ const documentFromFile = (file?: File): UploadedDocument | undefined =>
         size: file.size,
         type: file.type,
         uploadedAt: new Date().toISOString(),
+        previewUrl: URL.createObjectURL(file),
       }
     : undefined;
 
 const isValidEmail = (email: string) => /^\S+@\S+\.\S+$/.test(email);
+
+const displayNameFromEmail = (email: string) => {
+  const localPart = email.split("@")[0] || "";
+  const words = localPart.split(/[._-]+/).filter(Boolean);
+  if (!words.length) return "Alex Morgan";
+  return words
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+};
 
 const isValidWebsiteUrl = (value: string) => {
   const trimmed = value.trim();
@@ -1264,6 +1306,19 @@ const hasCompleteApplicantProof = (
   hasPersonalDetailsEvidence(documents);
 
 export function Onboarding() {
+  const navigate = useNavigate();
+  const [loggedUserEmail] = useState(
+    () =>
+      sessionStorage.getItem("caprockUserEmail") || "alex.morgan@example.com",
+  );
+  const loggedUserName = displayNameFromEmail(loggedUserEmail);
+  const loggedUserRole = "Applicant";
+  const loggedUserInitials = loggedUserName
+    .split(" ")
+    .slice(0, 2)
+    .map((part) => part.charAt(0))
+    .join("")
+    .toUpperCase();
   const [form, setForm] = useState<FormState>(initialFormState);
   const [activeStepId, setActiveStepId] = useState<StepId>("personal");
   const [jointDraft, setJointDraft] =
@@ -1282,6 +1337,16 @@ export function Onboarding() {
   const [notice, setNotice] = useState("");
   const [successNotice, setSuccessNotice] = useState("");
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [notificationsSeen, setNotificationsSeen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [documentPreview, setDocumentPreview] =
+    useState<DocumentPreview | null>(null);
+  const notificationsRef = useRef<HTMLDivElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+  const previewDialogRef = useRef<HTMLDivElement>(null);
+  const previewCloseButtonRef = useRef<HTMLButtonElement>(null);
+  const previewReturnFocusRef = useRef<HTMLElement | null>(null);
   const [showAdviserInvite, setShowAdviserInvite] = useState(false);
   const [adviserDraft, setAdviserDraft] =
     useState<AdviserDraft>(emptyAdviserDraft);
@@ -1471,6 +1536,84 @@ export function Onboarding() {
   );
   const sectionEyebrow = (stepId: StepId) =>
     `Section ${visibleSteps.findIndex((step) => step.id === stepId) + 1} of ${visibleSteps.length}`;
+
+  const openDocumentPreview = (
+    uploadedDocument: UploadedDocument,
+    label: string,
+  ) => {
+    previewReturnFocusRef.current =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+    setDocumentPreview({ document: uploadedDocument, label });
+    setNotificationsOpen(false);
+    setUserMenuOpen(false);
+  };
+
+  const handleLogout = () => {
+    sessionStorage.removeItem("caprockUserEmail");
+    navigate("/", { replace: true });
+  };
+
+  useEffect(() => {
+    if (!notificationsOpen && !userMenuOpen) return;
+    const handlePointerDown = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (notificationsOpen && !notificationsRef.current?.contains(target))
+        setNotificationsOpen(false);
+      if (userMenuOpen && !userMenuRef.current?.contains(target))
+        setUserMenuOpen(false);
+    };
+    const handlePopoverKeyDown = (event: globalThis.KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setNotificationsOpen(false);
+      setUserMenuOpen(false);
+    };
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handlePopoverKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handlePopoverKeyDown);
+    };
+  }, [notificationsOpen, userMenuOpen]);
+
+  useEffect(() => {
+    if (!documentPreview) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.requestAnimationFrame(() => previewCloseButtonRef.current?.focus());
+
+    const handlePreviewKeyDown = (event: globalThis.KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setDocumentPreview(null);
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const focusable = Array.from(
+        previewDialogRef.current?.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), [href], iframe, [tabindex]:not([tabindex="-1"])',
+        ) || [],
+      ).filter((element) => element.getClientRects().length > 0);
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener("keydown", handlePreviewKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handlePreviewKeyDown);
+      document.body.style.overflow = previousOverflow;
+      previewReturnFocusRef.current?.focus();
+    };
+  }, [documentPreview]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -2384,12 +2527,14 @@ export function Onboarding() {
             <div className="sm:col-span-2 lg:col-span-3">
               <DocumentUpload
                 id="profilePicture"
-                title="Account profile image (optional)"
+                title="Account profile image"
                 description="Optional for your account profile. This does not replace the required identity selfie in Prove It’s You."
                 value={form.personal.profilePicture}
                 onChange={(file) =>
                   updatePersonal("profilePicture", documentFromFile(file))
                 }
+                onPreview={openDocumentPreview}
+                required={false}
               />
             </div>
             <Field
@@ -3242,6 +3387,7 @@ export function Onboarding() {
               value={form.identity.selfie}
               error={errors.identity}
               onChange={updateSelfie}
+              onPreview={openDocumentPreview}
             />
           </section>
 
@@ -3333,9 +3479,20 @@ export function Onboarding() {
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="mr-auto inline-flex items-center gap-1.5 rounded-full bg-[#dce7f2] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-800 sm:mr-2">
-                      <Check className="h-3 w-3" /> Verified file
-                    </span>
+                    {account.verificationDocument ? (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          openDocumentPreview(
+                            account.verificationDocument!,
+                            "Bank verification document",
+                          )
+                        }
+                        className="mr-auto inline-flex items-center gap-1.5 rounded-full bg-[#dce7f2] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-800 transition hover:text-[#003478] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003478]/20 sm:mr-2"
+                      >
+                        <Eye className="h-3 w-3" /> Open verified file
+                      </button>
+                    ) : null}
                     <button
                       type="button"
                       onClick={() => editBankAccount(account)}
@@ -3477,6 +3634,7 @@ export function Onboarding() {
                       documentFromFile(file),
                     )
                   }
+                  onPreview={openDocumentPreview}
                 />
               </div>
             </div>
@@ -3844,6 +4002,7 @@ export function Onboarding() {
                   onChange={(file) =>
                     updateApplicantDocument(applicant.key, frontField, file)
                   }
+                  onPreview={openDocumentPreview}
                 />
                 {type === "driving-licence" ? (
                   <DocumentUpload
@@ -3854,6 +4013,7 @@ export function Onboarding() {
                     onChange={(file) =>
                       updateApplicantDocument(applicant.key, backField, file)
                     }
+                    onPreview={openDocumentPreview}
                   />
                 ) : null}
               </div>
@@ -4055,6 +4215,7 @@ export function Onboarding() {
                               file,
                             )
                           }
+                          onPreview={openDocumentPreview}
                         />
                       ) : null}
                     </div>
@@ -4081,6 +4242,7 @@ export function Onboarding() {
                       onChange={(file) =>
                         updateApplicantDocument(applicant.key, "cv", file)
                       }
+                      onPreview={openDocumentPreview}
                       required={false}
                       accept=".pdf,.doc,.docx"
                     />
@@ -4408,9 +4570,20 @@ export function Onboarding() {
                         {account.accountNumber.slice(-4)}
                       </p>
                     </div>
-                    <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-[#dce7f2] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-800">
-                      <FileCheck2 className="h-3 w-3" /> Evidence attached
-                    </span>
+                    {account.verificationDocument ? (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          openDocumentPreview(
+                            account.verificationDocument!,
+                            "Bank verification document",
+                          )
+                        }
+                        className="inline-flex w-fit items-center gap-1.5 rounded-full bg-[#dce7f2] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-800 transition hover:text-[#003478] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003478]/20"
+                      >
+                        <Eye className="h-3 w-3" /> Open evidence
+                      </button>
+                    ) : null}
                   </div>
                 ))
               ) : (
@@ -4691,8 +4864,8 @@ export function Onboarding() {
               <p className="text-[11px] text-slate-400">Secure onboarding</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 sm:gap-3">
-            <div className="hidden items-center gap-2 text-xs font-medium text-slate-500 md:flex">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <div className="hidden items-center gap-2 pr-1 text-xs font-medium text-slate-500 2xl:flex">
               <ShieldCheck className="h-4 w-4 text-[#003478]" />
               Encrypted session
             </div>
@@ -4704,14 +4877,14 @@ export function Onboarding() {
                   ? "Manage adviser access"
                   : "Invite an adviser"
               }
-              className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:text-[#003478] sm:px-3.5"
+              className="hidden h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:text-[#003478] lg:inline-flex"
             >
               {form.adviserAccess ? (
                 <CheckCircle2 className="h-4 w-4 text-[#003478]" />
               ) : (
                 <UserPlus className="h-4 w-4" />
               )}
-              <span className="hidden lg:inline">
+              <span>
                 {form.adviserAccess ? "Adviser invited" : "Invite adviser"}
               </span>
             </button>
@@ -4719,24 +4892,174 @@ export function Onboarding() {
               type="button"
               onClick={saveDraft}
               disabled={isSaving}
-              className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:text-[#003478] disabled:opacity-60 sm:px-4"
+              aria-label={isSaving ? "Saving draft" : "Save draft"}
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:text-[#003478] disabled:opacity-60 sm:px-3.5"
             >
               {isSaving ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <Save className="h-4 w-4" />
               )}
-              <span className="hidden sm:inline">
+              <span className="hidden md:inline">
                 {isSaving ? "Saved" : "Save draft"}
               </span>
             </button>
+
+            <div ref={notificationsRef} className="relative">
+              <button
+                type="button"
+                onClick={() => {
+                  setNotificationsOpen((open) => !open);
+                  setNotificationsSeen(true);
+                  setUserMenuOpen(false);
+                }}
+                aria-label="Open notifications"
+                aria-haspopup="dialog"
+                aria-expanded={notificationsOpen}
+                className={`relative grid h-10 w-10 place-items-center rounded-xl border bg-white transition ${
+                  notificationsOpen
+                    ? "border-[rgba(0,52,120,0.22)] text-[#003478] ring-4 ring-[#003478]/5"
+                    : "border-slate-200 text-slate-500 hover:border-slate-300 hover:text-[#003478]"
+                }`}
+              >
+                <Bell className="h-4 w-4" />
+                {!notificationsSeen ? (
+                  <span
+                    className="absolute right-2 top-2 h-2 w-2 rounded-full bg-[#003478] ring-2 ring-white"
+                    aria-label="Unread notifications"
+                  />
+                ) : null}
+              </button>
+              {notificationsOpen ? (
+                <div
+                  role="dialog"
+                  aria-label="Notifications"
+                  className="fixed left-4 right-4 top-[72px] z-[80] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_18px_55px_rgba(15,23,42,0.14)] sm:absolute sm:left-auto sm:right-0 sm:top-12 sm:w-[22rem]"
+                >
+                  <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3.5">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-950">
+                        Notifications
+                      </p>
+                      <p className="mt-0.5 text-[10px] text-slate-400">
+                        Application activity and updates
+                      </p>
+                    </div>
+                    <span className="rounded-full bg-[#dce7f2] px-2.5 py-1 text-[10px] font-bold text-[#003478]">
+                      3 updates
+                    </span>
+                  </div>
+                  <div className="divide-y divide-slate-100">
+                    {[
+                      {
+                        title: "Document previews are ready",
+                        message:
+                          "Click any uploaded file to inspect it without leaving your application.",
+                        icon: Eye,
+                      },
+                      {
+                        title: "Your session is protected",
+                        message:
+                          "Application details and uploads remain encrypted throughout onboarding.",
+                        icon: ShieldCheck,
+                      },
+                      {
+                        title: "Draft saving is available",
+                        message:
+                          "Use Save draft at any time and continue when you are ready.",
+                        icon: Save,
+                      },
+                    ].map(({ title, message, icon: Icon }) => (
+                      <div key={title} className="flex gap-3 px-4 py-3.5">
+                        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#dce7f2] text-[#003478]">
+                          <Icon className="h-4 w-4" />
+                        </span>
+                        <div>
+                          <p className="text-xs font-semibold text-slate-900">
+                            {title}
+                          </p>
+                          <p className="mt-1 text-[11px] leading-5 text-slate-500">
+                            {message}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+
             <button
               type="button"
               aria-label="Help with application"
-              className="grid h-10 w-10 place-items-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:border-slate-300 hover:text-[#003478]"
+              className="hidden h-10 w-10 place-items-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:border-slate-300 hover:text-[#003478] sm:grid"
             >
               <HelpCircle className="h-4 w-4" />
             </button>
+
+            <div ref={userMenuRef} className="relative">
+              <button
+                type="button"
+                onClick={() => {
+                  setUserMenuOpen((open) => !open);
+                  setNotificationsOpen(false);
+                }}
+                aria-label="Open user menu"
+                aria-haspopup="menu"
+                aria-expanded={userMenuOpen}
+                className={`flex h-10 items-center gap-2 rounded-xl border bg-white p-1.5 pr-2 transition ${
+                  userMenuOpen
+                    ? "border-[rgba(0,52,120,0.22)] ring-4 ring-[#003478]/5"
+                    : "border-slate-200 hover:border-slate-300"
+                }`}
+              >
+                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-[#003478] text-[10px] font-bold text-white">
+                  {loggedUserInitials}
+                </span>
+                <span className="hidden min-w-0 text-left xl:block">
+                  <span className="block max-w-28 truncate text-[11px] font-semibold leading-4 text-slate-900">
+                    {loggedUserName}
+                  </span>
+                  <span className="block text-[9px] leading-3 text-slate-400">
+                    {loggedUserRole}
+                  </span>
+                </span>
+              </button>
+              {userMenuOpen ? (
+                <div
+                  role="menu"
+                  className="absolute right-0 top-12 z-[80] w-64 overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_18px_55px_rgba(15,23,42,0.14)]"
+                >
+                  <div className="rounded-xl bg-slate-50 p-3">
+                    <div className="flex items-center gap-3">
+                      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#003478] text-xs font-bold text-white">
+                        {loggedUserInitials}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-slate-950">
+                          {loggedUserName}
+                        </p>
+                        <p className="mt-0.5 text-[10px] font-medium text-[#003478]">
+                          {loggedUserRole}
+                        </p>
+                      </div>
+                    </div>
+                    <p className="mt-3 truncate text-[10px] text-slate-400">
+                      {loggedUserEmail}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={handleLogout}
+                    className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs font-semibold text-red-600 transition hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/20"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Log out
+                  </button>
+                </div>
+              ) : null}
+            </div>
           </div>
         </div>
         <div className="h-1 bg-slate-100">
@@ -5007,6 +5330,115 @@ export function Onboarding() {
           </div>
         </div>
       </main>
+
+      {documentPreview ? (
+        <div
+          className="fixed inset-0 z-[140] flex items-center justify-center bg-slate-950/55 p-3 backdrop-blur-[3px] sm:p-6"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setDocumentPreview(null);
+          }}
+        >
+          <div
+            ref={previewDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="document-preview-title"
+            className="flex h-[min(90vh,900px)] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-white/20 bg-white shadow-[0_30px_100px_rgba(2,6,23,0.32)] sm:rounded-3xl"
+          >
+            <div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-3.5 sm:px-5">
+              <div className="flex min-w-0 items-center gap-3">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#dce7f2] text-[#003478]">
+                  <FileText className="h-4 w-4" />
+                </span>
+                <div className="min-w-0">
+                  <p
+                    id="document-preview-title"
+                    className="text-sm font-semibold text-slate-950"
+                  >
+                    {documentPreview.label}
+                  </p>
+                  <p className="mt-0.5 truncate text-[11px] text-slate-500">
+                    {documentPreview.document.name}
+                  </p>
+                </div>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <a
+                  href={documentPreview.document.previewUrl}
+                  download={documentPreview.document.name}
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:text-[#003478] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003478]/20 sm:px-3.5"
+                >
+                  <Download className="h-4 w-4" />
+                  <span className="hidden sm:inline">Download</span>
+                </a>
+                <button
+                  ref={previewCloseButtonRef}
+                  type="button"
+                  onClick={() => setDocumentPreview(null)}
+                  aria-label="Close document viewer"
+                  className="grid h-10 w-10 place-items-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:border-slate-300 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003478]/20"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+
+            <div className="min-h-0 flex-1 bg-slate-100 p-2 sm:p-4">
+              {documentPreview.document.type.startsWith("image/") ? (
+                <div className="grid h-full place-items-center overflow-auto rounded-xl bg-white p-3 ring-1 ring-slate-200 sm:rounded-2xl sm:p-5">
+                  <img
+                    src={documentPreview.document.previewUrl}
+                    alt={`Preview of ${documentPreview.document.name}`}
+                    className="max-h-full max-w-full rounded-lg object-contain shadow-sm"
+                  />
+                </div>
+              ) : documentPreview.document.type === "application/pdf" ||
+                documentPreview.document.name.toLowerCase().endsWith(".pdf") ? (
+                <iframe
+                  src={documentPreview.document.previewUrl}
+                  title={`Preview of ${documentPreview.document.name}`}
+                  className="h-full w-full rounded-xl border-0 bg-white ring-1 ring-slate-200 sm:rounded-2xl"
+                />
+              ) : (
+                <div className="grid h-full place-items-center rounded-xl bg-white p-6 text-center ring-1 ring-slate-200 sm:rounded-2xl">
+                  <div className="max-w-sm">
+                    <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-[#dce7f2] text-[#003478]">
+                      <FileText className="h-7 w-7" />
+                    </div>
+                    <h2 className="mt-5 text-lg font-semibold text-slate-950">
+                      Preview unavailable for this file type
+                    </h2>
+                    <p className="mt-2 text-sm leading-6 text-slate-500">
+                      Word documents cannot be displayed securely in the browser
+                      viewer. Download the file to open it in a compatible
+                      application.
+                    </p>
+                    <a
+                      href={documentPreview.document.previewUrl}
+                      download={documentPreview.document.name}
+                      className="mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#003478] px-4 text-xs font-semibold text-white transition hover:bg-[#002b63] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#003478]/15"
+                    >
+                      <Download className="h-4 w-4" />
+                      Download document
+                    </a>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-200 bg-white px-4 py-3 text-[10px] text-slate-400 sm:px-5">
+              <span>
+                {(documentPreview.document.size / 1024 / 1024).toFixed(2)} MB ·{" "}
+                {documentPreview.document.type || "Document"}
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <ShieldCheck className="h-3.5 w-3.5 text-[#003478]" /> Secure
+                document viewer
+              </span>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {showAdviserInvite ? (
         <div

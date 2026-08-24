@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Check, Eye, EyeOff, Loader2, LogIn, ArrowUpRight } from "lucide-react";
+import { Check, Eye, EyeOff, Loader2, LogIn } from "lucide-react";
 
 type Status = "idle" | "loading" | "success";
 type Errors = Partial<Record<"email" | "password", string>>;
@@ -35,7 +35,7 @@ function HeaderVisual({ reduceMotion }: { reduceMotion: boolean | null }) {
       viewBox="0 0 128 72"
       role="img"
       aria-labelledby="header-visual-title"
-      className="h-[64px] w-[112px] shrink-0"
+      className="h-[56px] w-[98px] shrink-0 sm:h-[64px] sm:w-[112px]"
     >
       <title id="header-visual-title">
         Transactions between cash accounts and investment funds
@@ -86,13 +86,14 @@ function HeaderVisual({ reduceMotion }: { reduceMotion: boolean | null }) {
           width="24"
           height="14"
           rx="3"
-          fill="#eff6ff"
-          stroke="#93c5fd"
+          fill="rgba(0,52,120,0.055)"
+          stroke="rgba(0,52,120,0.24)"
         />
         <circle cx="32" cy="38" r="3.5" fill="#003478" />
         <path
           d="M23 35H26M38 41H41"
-          stroke="#60a5fa"
+          stroke="#003478"
+          strokeOpacity="0.45"
           strokeWidth="1.5"
           strokeLinecap="round"
         />
@@ -104,7 +105,14 @@ function HeaderVisual({ reduceMotion }: { reduceMotion: boolean | null }) {
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.42, delay: 0.22, ease: EASE }}
       >
-        <rect x="81" y="18" width="38" height="41" rx="8" fill="#dbeafe" />
+        <rect
+          x="81"
+          y="18"
+          width="38"
+          height="41"
+          rx="8"
+          fill="rgba(0,52,120,0.07)"
+        />
         <rect
           x="77"
           y="13"
@@ -112,7 +120,7 @@ function HeaderVisual({ reduceMotion }: { reduceMotion: boolean | null }) {
           height="42"
           rx="8"
           fill="white"
-          stroke="#bfdbfe"
+          stroke="rgba(0,52,120,0.20)"
           strokeWidth="1.5"
         />
         <text
@@ -127,9 +135,9 @@ function HeaderVisual({ reduceMotion }: { reduceMotion: boolean | null }) {
           FUNDS
         </text>
         <path d="M84 38H108L105.5 45H86.5L84 38Z" fill="#003478" />
-        <circle cx="89" cy="34" r="3.2" fill="#bfdbfe" />
-        <circle cx="96" cy="32" r="3.8" fill="#60a5fa" />
-        <circle cx="104" cy="34" r="3.2" fill="#dbeafe" />
+        <circle cx="89" cy="34" r="3.2" fill="#003478" fillOpacity="0.18" />
+        <circle cx="96" cy="32" r="3.8" fill="#003478" fillOpacity="0.52" />
+        <circle cx="104" cy="34" r="3.2" fill="#003478" fillOpacity="0.10" />
       </motion.g>
 
       {/* Transaction rail */}
@@ -217,6 +225,7 @@ export function Login() {
     // Replace this demo delay with your authentication request.
     await wait(1000);
     setStatus("success");
+    sessionStorage.setItem("caprockUserEmail", normalizedEmail);
     await wait(450);
     navigate("/onboarding");
   };
@@ -226,23 +235,21 @@ export function Login() {
       variants={container}
       initial={reduceMotion ? false : "hidden"}
       animate="visible"
-      className="mx-auto w-full max-w-[420px] px-5 py-4 sm:px-0 sm:py-10"
+      className="mx-auto w-full max-w-[420px] px-5 py-8 sm:px-0 sm:py-10"
     >
       <motion.header variants={item} className="mb-9">
-        <div className="mb-9 flex items-start justify-between gap-5">
+        <div className="mb-8 flex items-start justify-between gap-3 sm:mb-9 sm:gap-5">
           <Link
             to="/"
             aria-label="Caprock home"
-            className="inline-flex items-center gap-2.5 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003478]/20 focus-visible:ring-offset-4"
+            className="inline-flex min-h-10 items-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003478]/20 focus-visible:ring-offset-4"
           >
+            {/* Replace public/company-logo.svg with the official logo file. */}
             <img
-              src="/blue-logo.svg"
+              src="/company-logo.svg"
               alt="Caprock"
-              className="h-10 w-auto max-w-[140px] object-contain object-left sm:max-w-[168px]"
+              className="h-9 w-auto max-w-[116px] object-contain object-left sm:h-10 sm:max-w-[168px]"
             />
-            <span className="text-sm font-bold tracking-[0.14em] text-slate-950">
-              CAPROCK
-            </span>
           </Link>
 
           <HeaderVisual reduceMotion={reduceMotion} />
@@ -404,7 +411,7 @@ export function Login() {
             !reduceMotion && status === "idle" ? { scale: 0.985 } : undefined
           }
           transition={{ duration: 0.18, ease: EASE }}
-          className="group  cursor-pointer relative h-14 w-full overflow-hidden rounded-xl bg-[#003478] text-white shadow-[0_6px_16px_-10px_rgba(0,52,120,0.75)] transition-[background-color,box-shadow] duration-200 hover:bg-[#002d69] hover:shadow-[0_12px_24px_-12px_rgba(0,52,120,0.65)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003478]/25 focus-visible:ring-offset-2 disabled:cursor-wait disabled:bg-[#003478] disabled:opacity-90"
+          className="group relative h-14 w-full overflow-hidden rounded-xl bg-[#003478] text-white shadow-[0_6px_16px_-10px_rgba(0,52,120,0.75)] transition-shadow duration-200 hover:shadow-[0_12px_24px_-12px_rgba(0,52,120,0.65)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003478]/25 focus-visible:ring-offset-2 disabled:cursor-wait disabled:bg-[#003478] disabled:opacity-90"
         >
           <AnimatePresence initial={false}>
             <motion.span
@@ -421,7 +428,7 @@ export function Login() {
                   ? "Verifying account"
                   : status === "success"
                     ? "Access granted"
-                    : "Continue"}
+                    : "Sign in to Caprock"}
               </span>
 
               <span
@@ -449,60 +456,8 @@ export function Login() {
           </AnimatePresence>
         </motion.button>
       </motion.form>
-      <motion.div
-        initial={{
-          opacity: 0,
-        }}
-        animate={{
-          opacity: 1,
-        }}
-        transition={{
-          delay: 0.55,
-        }}
-        className="
-          mt-8
-          flex items-center
-          justify-between
-          border-t border-black/[0.08]
-          pt-6
-        "
-      >
-        <p className="text-[12px] text-black/40">New to Caprock?</p>
 
-        <Link
-          to="/signup"
-          className="
-            group flex items-center gap-1.5
-            text-[12px]
-            font-bold
-            text-black
-          "
-        >
-          Create an account
-          <span
-            className="
-              flex h-6 w-6
-              items-center justify-center
-              rounded-full
-              border border-black/10
-              transition-all duration-300
-              group-hover:border-[#003478]
-              group-hover:bg-[#003478]
-              group-hover:text-white
-            "
-          >
-            <ArrowUpRight
-              className="
-                h-3 w-3
-                transition-transform
-                group-hover:translate-x-[1px]
-                group-hover:-translate-y-[1px]
-              "
-            />
-          </span>
-        </Link>
-      </motion.div>
-      {/* <motion.p
+      <motion.p
         variants={item}
         className="mt-8 border-t border-slate-200 pt-6 text-center text-sm text-slate-500"
       >
@@ -513,7 +468,7 @@ export function Login() {
         >
           Create an account
         </Link>
-      </motion.p> */}
+      </motion.p>
     </motion.section>
   );
 }
