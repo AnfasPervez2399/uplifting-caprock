@@ -74,7 +74,7 @@ export function PersonalStep({ controller }: StepProps) {
     <div className="animate-[fadeUp_.35s_ease-out]">
       <SectionIntro
         eyebrow={sectionEyebrow("personal")}
-        title="Personal"
+        title="Personal Information"
         description="Tell us who is applying and provide the investment profile details required for this application."
         icon={CircleUserRound}
       />

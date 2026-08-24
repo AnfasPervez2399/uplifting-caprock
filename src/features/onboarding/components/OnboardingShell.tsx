@@ -7,6 +7,7 @@ import {
   Building2,
   Check,
   CheckCircle2,
+  Clock3,
   Download,
   Eye,
   FileText,
@@ -69,6 +70,7 @@ export function OnboardingShell({
     draftStatus,
     isSaving,
     isSubmitting,
+    submitted,
     visibleSteps,
     activeStepIndex,
     applicationHeader,
@@ -276,6 +278,15 @@ export function OnboardingShell({
                 </div>
               ) : null}
             </div>
+
+            <button
+              type="button"
+              aria-label="Help with application"
+              className="hidden h-10 w-10 place-items-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:border-slate-300 hover:text-[#003478] sm:grid"
+            >
+              <HelpCircle className="h-4 w-4" />
+            </button>
+
             <div ref={userMenuRef} className="relative">
               <button
                 type="button"
@@ -636,13 +647,17 @@ export function OnboardingShell({
                 <button
                   type="button"
                   onClick={goNext}
-                  disabled={isSubmitting}
+                  disabled={
+                    isSubmitting || (activeStepId === "review" && submitted)
+                  }
                   aria-label={
                     activeStepId === "review"
-                      ? "Submit application securely"
+                      ? submitted
+                        ? "Application under review"
+                        : "Submit application securely"
                       : "Continue to next section"
                   }
-                  className={`group inline-flex h-12 items-center justify-center rounded-xl bg-[#003478] text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#002b63] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#003478]/15 disabled:cursor-wait disabled:opacity-70 ${
+                  className={`group inline-flex h-12 items-center justify-center rounded-xl bg-[#003478] text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#002b63] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#003478]/15 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:bg-[#003478] ${
                     activeStepId === "review"
                       ? "min-w-[210px] gap-3 px-4"
                       : "min-w-40 gap-2 px-6"
@@ -654,6 +669,13 @@ export function OnboardingShell({
                         <Loader2 className="h-4 w-4 animate-spin" />
                       </span>
                       Submitting securely…
+                    </>
+                  ) : activeStepId === "review" && submitted ? (
+                    <>
+                      <span className="grid h-8 w-8 place-items-center rounded-lg bg-white/10 ring-1 ring-white/10">
+                        <Clock3 className="h-4 w-4" />
+                      </span>
+                      <span>Under review</span>
                     </>
                   ) : activeStepId === "review" ? (
                     <>

@@ -15,14 +15,14 @@ export const allSteps: StepDefinition[] = [
   {
     id: "personal",
     shortLabel: "Personal",
-    label: "Personal",
+    label: "Personal Information",
     description: "Applicant and investment details",
     icon: CircleUserRound,
   },
   {
     id: "business",
     shortLabel: "Business",
-    label: "Business",
+    label: "Business Information",
     description: "Assessment, tax and activity",
     icon: BriefcaseBusiness,
   },

@@ -39,7 +39,7 @@ export function BusinessStep({ controller }: StepProps) {
     <div className="animate-[fadeUp_.35s_ease-out]">
       <SectionIntro
         eyebrow={sectionEyebrow("business")}
-        title="Business"
+        title="Business Information"
         description="Provide the Sole Trader assessment and business information required for this application."
         icon={BriefcaseBusiness}
       />

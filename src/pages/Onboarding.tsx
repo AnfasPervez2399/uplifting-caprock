@@ -36,14 +36,15 @@ export function Onboarding() {
     }
   };
 
-  if (controller.submitted) {
-    return <SubmittedApplication controller={controller} />;
-  }
-
   return (
-    <OnboardingShell controller={controller}>
-      {renderActiveStep()}
-    </OnboardingShell>
+    <>
+      <OnboardingShell controller={controller}>
+        {renderActiveStep()}
+      </OnboardingShell>
+      {controller.submissionConfirmationOpen ? (
+        <SubmittedApplication controller={controller} />
+      ) : null}
+    </>
   );
 }
 

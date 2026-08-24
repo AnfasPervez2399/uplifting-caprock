@@ -96,6 +96,8 @@ export function useOnboardingController() {
   const isSaving = draftStatus === "saving";
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [submissionConfirmationOpen, setSubmissionConfirmationOpen] =
+    useState(false);
 
   const isJoint = isJointType(form.personal.applicationType);
   const sharedAddress = usesSharedAddress(form.personal.applicationType);
@@ -120,6 +122,7 @@ export function useOnboardingController() {
     title: selectedApplicationOption?.headerTitle || "Investment application",
     subtitle: selectedApplicationOption?.headerSubtitle || "Caprock onboarding",
   };
+
   const applicantProfiles = useMemo(
     () => [
       {
@@ -128,18 +131,8 @@ export function useOnboardingController() {
         name: mainApplicantFullName || "Main applicant",
         country: form.personal.applicantCountry,
       },
-      ...form.jointApplicants.map((applicant, index) => ({
-        key: applicant.id,
-        label: `Joint applicant ${index + 1}`,
-        name: formatApplicantName(applicant) || `Joint applicant ${index + 1}`,
-        country: applicant.applicantCountry || form.personal.applicantCountry,
-      })),
     ],
-    [
-      form.jointApplicants,
-      form.personal.applicantCountry,
-      mainApplicantFullName,
-    ],
+    [form.personal.applicantCountry, mainApplicantFullName],
   );
 
   const personalComplete = useMemo(() => {
@@ -584,9 +577,7 @@ export function useOnboardingController() {
       jointApplicants: isJointType(applicationType)
         ? current.jointApplicants
         : [],
-      documents: isJointType(applicationType)
-        ? current.documents
-        : { main: current.documents.main || {} },
+      documents: { main: current.documents.main || {} },
     }));
     setErrors((current) => ({
       ...current,
@@ -1063,7 +1054,7 @@ export function useOnboardingController() {
 
     if (stepId === "documents" && !documentsComplete) {
       nextErrors.documents =
-        "Complete every applicant’s proof requirements. Non-Australian applicants need two different photo IDs; all applicants also need address evidence where applicable and either a CV or website.";
+        "Complete the main applicant’s proof requirements. A non-Australian main applicant needs two different photo IDs, plus address evidence where applicable and either a CV or website.";
     }
 
     if (stepId === "review") {
@@ -1170,7 +1161,7 @@ export function useOnboardingController() {
   };
 
   const submitApplication = async () => {
-    if (!validateStep("review")) return;
+    if (!validateStep("review") || submitted) return;
     setIsSubmitting(true);
 
     try {
@@ -1179,6 +1170,8 @@ export function useOnboardingController() {
         new Promise<void>((resolve) => window.setTimeout(resolve, 1400)),
       );
       setSubmitted(true);
+      setSubmissionConfirmationOpen(true);
+      setSuccessNotice("");
     } catch {
       setNotice(
         "We could not submit your application. Your progress is safe—please try again.",
@@ -1249,7 +1242,8 @@ export function useOnboardingController() {
     isSubmitting,
     setIsSubmitting,
     submitted,
-    setSubmitted,
+    submissionConfirmationOpen,
+    setSubmissionConfirmationOpen,
     isJoint,
     sharedAddress,
     isSoleTrader,

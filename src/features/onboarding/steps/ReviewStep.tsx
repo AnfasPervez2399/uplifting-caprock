@@ -91,7 +91,7 @@ export function ReviewStep({ controller }: StepProps) {
 
         <div className="space-y-4">
           <ReviewSection
-            title="Personal"
+            title="Personal Information"
             icon={CircleUserRound}
             onEdit={() => goToStep("personal")}
           >
@@ -180,7 +180,7 @@ export function ReviewStep({ controller }: StepProps) {
 
           {isSoleTrader ? (
             <ReviewSection
-              title="Business"
+              title="Business Information"
               icon={BriefcaseBusiness}
               onEdit={() => goToStep("business")}
             >
