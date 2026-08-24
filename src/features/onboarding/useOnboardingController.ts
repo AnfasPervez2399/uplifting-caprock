@@ -588,7 +588,11 @@ export function useOnboardingController() {
         ? current.documents
         : { main: current.documents.main || {} },
     }));
-    setErrors((current) => ({ ...current, applicationType: "" }));
+    setErrors((current) => ({
+      ...current,
+      applicationType: "",
+      jointApplicants: "",
+    }));
     if (!isJointType(applicationType)) {
       lookupRequestRef.current += 1;
       setShowJointComposer(false);
@@ -646,14 +650,16 @@ export function useOnboardingController() {
 
   const saveJointApplicant = () => {
     const isExisting = jointDraft.method === "existing";
-    const address = sharedAddress
-      ? form.personal.residentialAddress
-      : jointDraft.residentialAddress;
+    const invitationName = jointDraft.firstName.trim();
+    const invitationEmail = jointDraft.email.trim();
+    const separateAddress = jointDraft.residentialAddress.trim();
     const valid = isExisting
-      ? lookupState === "found" && jointDraft.clientId.trim()
-      : jointDraft.firstName.trim() &&
-        isValidEmail(jointDraft.email) &&
-        address.trim();
+      ? lookupState === "found" && Boolean(jointDraft.clientId.trim())
+      : Boolean(
+          invitationName &&
+          isValidEmail(invitationEmail) &&
+          (sharedAddress || separateAddress),
+        );
 
     if (!valid) {
       setErrors((current) => ({
@@ -673,14 +679,18 @@ export function useOnboardingController() {
       clientId: isExisting ? jointDraft.clientId.trim() : "",
       firstName: isExisting
         ? `Verified client · ${jointDraft.clientId.trim().toUpperCase()}`
-        : jointDraft.firstName.trim(),
+        : invitationName,
       middleName: "",
       lastName: "",
       formerNames: isExisting ? "Verified on file" : "",
-      email: isExisting ? "" : jointDraft.email.trim(),
+      email: isExisting ? "" : invitationEmail,
       dateOfBirth: "",
       applicantCountry: form.personal.applicantCountry,
-      residentialAddress: isExisting ? "Verified on file" : address.trim(),
+      residentialAddress: isExisting
+        ? "Verified on file"
+        : sharedAddress
+          ? ""
+          : separateAddress,
       confirmed: true,
     };
 
@@ -693,6 +703,12 @@ export function useOnboardingController() {
     setLookupVerifiedAt("");
     setShowJointComposer(false);
     setErrors((current) => ({ ...current, jointApplicants: "" }));
+    setNotice("");
+    setSuccessNotice(
+      isExisting
+        ? "Verified client added to the joint application."
+        : `Invitation added for ${invitationName}.`,
+    );
   };
 
   const removeJointApplicant = (id: string) => {
@@ -1061,7 +1077,10 @@ export function useOnboardingController() {
 
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) {
-      setNotice("Please review the highlighted information before continuing.");
+      setNotice(
+        Object.values(nextErrors)[0] ||
+          "Please review the highlighted information before continuing.",
+      );
       return false;
     }
     setNotice("");

@@ -251,7 +251,7 @@ export function CustomSelect({
         aria-controls={`${menuId}-listbox`}
         onClick={() => setOpen((current) => !current)}
         onKeyDown={handleTriggerKeyDown}
-        className={`flex h-12 w-full items-center justify-between gap-3 rounded-xl border bg-white px-3.5 text-left text-sm outline-none transition ${
+        className={`flex h-12 w-full items-center justify-between gap-3 rounded-xl border bg-white px-3.5 text-left text-sm font-normal leading-5 outline-none transition ${
           error
             ? "border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-500/[0.08]"
             : open

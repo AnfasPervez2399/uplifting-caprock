@@ -12,10 +12,10 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import type { ChangeEvent, ReactNode } from "react";
-import type { UploadedDocument, YesNo } from "./types";
+import type { UploadedDocument, YesNo } from "../types";
 
 export const inputClass = (hasError = false) =>
-  `h-12 w-full rounded-xl border bg-white px-3.5 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 ${
+  `h-12 w-full rounded-xl border bg-white px-3.5 text-sm font-normal leading-5 text-slate-950 outline-none transition placeholder:font-normal placeholder:text-slate-400 ${
     hasError
       ? "border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-500/[0.08]"
       : "border-slate-200 hover:border-slate-300 focus:border-[#003478] focus:ring-4 focus:ring-[#003478]/[0.07]"

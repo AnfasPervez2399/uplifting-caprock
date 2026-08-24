@@ -233,7 +233,7 @@ export function CustomMultiSelect({
         aria-controls={`${menuId}-listbox`}
         onClick={() => setOpen((current) => !current)}
         onKeyDown={handleTriggerKeyDown}
-        className={`flex h-12 w-full items-center justify-between gap-3 rounded-xl border bg-white px-3.5 text-left text-sm outline-none transition ${
+        className={`flex h-12 w-full items-center justify-between gap-3 rounded-xl border bg-white px-3.5 text-left text-sm font-normal leading-5 outline-none transition ${
           error
             ? "border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-500/[0.08]"
             : open
@@ -242,7 +242,7 @@ export function CustomMultiSelect({
         } disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400`}
       >
         <span
-          className={`min-w-0 flex-1 truncate ${selectedOptions.length ? "font-semibold text-slate-900" : "text-slate-400"}`}
+          className={`min-w-0 flex-1 truncate ${selectedOptions.length ? "font-normal text-slate-950" : "text-slate-400"}`}
         >
           {selectionText}
         </span>

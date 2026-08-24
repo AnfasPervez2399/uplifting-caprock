@@ -305,7 +305,7 @@ export function PersonalStep({ controller }: StepProps) {
                       </p>
                     </div>
                     <span className="hidden rounded-full bg-[#dce7f2] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-800 sm:inline-flex">
-                      Added
+                      {applicant.method === "existing" ? "Verified" : "Invited"}
                     </span>
                     <button
                       type="button"
