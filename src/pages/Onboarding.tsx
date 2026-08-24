@@ -75,7 +75,13 @@ type AddressDocumentType =
   | "lease-agreement"
   | "tax-document"
   | "";
-type ProofFileField = "photoIdFront" | "photoIdBack" | "addressDocument" | "cv";
+type ProofFileField =
+  | "photoIdFront"
+  | "photoIdBack"
+  | "secondaryPhotoIdFront"
+  | "secondaryPhotoIdBack"
+  | "addressDocument"
+  | "cv";
 
 interface StepDefinition {
   id: StepId;
@@ -118,6 +124,7 @@ interface JointApplicant {
   formerNames: string;
   email: string;
   dateOfBirth: string;
+  applicantCountry: string;
   residentialAddress: string;
   confirmed: boolean;
 }
@@ -131,6 +138,7 @@ interface JointApplicantDraft {
   formerNames: string;
   email: string;
   dateOfBirth: string;
+  applicantCountry: string;
   residentialAddress: string;
 }
 
@@ -189,6 +197,9 @@ interface ApplicantDocuments {
   photoIdType?: PhotoIdType;
   photoIdFront?: UploadedDocument;
   photoIdBack?: UploadedDocument;
+  secondaryPhotoIdType?: PhotoIdType;
+  secondaryPhotoIdFront?: UploadedDocument;
+  secondaryPhotoIdBack?: UploadedDocument;
   addressDocumentType?: AddressDocumentType;
   addressDocument?: UploadedDocument;
   cv?: UploadedDocument;
@@ -652,6 +663,7 @@ const emptyJointDraft: JointApplicantDraft = {
   formerNames: "",
   email: "",
   dateOfBirth: "",
+  applicantCountry: "",
   residentialAddress: "",
 };
 
@@ -1157,20 +1169,80 @@ const isCompleteJointPersonal = (
     applicant.formerNames.trim() &&
     isAtLeastAge(applicant.dateOfBirth, 18) &&
     isValidEmail(applicant.email) &&
+    applicant.applicantCountry &&
     (sharedAddress || applicant.residentialAddress.trim()),
   );
 };
 
-const hasPhotoIdentity = (documents?: ApplicantDocuments) =>
+const requiresTwoPhotoIds = (country: string) =>
+  Boolean(country && country !== "Australia");
+
+const isPhotoIdUploadComplete = (
+  type?: PhotoIdType,
+  front?: UploadedDocument,
+  back?: UploadedDocument,
+) => Boolean(type && front && (type !== "driving-licence" || back));
+
+const isSameUploadedFile = (
+  first?: UploadedDocument,
+  second?: UploadedDocument,
+) =>
   Boolean(
-    documents?.photoIdType &&
-    documents.photoIdFront &&
-    (documents.photoIdType !== "driving-licence" || documents.photoIdBack),
+    first &&
+    second &&
+    first.name === second.name &&
+    first.size === second.size &&
+    first.type === second.type,
   );
+
+const hasDistinctPhotoIdFiles = (documents?: ApplicantDocuments) => {
+  if (!documents) return false;
+  const firstFiles = [documents.photoIdFront, documents.photoIdBack].filter(
+    Boolean,
+  ) as UploadedDocument[];
+  const secondFiles = [
+    documents.secondaryPhotoIdFront,
+    documents.secondaryPhotoIdBack,
+  ].filter(Boolean) as UploadedDocument[];
+  return !firstFiles.some((first) =>
+    secondFiles.some((second) => isSameUploadedFile(first, second)),
+  );
+};
+
+const hasPhotoIdentity = (
+  documents: ApplicantDocuments | undefined,
+  country: string,
+) => {
+  if (
+    !documents ||
+    !isPhotoIdUploadComplete(
+      documents.photoIdType,
+      documents.photoIdFront,
+      documents.photoIdBack,
+    )
+  ) {
+    return false;
+  }
+  if (!requiresTwoPhotoIds(country)) return true;
+  return Boolean(
+    documents.secondaryPhotoIdType &&
+    documents.secondaryPhotoIdType !== documents.photoIdType &&
+    isPhotoIdUploadComplete(
+      documents.secondaryPhotoIdType,
+      documents.secondaryPhotoIdFront,
+      documents.secondaryPhotoIdBack,
+    ) &&
+    hasDistinctPhotoIdFiles(documents),
+  );
+};
+
+const hasDrivingLicenceProof = (documents?: ApplicantDocuments) =>
+  documents?.photoIdType === "driving-licence" ||
+  documents?.secondaryPhotoIdType === "driving-licence";
 
 const hasAddressEvidence = (documents?: ApplicantDocuments) =>
   Boolean(
-    documents?.photoIdType === "driving-licence" ||
+    hasDrivingLicenceProof(documents) ||
     (documents?.addressDocumentType && documents.addressDocument),
   );
 
@@ -1183,8 +1255,11 @@ const hasPersonalDetailsEvidence = (documents?: ApplicantDocuments) => {
   );
 };
 
-const hasCompleteApplicantProof = (documents?: ApplicantDocuments) =>
-  hasPhotoIdentity(documents) &&
+const hasCompleteApplicantProof = (
+  documents: ApplicantDocuments | undefined,
+  country: string,
+) =>
+  hasPhotoIdentity(documents, country) &&
   hasAddressEvidence(documents) &&
   hasPersonalDetailsEvidence(documents);
 
@@ -1197,6 +1272,8 @@ export function Onboarding() {
   const [lookupState, setLookupState] = useState<
     "idle" | "loading" | "found" | "error"
   >("idle");
+  const [lookupVerifiedAt, setLookupVerifiedAt] = useState("");
+  const lookupRequestRef = useRef(0);
   const [bankDraft, setBankDraft] = useState<BankAccount | null>(
     createEmptyBank(),
   );
@@ -1241,14 +1318,20 @@ export function Onboarding() {
         key: "main",
         label: "Main applicant",
         name: mainApplicantFullName || "Main applicant",
+        country: form.personal.applicantCountry,
       },
       ...form.jointApplicants.map((applicant, index) => ({
         key: applicant.id,
         label: `Joint applicant ${index + 1}`,
         name: formatApplicantName(applicant) || `Joint applicant ${index + 1}`,
+        country: applicant.applicantCountry || form.personal.applicantCountry,
       })),
     ],
-    [form.jointApplicants, mainApplicantFullName],
+    [
+      form.jointApplicants,
+      form.personal.applicantCountry,
+      mainApplicantFullName,
+    ],
   );
 
   const personalComplete = useMemo(() => {
@@ -1347,7 +1430,10 @@ export function Onboarding() {
   const documentsComplete = useMemo(
     () =>
       applicantProfiles.every((applicant) =>
-        hasCompleteApplicantProof(form.documents[applicant.key]),
+        hasCompleteApplicantProof(
+          form.documents[applicant.key],
+          applicant.country,
+        ),
       ),
     [applicantProfiles, form.documents],
   );
@@ -1619,30 +1705,58 @@ export function Onboarding() {
     }));
     setErrors((current) => ({ ...current, applicationType: "" }));
     if (!isJointType(applicationType)) {
+      lookupRequestRef.current += 1;
       setShowJointComposer(false);
       setJointDraft(emptyJointDraft);
+      setLookupState("idle");
+      setLookupVerifiedAt("");
     }
   };
 
   const updateJointDraft = (key: keyof JointApplicantDraft, value: string) => {
     setJointDraft((current) => ({ ...current, [key]: value }));
     setErrors((current) => ({ ...current, jointApplicants: "" }));
-    if (key === "clientId") setLookupState("idle");
+    if (key === "clientId") {
+      lookupRequestRef.current += 1;
+      setLookupState("idle");
+      setLookupVerifiedAt("");
+    }
   };
 
   const beginJointApplicant = () => {
+    lookupRequestRef.current += 1;
     setJointDraft(emptyJointDraft);
     setLookupState("idle");
+    setLookupVerifiedAt("");
     setShowJointComposer(true);
   };
 
   const handleLookupClient = () => {
+    const requestId = ++lookupRequestRef.current;
     if (jointDraft.clientId.trim().length < 5) {
       setLookupState("error");
+      setLookupVerifiedAt("");
       return;
     }
     setLookupState("loading");
-    window.setTimeout(() => setLookupState("found"), 700);
+    setLookupVerifiedAt("");
+    window.setTimeout(() => {
+      if (lookupRequestRef.current !== requestId) return;
+      setJointDraft((current) => ({
+        ...current,
+        applicantCountry:
+          current.applicantCountry ||
+          form.personal.applicantCountry ||
+          "Australia",
+      }));
+      setLookupState("found");
+      setLookupVerifiedAt(
+        new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+      );
+    }, 700);
   };
 
   const saveJointApplicant = () => {
@@ -1657,6 +1771,7 @@ export function Onboarding() {
         jointDraft.formerNames.trim() &&
         isAtLeastAge(jointDraft.dateOfBirth, 18) &&
         isValidEmail(jointDraft.email) &&
+        jointDraft.applicantCountry &&
         address.trim();
 
     if (
@@ -1676,7 +1791,7 @@ export function Onboarding() {
         ...current,
         jointApplicants: isExisting
           ? "Verify the Caprock client ID before adding this applicant."
-          : "Complete the applicant’s name, former names, date of birth, email and required address.",
+          : "Complete the applicant’s name, former names, date of birth, country, email and required address.",
       }));
       return;
     }
@@ -1695,6 +1810,9 @@ export function Onboarding() {
         : jointDraft.formerNames.trim(),
       email: isExisting ? "" : jointDraft.email.trim(),
       dateOfBirth: isExisting ? "" : jointDraft.dateOfBirth,
+      applicantCountry: isExisting
+        ? form.personal.applicantCountry
+        : jointDraft.applicantCountry,
       residentialAddress: isExisting ? "Verified on file" : address.trim(),
       confirmed: true,
     };
@@ -1705,6 +1823,7 @@ export function Onboarding() {
     }));
     setJointDraft(emptyJointDraft);
     setLookupState("idle");
+    setLookupVerifiedAt("");
     setShowJointComposer(false);
     setErrors((current) => ({ ...current, jointApplicants: "" }));
   };
@@ -1832,24 +1951,66 @@ export function Onboarding() {
     applicantKey: string,
     photoIdType: PhotoIdType,
   ) => {
-    setForm((current) => ({
-      ...current,
-      documents: {
-        ...current.documents,
-        [applicantKey]: {
-          ...current.documents[applicantKey],
-          photoIdType,
-          photoIdFront: undefined,
-          photoIdBack: undefined,
-          ...(photoIdType === "driving-licence"
-            ? {
-                addressDocumentType: "" as AddressDocumentType,
-                addressDocument: undefined,
-              }
-            : {}),
+    setForm((current) => {
+      const currentDocuments = current.documents[applicantKey] || {};
+      const clearsDuplicateSecondary =
+        currentDocuments.secondaryPhotoIdType === photoIdType;
+      return {
+        ...current,
+        documents: {
+          ...current.documents,
+          [applicantKey]: {
+            ...currentDocuments,
+            photoIdType,
+            photoIdFront: undefined,
+            photoIdBack: undefined,
+            ...(clearsDuplicateSecondary
+              ? {
+                  secondaryPhotoIdType: "" as PhotoIdType,
+                  secondaryPhotoIdFront: undefined,
+                  secondaryPhotoIdBack: undefined,
+                }
+              : {}),
+            ...(photoIdType === "driving-licence"
+              ? {
+                  addressDocumentType: "" as AddressDocumentType,
+                  addressDocument: undefined,
+                }
+              : {}),
+          },
         },
-      },
-    }));
+      };
+    });
+    setErrors((current) => ({ ...current, documents: "" }));
+  };
+
+  const updateSecondaryPhotoIdType = (
+    applicantKey: string,
+    requestedType: PhotoIdType,
+  ) => {
+    setForm((current) => {
+      const currentDocuments = current.documents[applicantKey] || {};
+      const secondaryPhotoIdType =
+        requestedType === currentDocuments.photoIdType ? "" : requestedType;
+      return {
+        ...current,
+        documents: {
+          ...current.documents,
+          [applicantKey]: {
+            ...currentDocuments,
+            secondaryPhotoIdType,
+            secondaryPhotoIdFront: undefined,
+            secondaryPhotoIdBack: undefined,
+            ...(secondaryPhotoIdType === "driving-licence"
+              ? {
+                  addressDocumentType: "" as AddressDocumentType,
+                  addressDocument: undefined,
+                }
+              : {}),
+          },
+        },
+      };
+    });
     setErrors((current) => ({ ...current, documents: "" }));
   };
 
@@ -2028,7 +2189,7 @@ export function Onboarding() {
 
     if (stepId === "documents" && !documentsComplete) {
       nextErrors.documents =
-        "For each applicant, complete the photo ID, address evidence and CV-or-website requirements.";
+        "Complete every applicant’s proof requirements. Non-Australian applicants need two different photo IDs; all applicants also need address evidence where applicable and either a CV or website.";
     }
 
     if (stepId === "review") {
@@ -2357,7 +2518,8 @@ export function Onboarding() {
                         Applicant {index + 1} ·{" "}
                         {applicant.method === "existing"
                           ? "Existing Caprock client"
-                          : applicant.email}
+                          : applicant.email}{" "}
+                        · {applicant.applicantCountry}
                       </p>
                     </div>
                     <span className="hidden rounded-full bg-[#dce7f2] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-800 sm:inline-flex">
@@ -2389,7 +2551,10 @@ export function Onboarding() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => setShowJointComposer(false)}
+                    onClick={() => {
+                      lookupRequestRef.current += 1;
+                      setShowJointComposer(false);
+                    }}
                     aria-label="Close applicant form"
                     className="grid h-9 w-9 place-items-center rounded-xl text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
                   >
@@ -2403,8 +2568,10 @@ export function Onboarding() {
                       key={method}
                       type="button"
                       onClick={() => {
+                        lookupRequestRef.current += 1;
                         setJointDraft({ ...emptyJointDraft, method });
                         setLookupState("idle");
+                        setLookupVerifiedAt("");
                       }}
                       className={`rounded-lg px-3 py-2.5 text-xs font-semibold transition ${
                         jointDraft.method === method
@@ -2439,23 +2606,72 @@ export function Onboarding() {
                         <button
                           type="button"
                           onClick={handleLookupClient}
-                          disabled={lookupState === "loading"}
-                          className="inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:text-[#003478] disabled:cursor-wait disabled:opacity-60"
+                          disabled={
+                            lookupState === "loading" || lookupState === "found"
+                          }
+                          className={`inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-xl border px-4 text-xs font-semibold transition ${
+                            lookupState === "found"
+                              ? "cursor-default border-[rgba(0,52,120,0.16)] bg-[#dce7f2] text-[#003478]"
+                              : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:text-[#003478] disabled:cursor-wait disabled:opacity-60"
+                          }`}
                         >
                           {lookupState === "loading" ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : lookupState === "found" ? (
+                            <CheckCircle2 className="h-4 w-4" />
                           ) : (
                             <BadgeCheck className="h-4 w-4" />
                           )}
-                          Verify ID
+                          {lookupState === "loading"
+                            ? "Checking…"
+                            : lookupState === "found"
+                              ? "Verified"
+                              : "Verify ID"}
                         </button>
                       </div>
                     </Field>
                     {lookupState === "found" ? (
-                      <div className="mt-3 flex items-center gap-2 rounded-xl bg-[#dce7f2] px-3.5 py-3 text-xs font-medium text-slate-800">
-                        <CheckCircle2 className="h-4 w-4 shrink-0 text-[#003478]" />
-                        Client record found. Identity details will be securely
-                        linked.
+                      <div
+                        role="status"
+                        className="mt-4 overflow-hidden rounded-2xl border border-[rgba(0,52,120,0.16)] bg-[rgba(0,52,120,0.035)]"
+                      >
+                        <div className="flex items-start gap-3 p-4 sm:p-5">
+                          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#003478] text-white shadow-sm">
+                            <CheckCircle2 className="h-5 w-5" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <p className="text-sm font-semibold text-slate-950">
+                                Client ID verified
+                              </p>
+                              <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-[#003478] ring-1 ring-[rgba(0,52,120,0.12)]">
+                                Verified{" "}
+                                {lookupVerifiedAt
+                                  ? `at ${lookupVerifiedAt}`
+                                  : "just now"}
+                              </span>
+                            </div>
+                            <p className="mt-1.5 text-xs leading-5 text-slate-600">
+                              A matching Caprock client record was found.
+                              Identity and contact details will be securely
+                              linked when this applicant is added.
+                            </p>
+                            <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] font-medium text-slate-600">
+                              <span className="rounded-lg bg-white px-2.5 py-1.5 ring-1 ring-slate-200">
+                                {jointDraft.clientId.trim().toUpperCase()}
+                              </span>
+                              <span className="rounded-lg bg-white px-2.5 py-1.5 ring-1 ring-slate-200">
+                                {jointDraft.applicantCountry ||
+                                  form.personal.applicantCountry ||
+                                  "Australia"}
+                              </span>
+                              <span className="inline-flex items-center gap-1.5">
+                                <ShieldCheck className="h-3.5 w-3.5 text-[#003478]" />
+                                Ready to add securely
+                              </span>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     ) : lookupState === "error" ? (
                       <p className="mt-2 text-xs font-medium text-red-600">
@@ -2547,6 +2763,22 @@ export function Onboarding() {
                         }
                         placeholder="name@example.com"
                         className={inputClass()}
+                      />
+                    </Field>
+                    <Field
+                      label="Applicant’s country"
+                      htmlFor="jointApplicantCountry"
+                    >
+                      <CustomSelect
+                        id="jointApplicantCountry"
+                        value={jointDraft.applicantCountry}
+                        onChange={(value) =>
+                          updateJointDraft("applicantCountry", value)
+                        }
+                        options={COUNTRY_OPTIONS}
+                        placeholder="Select country"
+                        searchable
+                        searchPlaceholder="Search countries"
                       />
                     </Field>
                     {sharedAddress ? (
@@ -3509,17 +3741,21 @@ export function Onboarding() {
       <SectionIntro
         eyebrow={sectionEyebrow("documents")}
         title="Upload Proof"
-        description="For each applicant, provide one photo ID, any required address evidence, and either a CV or website URL."
+        description="Australian applicants provide one photo ID. Non-Australian applicants must provide two different photo IDs, plus the applicable address and personal-details evidence."
         icon={FileCheck2}
       />
 
       <div className="mb-6 grid gap-3 sm:grid-cols-3">
         {[
-          ["1", "Photo ID", "Passport, driving licence or other photo ID"],
+          [
+            "1",
+            "Photo ID",
+            "One for Australian applicants; two different IDs for all others",
+          ],
           [
             "2",
             "Address evidence",
-            "Not needed when a driving licence is supplied",
+            "Not needed when either photo ID is a driving licence",
           ],
           ["3", "Personal details", "Upload a CV or provide a website URL"],
         ].map(([number, title, description]) => (
@@ -3545,23 +3781,84 @@ export function Onboarding() {
       <div className="space-y-6">
         {applicantProfiles.map((applicant) => {
           const documents = form.documents[applicant.key] || {};
-          const photoIdentityComplete = hasPhotoIdentity(documents);
+          const needsTwoPhotoIds = requiresTwoPhotoIds(applicant.country);
+          const hasDrivingLicence = hasDrivingLicenceProof(documents);
+          const photoIdentityComplete = hasPhotoIdentity(
+            documents,
+            applicant.country,
+          );
           const addressEvidenceComplete = hasAddressEvidence(documents);
           const personalDetailsComplete = hasPersonalDetailsEvidence(documents);
-          const complete = hasCompleteApplicantProof(documents);
+          const complete = hasCompleteApplicantProof(
+            documents,
+            applicant.country,
+          );
+          const hasDuplicatePhotoFile =
+            needsTwoPhotoIds &&
+            Boolean(
+              documents.photoIdFront && documents.secondaryPhotoIdFront,
+            ) &&
+            !hasDistinctPhotoIdFiles(documents);
           const websiteError =
             documents.websiteUrl?.trim() &&
             !isValidWebsiteUrl(documents.websiteUrl)
               ? "Enter a valid website URL, such as example.com."
               : undefined;
-          const selectedPhotoIdLabel =
-            PHOTO_ID_OPTIONS.find(
-              (option) => option.value === documents.photoIdType,
-            )?.label || "Photo ID";
           const selectedAddressLabel =
             ADDRESS_DOCUMENT_OPTIONS.find(
               (option) => option.value === documents.addressDocumentType,
             )?.label || "Address document";
+          const secondaryPhotoIdOptions = PHOTO_ID_OPTIONS.filter(
+            (option) => option.value !== documents.photoIdType,
+          );
+
+          const renderPhotoIdFiles = (
+            type: PhotoIdType | undefined,
+            front: UploadedDocument | undefined,
+            back: UploadedDocument | undefined,
+            idPrefix: string,
+            frontField: ProofFileField,
+            backField: ProofFileField,
+          ) => {
+            if (!type) return null;
+            const selectedLabel =
+              PHOTO_ID_OPTIONS.find((option) => option.value === type)?.label ||
+              "Photo ID";
+            return (
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                <DocumentUpload
+                  id={`${applicant.key}-${idPrefix}Front`}
+                  title={
+                    type === "driving-licence"
+                      ? "Driving licence — front"
+                      : type === "passport"
+                        ? "Passport identity page"
+                        : "Photo ID document"
+                  }
+                  description={
+                    type === "driving-licence"
+                      ? "Clear colour image showing the full front of the current licence."
+                      : `Clear colour image showing the full ${selectedLabel.toLowerCase()}.`
+                  }
+                  value={front}
+                  onChange={(file) =>
+                    updateApplicantDocument(applicant.key, frontField, file)
+                  }
+                />
+                {type === "driving-licence" ? (
+                  <DocumentUpload
+                    id={`${applicant.key}-${idPrefix}Back`}
+                    title="Driving licence — back"
+                    description="Clear colour image showing the full reverse of the current licence."
+                    value={back}
+                    onChange={(file) =>
+                      updateApplicantDocument(applicant.key, backField, file)
+                    }
+                  />
+                ) : null}
+              </div>
+            );
+          };
 
           return (
             <section
@@ -3582,7 +3879,11 @@ export function Onboarding() {
                       {applicant.name}
                     </p>
                     <p className="mt-0.5 text-xs text-slate-500">
-                      {applicant.label}
+                      {applicant.label} ·{" "}
+                      {applicant.country || "Country not selected"} ·{" "}
+                      {needsTwoPhotoIds
+                        ? "2 photo IDs required"
+                        : "1 photo ID required"}
                     </p>
                   </div>
                 </div>
@@ -3605,11 +3906,15 @@ export function Onboarding() {
                       <RequiredIndicator />
                     </h3>
                     <p className="mt-1 text-xs leading-5 text-slate-500">
-                      Select and upload one current, government-issued photo ID.
+                      {needsTwoPhotoIds
+                        ? "Because this applicant is outside Australia, select two different photo ID types and upload a different document for each."
+                        : "Select and upload one current, government-issued photo ID."}
                     </p>
                   </div>
                   <Field
-                    label="Photo ID type"
+                    label={
+                      needsTwoPhotoIds ? "First photo ID type" : "Photo ID type"
+                    }
                     htmlFor={`${applicant.key}-photoIdType`}
                   >
                     <CustomSelect
@@ -3622,46 +3927,71 @@ export function Onboarding() {
                       placeholder="Select photo ID type"
                     />
                   </Field>
+                  {renderPhotoIdFiles(
+                    documents.photoIdType,
+                    documents.photoIdFront,
+                    documents.photoIdBack,
+                    "photoId",
+                    "photoIdFront",
+                    "photoIdBack",
+                  )}
 
-                  {documents.photoIdType ? (
-                    <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                      <DocumentUpload
-                        id={`${applicant.key}-photoIdFront`}
-                        title={
-                          documents.photoIdType === "driving-licence"
-                            ? "Driving licence — front"
-                            : documents.photoIdType === "passport"
-                              ? "Passport identity page"
-                              : "Photo ID document"
-                        }
-                        description={
-                          documents.photoIdType === "driving-licence"
-                            ? "Clear colour image showing the full front of the current licence."
-                            : `Clear colour image showing the full ${selectedPhotoIdLabel.toLowerCase()}.`
-                        }
-                        value={documents.photoIdFront}
-                        onChange={(file) =>
-                          updateApplicantDocument(
-                            applicant.key,
-                            "photoIdFront",
-                            file,
-                          )
-                        }
-                      />
-                      {documents.photoIdType === "driving-licence" ? (
-                        <DocumentUpload
-                          id={`${applicant.key}-photoIdBack`}
-                          title="Driving licence — back"
-                          description="Clear colour image showing the full reverse of the current licence."
-                          value={documents.photoIdBack}
-                          onChange={(file) =>
-                            updateApplicantDocument(
+                  {needsTwoPhotoIds ? (
+                    <div className="mt-5 rounded-2xl border border-[rgba(0,52,120,0.14)] bg-[rgba(0,52,120,0.025)] p-4 sm:p-5">
+                      <div className="mb-4 flex items-start gap-3">
+                        <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[#dce7f2] text-xs font-bold text-[#003478]">
+                          2
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold text-slate-900">
+                            Second, different photo ID
+                          </p>
+                          <p className="mt-1 text-[11px] leading-5 text-slate-500">
+                            The same ID type and the same uploaded file cannot
+                            be used twice.
+                          </p>
+                        </div>
+                      </div>
+                      <Field
+                        label="Second photo ID type"
+                        htmlFor={`${applicant.key}-secondaryPhotoIdType`}
+                      >
+                        <CustomSelect
+                          id={`${applicant.key}-secondaryPhotoIdType`}
+                          value={documents.secondaryPhotoIdType || ""}
+                          onChange={(value) =>
+                            updateSecondaryPhotoIdType(
                               applicant.key,
-                              "photoIdBack",
-                              file,
+                              value as PhotoIdType,
                             )
                           }
+                          options={secondaryPhotoIdOptions}
+                          placeholder="Select a different photo ID"
+                          disabled={!documents.photoIdType}
                         />
+                      </Field>
+                      {!documents.photoIdType ? (
+                        <p className="mt-2 text-[11px] text-slate-500">
+                          Select the first photo ID before choosing the second.
+                        </p>
+                      ) : null}
+                      {renderPhotoIdFiles(
+                        documents.secondaryPhotoIdType,
+                        documents.secondaryPhotoIdFront,
+                        documents.secondaryPhotoIdBack,
+                        "secondaryPhotoId",
+                        "secondaryPhotoIdFront",
+                        "secondaryPhotoIdBack",
+                      )}
+                      {hasDuplicatePhotoFile ? (
+                        <div
+                          role="alert"
+                          className="mt-4 flex items-start gap-2 rounded-xl border border-red-100 bg-red-50 px-3.5 py-3 text-xs font-medium text-red-700"
+                        >
+                          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                          Upload a different file for the second photo ID. The
+                          same document cannot be used twice.
+                        </div>
                       ) : null}
                     </div>
                   ) : null}
@@ -3674,12 +4004,13 @@ export function Onboarding() {
                       <RequiredIndicator />
                     </h3>
                     <p className="mt-1 text-xs leading-5 text-slate-500">
-                      A driving licence satisfies this requirement. For another
-                      photo ID type, upload one non-photo address document.
+                      A driving licence satisfies this requirement. If neither
+                      photo ID is a driving licence, upload one non-photo
+                      address document.
                     </p>
                   </div>
 
-                  {documents.photoIdType === "driving-licence" ? (
+                  {hasDrivingLicence ? (
                     <div className="flex items-start gap-3 rounded-2xl border border-[rgba(0,52,120,0.14)] bg-[rgba(0,52,120,0.035)] p-4">
                       <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-[#003478]" />
                       <div>
@@ -3785,7 +4116,7 @@ export function Onboarding() {
                 <div className="grid gap-3 border-t border-slate-100 pt-5 sm:grid-cols-3">
                   <CheckRow
                     checked={photoIdentityComplete}
-                    label="Photo ID complete"
+                    label={`${needsTwoPhotoIds ? "Two photo IDs" : "Photo ID"} complete`}
                   />
                   <CheckRow
                     checked={addressEvidenceComplete}
@@ -3818,6 +4149,8 @@ export function Onboarding() {
         [
           documents.photoIdFront,
           documents.photoIdBack,
+          documents.secondaryPhotoIdFront,
+          documents.secondaryPhotoIdBack,
           documents.addressDocument,
           documents.cv,
         ].filter(Boolean).length,
@@ -3926,7 +4259,8 @@ export function Onboarding() {
                       <span className="text-xs text-slate-500">
                         {applicant.method === "existing"
                           ? `Client ID ${applicant.clientId}`
-                          : applicant.email}
+                          : applicant.email}{" "}
+                        · {applicant.applicantCountry}
                       </span>
                     </div>
                   ))}
@@ -4127,17 +4461,22 @@ export function Onboarding() {
             <div className="space-y-3">
               {applicantProfiles.map((applicant) => {
                 const documents = form.documents[applicant.key] || {};
-                const photoIdLabel =
+                const firstPhotoIdLabel =
                   PHOTO_ID_OPTIONS.find(
                     (option) => option.value === documents.photoIdType,
                   )?.label || "Not selected";
-                const addressEvidence =
-                  documents.photoIdType === "driving-licence"
-                    ? "Verified with driving licence"
-                    : ADDRESS_DOCUMENT_OPTIONS.find(
-                        (option) =>
-                          option.value === documents.addressDocumentType,
-                      )?.label || "Not selected";
+                const secondPhotoIdLabel = PHOTO_ID_OPTIONS.find(
+                  (option) => option.value === documents.secondaryPhotoIdType,
+                )?.label;
+                const photoIdLabel = secondPhotoIdLabel
+                  ? `${firstPhotoIdLabel} + ${secondPhotoIdLabel}`
+                  : firstPhotoIdLabel;
+                const addressEvidence = hasDrivingLicenceProof(documents)
+                  ? "Verified with driving licence"
+                  : ADDRESS_DOCUMENT_OPTIONS.find(
+                      (option) =>
+                        option.value === documents.addressDocumentType,
+                    )?.label || "Not selected";
                 const personalEvidence =
                   documents.cv?.name || documents.websiteUrl || "Not provided";
                 return (
@@ -4146,7 +4485,7 @@ export function Onboarding() {
                     className="grid gap-3 rounded-xl bg-slate-50 px-3.5 py-3 sm:grid-cols-3"
                   >
                     <SummaryItem
-                      label={`${applicant.label} · photo ID`}
+                      label={`${applicant.label} · photo ID${requiresTwoPhotoIds(applicant.country) ? "s" : ""}`}
                       value={photoIdLabel}
                     />
                     <SummaryItem
@@ -4619,17 +4958,30 @@ export function Onboarding() {
                   type="button"
                   onClick={goNext}
                   disabled={isSubmitting}
-                  className="group inline-flex h-12 min-w-40 items-center justify-center gap-2 rounded-xl bg-[#003478] px-6 text-sm font-semibold text-white shadow-[0_8px_22px_rgba(0,52,120,0.16)] transition hover:-translate-y-0.5 hover:bg-[#002b63] hover:shadow-[0_12px_28px_rgba(0,52,120,0.2)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#003478]/15 disabled:cursor-wait disabled:transform-none disabled:opacity-70"
+                  aria-label={
+                    activeStepId === "review"
+                      ? "Submit application securely"
+                      : "Continue to next section"
+                  }
+                  className={`group inline-flex h-12 items-center justify-center rounded-xl bg-[#003478] text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#002b63] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#003478]/15 disabled:cursor-wait disabled:opacity-70 ${
+                    activeStepId === "review"
+                      ? "min-w-[210px] gap-3 px-4"
+                      : "min-w-40 gap-2 px-6"
+                  }`}
                 >
                   {isSubmitting ? (
                     <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Submitting
+                      <span className="grid h-8 w-8 place-items-center rounded-lg bg-white/10">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      </span>
+                      Submitting securely…
                     </>
                   ) : activeStepId === "review" ? (
                     <>
-                      <Send className="h-4 w-4" />
-                      Submit securely
+                      <span className="grid h-8 w-8 place-items-center rounded-lg bg-white/10 ring-1 ring-white/10">
+                        <LockKeyhole className="h-4 w-4" />
+                      </span>
+                      <span>Submit securely</span>
                     </>
                   ) : (
                     <>
