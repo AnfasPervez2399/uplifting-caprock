@@ -56,8 +56,8 @@ type StepId =
   | "identity"
   | "bank"
   | "cash"
-  | "signature"
   | "documents"
+  | "signature"
   | "review";
 type ApplicationType =
   | "individual"
@@ -69,12 +69,13 @@ type ApplicationType =
 type AssessmentNature = "australian" | "foreign" | "";
 type YesNo = "yes" | "no" | "";
 type JointMethod = "existing" | "new";
-type ProofField =
-  | "licenceFront"
-  | "licenceBack"
-  | "photoId"
-  | "passport"
-  | "utilityBill";
+type PhotoIdType = "passport" | "driving-licence" | "photo-id" | "";
+type AddressDocumentType =
+  | "utility-bill"
+  | "lease-agreement"
+  | "tax-document"
+  | "";
+type ProofFileField = "photoIdFront" | "photoIdBack" | "addressDocument" | "cv";
 
 interface StepDefinition {
   id: StepId;
@@ -185,11 +186,13 @@ interface AdviserDraft {
 }
 
 interface ApplicantDocuments {
-  licenceFront?: UploadedDocument;
-  licenceBack?: UploadedDocument;
-  photoId?: UploadedDocument;
-  passport?: UploadedDocument;
-  utilityBill?: UploadedDocument;
+  photoIdType?: PhotoIdType;
+  photoIdFront?: UploadedDocument;
+  photoIdBack?: UploadedDocument;
+  addressDocumentType?: AddressDocumentType;
+  addressDocument?: UploadedDocument;
+  cv?: UploadedDocument;
+  websiteUrl?: string;
 }
 
 interface FormState {
@@ -323,6 +326,42 @@ const BANK_CURRENCY_OPTIONS: SelectOption[] = [
   { value: "JPY", label: "Japanese yen (JPY)" },
   { value: "CAD", label: "Canadian dollar (CAD)" },
   { value: "CHF", label: "Swiss franc (CHF)" },
+];
+
+const PHOTO_ID_OPTIONS: SelectOption[] = [
+  {
+    value: "passport",
+    label: "Passport",
+    description: "Passport identity page",
+  },
+  {
+    value: "driving-licence",
+    label: "Driving licence",
+    description: "Front and back of a current licence",
+  },
+  {
+    value: "photo-id",
+    label: "Photo ID",
+    description: "Other current government-issued photo identification",
+  },
+];
+
+const ADDRESS_DOCUMENT_OPTIONS: SelectOption[] = [
+  {
+    value: "utility-bill",
+    label: "Utility bill",
+    description: "Recent electricity, gas, water or internet bill",
+  },
+  {
+    value: "lease-agreement",
+    label: "Lease agreement",
+    description: "Current residential tenancy or lease agreement",
+  },
+  {
+    value: "tax-document",
+    label: "Tax document",
+    description: "Recent government-issued tax assessment or notice",
+  },
 ];
 
 const INVESTMENT_AMOUNT_OPTIONS: SelectOption[] = [
@@ -750,12 +789,16 @@ function DocumentUpload({
   description,
   value,
   onChange,
+  required = true,
+  accept = ".pdf,.png,.jpg,.jpeg",
 }: {
   id: string;
   title: string;
   description: string;
   value?: UploadedDocument;
   onChange: (file?: File) => void;
+  required?: boolean;
+  accept?: string;
 }) {
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     onChange(event.target.files?.[0]);
@@ -785,7 +828,13 @@ function DocumentUpload({
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold text-slate-900">
             {title}
-            <RequiredIndicator />
+            {required ? (
+              <RequiredIndicator />
+            ) : (
+              <span className="ml-1 font-normal text-slate-400">
+                (optional)
+              </span>
+            )}
           </p>
           <p className="mt-1 text-xs leading-5 text-slate-500">{description}</p>
           {value ? (
@@ -817,7 +866,7 @@ function DocumentUpload({
               <input
                 id={id}
                 type="file"
-                accept=".pdf,.png,.jpg,.jpeg"
+                accept={accept}
                 onChange={handleChange}
                 className="sr-only"
               />
@@ -1070,6 +1119,22 @@ const documentFromFile = (file?: File): UploadedDocument | undefined =>
 
 const isValidEmail = (email: string) => /^\S+@\S+\.\S+$/.test(email);
 
+const isValidWebsiteUrl = (value: string) => {
+  const trimmed = value.trim();
+  if (!trimmed || /\s/.test(trimmed)) return false;
+  try {
+    const parsed = new URL(
+      /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`,
+    );
+    return (
+      (parsed.protocol === "http:" || parsed.protocol === "https:") &&
+      parsed.hostname.includes(".")
+    );
+  } catch {
+    return false;
+  }
+};
+
 const ADULT_DATE_CONDITIONS = [
   minimumAgeCondition(18, "The selected person must be at least 18 years old."),
 ] as const;
@@ -1096,11 +1161,32 @@ const isCompleteJointPersonal = (
   );
 };
 
-const hasAustralianProof = (documents?: ApplicantDocuments) =>
-  Boolean(documents?.licenceFront && documents?.licenceBack);
+const hasPhotoIdentity = (documents?: ApplicantDocuments) =>
+  Boolean(
+    documents?.photoIdType &&
+    documents.photoIdFront &&
+    (documents.photoIdType !== "driving-licence" || documents.photoIdBack),
+  );
 
-const hasForeignProof = (documents?: ApplicantDocuments) =>
-  Boolean(documents?.photoId && documents?.passport && documents?.utilityBill);
+const hasAddressEvidence = (documents?: ApplicantDocuments) =>
+  Boolean(
+    documents?.photoIdType === "driving-licence" ||
+    (documents?.addressDocumentType && documents.addressDocument),
+  );
+
+const hasPersonalDetailsEvidence = (documents?: ApplicantDocuments) => {
+  if (!documents) return false;
+  const websiteUrl = documents.websiteUrl?.trim() || "";
+  return Boolean(
+    (documents.cv || isValidWebsiteUrl(websiteUrl)) &&
+    (!websiteUrl || isValidWebsiteUrl(websiteUrl)),
+  );
+};
+
+const hasCompleteApplicantProof = (documents?: ApplicantDocuments) =>
+  hasPhotoIdentity(documents) &&
+  hasAddressEvidence(documents) &&
+  hasPersonalDetailsEvidence(documents);
 
 export function Onboarding() {
   const [form, setForm] = useState<FormState>(initialFormState);
@@ -1149,37 +1235,20 @@ export function Onboarding() {
     APPLICATION_OPTIONS.find(
       (option) => option.value === form.personal.applicationType,
     )?.label || "Not selected";
-  const countryAssessmentNature: AssessmentNature = !form.personal
-    .applicantCountry
-    ? ""
-    : form.personal.applicantCountry === "Australia"
-      ? "australian"
-      : "foreign";
-  const mainApplicantAssessmentNature = isSoleTrader
-    ? form.business.assessmentNature
-    : countryAssessmentNature;
-
   const applicantProfiles = useMemo(
     () => [
       {
         key: "main",
         label: "Main applicant",
         name: mainApplicantFullName || "Main applicant",
-        assessmentNature: mainApplicantAssessmentNature,
       },
       ...form.jointApplicants.map((applicant, index) => ({
         key: applicant.id,
         label: `Joint applicant ${index + 1}`,
         name: formatApplicantName(applicant) || `Joint applicant ${index + 1}`,
-        assessmentNature: countryAssessmentNature,
       })),
     ],
-    [
-      countryAssessmentNature,
-      form.jointApplicants,
-      mainApplicantAssessmentNature,
-      mainApplicantFullName,
-    ],
+    [form.jointApplicants, mainApplicantFullName],
   );
 
   const personalComplete = useMemo(() => {
@@ -1277,15 +1346,9 @@ export function Onboarding() {
 
   const documentsComplete = useMemo(
     () =>
-      applicantProfiles.every((applicant) => {
-        if (applicant.assessmentNature === "australian") {
-          return hasAustralianProof(form.documents[applicant.key]);
-        }
-        if (applicant.assessmentNature === "foreign") {
-          return hasForeignProof(form.documents[applicant.key]);
-        }
-        return false;
-      }),
+      applicantProfiles.every((applicant) =>
+        hasCompleteApplicantProof(form.documents[applicant.key]),
+      ),
     [applicantProfiles, form.documents],
   );
 
@@ -1749,7 +1812,7 @@ export function Onboarding() {
 
   const updateApplicantDocument = (
     applicantKey: string,
-    field: ProofField,
+    field: ProofFileField,
     file?: File,
   ) => {
     setForm((current) => ({
@@ -1760,6 +1823,60 @@ export function Onboarding() {
           ...current.documents[applicantKey],
           [field]: documentFromFile(file),
         },
+      },
+    }));
+    setErrors((current) => ({ ...current, documents: "" }));
+  };
+
+  const updatePhotoIdType = (
+    applicantKey: string,
+    photoIdType: PhotoIdType,
+  ) => {
+    setForm((current) => ({
+      ...current,
+      documents: {
+        ...current.documents,
+        [applicantKey]: {
+          ...current.documents[applicantKey],
+          photoIdType,
+          photoIdFront: undefined,
+          photoIdBack: undefined,
+          ...(photoIdType === "driving-licence"
+            ? {
+                addressDocumentType: "" as AddressDocumentType,
+                addressDocument: undefined,
+              }
+            : {}),
+        },
+      },
+    }));
+    setErrors((current) => ({ ...current, documents: "" }));
+  };
+
+  const updateAddressDocumentType = (
+    applicantKey: string,
+    addressDocumentType: AddressDocumentType,
+  ) => {
+    setForm((current) => ({
+      ...current,
+      documents: {
+        ...current.documents,
+        [applicantKey]: {
+          ...current.documents[applicantKey],
+          addressDocumentType,
+          addressDocument: undefined,
+        },
+      },
+    }));
+    setErrors((current) => ({ ...current, documents: "" }));
+  };
+
+  const updateApplicantWebsite = (applicantKey: string, websiteUrl: string) => {
+    setForm((current) => ({
+      ...current,
+      documents: {
+        ...current.documents,
+        [applicantKey]: { ...current.documents[applicantKey], websiteUrl },
       },
     }));
     setErrors((current) => ({ ...current, documents: "" }));
@@ -1911,7 +2028,7 @@ export function Onboarding() {
 
     if (stepId === "documents" && !documentsComplete) {
       nextErrors.documents =
-        "Upload every required document for each applicant.";
+        "For each applicant, complete the photo ID, address evidence and CV-or-website requirements.";
     }
 
     if (stepId === "review") {
@@ -3392,27 +3509,66 @@ export function Onboarding() {
       <SectionIntro
         eyebrow={sectionEyebrow("documents")}
         title="Upload Proof"
-        description="Upload identity and address evidence for each applicant. Requirements adapt to the applicant country and any Sole Trader assessment."
+        description="For each applicant, provide one photo ID, any required address evidence, and either a CV or website URL."
         icon={FileCheck2}
       />
+
+      <div className="mb-6 grid gap-3 sm:grid-cols-3">
+        {[
+          ["1", "Photo ID", "Passport, driving licence or other photo ID"],
+          [
+            "2",
+            "Address evidence",
+            "Not needed when a driving licence is supplied",
+          ],
+          ["3", "Personal details", "Upload a CV or provide a website URL"],
+        ].map(([number, title, description]) => (
+          <div
+            key={number}
+            className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4"
+          >
+            <div className="flex items-start gap-3">
+              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-[#dce7f2] text-[11px] font-bold text-[#003478]">
+                {number}
+              </span>
+              <div>
+                <p className="text-xs font-semibold text-slate-900">{title}</p>
+                <p className="mt-1 text-[11px] leading-5 text-slate-500">
+                  {description}
+                </p>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
 
       <div className="space-y-6">
         {applicantProfiles.map((applicant) => {
           const documents = form.documents[applicant.key] || {};
-          const isAustralian = applicant.assessmentNature === "australian";
-          const isForeign = applicant.assessmentNature === "foreign";
-          const complete = isAustralian
-            ? hasAustralianProof(documents)
-            : isForeign
-              ? hasForeignProof(documents)
-              : false;
+          const photoIdentityComplete = hasPhotoIdentity(documents);
+          const addressEvidenceComplete = hasAddressEvidence(documents);
+          const personalDetailsComplete = hasPersonalDetailsEvidence(documents);
+          const complete = hasCompleteApplicantProof(documents);
+          const websiteError =
+            documents.websiteUrl?.trim() &&
+            !isValidWebsiteUrl(documents.websiteUrl)
+              ? "Enter a valid website URL, such as example.com."
+              : undefined;
+          const selectedPhotoIdLabel =
+            PHOTO_ID_OPTIONS.find(
+              (option) => option.value === documents.photoIdType,
+            )?.label || "Photo ID";
+          const selectedAddressLabel =
+            ADDRESS_DOCUMENT_OPTIONS.find(
+              (option) => option.value === documents.addressDocumentType,
+            )?.label || "Address document";
 
           return (
             <section
               key={applicant.key}
-              className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6"
+              className="overflow-hidden rounded-2xl border border-slate-200 bg-white"
             >
-              <div className="mb-5 flex items-start justify-between gap-4 border-b border-slate-100 pb-5">
+              <div className="flex items-start justify-between gap-4 border-b border-slate-100 bg-slate-50/60 p-5 sm:px-6">
                 <div className="flex min-w-0 items-center gap-3">
                   <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#dce7f2] text-[#003478]">
                     {applicant.key === "main" ? (
@@ -3426,17 +3582,12 @@ export function Onboarding() {
                       {applicant.name}
                     </p>
                     <p className="mt-0.5 text-xs text-slate-500">
-                      {applicant.label} ·{" "}
-                      {isAustralian
-                        ? "Australian assessment"
-                        : isForeign
-                          ? "Foreign assessment"
-                          : "Assessment not selected"}
+                      {applicant.label}
                     </p>
                   </div>
                 </div>
                 <span
-                  className={`hidden shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] sm:inline-flex ${
+                  className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] ${
                     complete
                       ? "bg-[#dce7f2] text-slate-800"
                       : "bg-slate-100 text-slate-500"
@@ -3446,79 +3597,206 @@ export function Onboarding() {
                 </span>
               </div>
 
-              {!applicant.assessmentNature ? (
-                <div className="flex items-start gap-3 rounded-xl bg-amber-50 p-4 text-sm leading-6 text-amber-900">
-                  <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
-                  {isSoleTrader
-                    ? "Select the assessment nature in Business before uploading proof."
-                    : "Complete the applicant country in Personal before uploading proof."}
-                </div>
-              ) : isAustralian ? (
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <DocumentUpload
-                    id={`${applicant.key}-licenceFront`}
-                    title="Australian driver licence — front"
-                    description="Clear colour image showing the full front of the current licence."
-                    value={documents.licenceFront}
-                    onChange={(file) =>
-                      updateApplicantDocument(
-                        applicant.key,
-                        "licenceFront",
-                        file,
-                      )
-                    }
-                  />
-                  <DocumentUpload
-                    id={`${applicant.key}-licenceBack`}
-                    title="Australian driver licence — back"
-                    description="Clear colour image showing the full reverse of the current licence."
-                    value={documents.licenceBack}
-                    onChange={(file) =>
-                      updateApplicantDocument(
-                        applicant.key,
-                        "licenceBack",
-                        file,
-                      )
-                    }
-                  />
-                </div>
-              ) : (
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <DocumentUpload
-                    id={`${applicant.key}-photoId`}
-                    title="Foreign identity or driver licence"
-                    description="Government-issued photo identity or a valid foreign driver licence."
-                    value={documents.photoId}
-                    onChange={(file) =>
-                      updateApplicantDocument(applicant.key, "photoId", file)
-                    }
-                  />
-                  <DocumentUpload
-                    id={`${applicant.key}-passport`}
-                    title="Passport"
-                    description="Clear image of the passport identity page."
-                    value={documents.passport}
-                    onChange={(file) =>
-                      updateApplicantDocument(applicant.key, "passport", file)
-                    }
-                  />
-                  <div className="sm:col-span-2">
-                    <DocumentUpload
-                      id={`${applicant.key}-utilityBill`}
-                      title="Residential address evidence"
-                      description="Recent utility bill or equivalent address evidence showing the applicant’s name and residential address."
-                      value={documents.utilityBill}
-                      onChange={(file) =>
-                        updateApplicantDocument(
-                          applicant.key,
-                          "utilityBill",
-                          file,
-                        )
+              <div className="space-y-7 p-5 sm:p-6">
+                <div>
+                  <div className="mb-4">
+                    <h3 className="text-sm font-semibold text-slate-950">
+                      1. Photo identification
+                      <RequiredIndicator />
+                    </h3>
+                    <p className="mt-1 text-xs leading-5 text-slate-500">
+                      Select and upload one current, government-issued photo ID.
+                    </p>
+                  </div>
+                  <Field
+                    label="Photo ID type"
+                    htmlFor={`${applicant.key}-photoIdType`}
+                  >
+                    <CustomSelect
+                      id={`${applicant.key}-photoIdType`}
+                      value={documents.photoIdType || ""}
+                      onChange={(value) =>
+                        updatePhotoIdType(applicant.key, value as PhotoIdType)
                       }
+                      options={PHOTO_ID_OPTIONS}
+                      placeholder="Select photo ID type"
                     />
+                  </Field>
+
+                  {documents.photoIdType ? (
+                    <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                      <DocumentUpload
+                        id={`${applicant.key}-photoIdFront`}
+                        title={
+                          documents.photoIdType === "driving-licence"
+                            ? "Driving licence — front"
+                            : documents.photoIdType === "passport"
+                              ? "Passport identity page"
+                              : "Photo ID document"
+                        }
+                        description={
+                          documents.photoIdType === "driving-licence"
+                            ? "Clear colour image showing the full front of the current licence."
+                            : `Clear colour image showing the full ${selectedPhotoIdLabel.toLowerCase()}.`
+                        }
+                        value={documents.photoIdFront}
+                        onChange={(file) =>
+                          updateApplicantDocument(
+                            applicant.key,
+                            "photoIdFront",
+                            file,
+                          )
+                        }
+                      />
+                      {documents.photoIdType === "driving-licence" ? (
+                        <DocumentUpload
+                          id={`${applicant.key}-photoIdBack`}
+                          title="Driving licence — back"
+                          description="Clear colour image showing the full reverse of the current licence."
+                          value={documents.photoIdBack}
+                          onChange={(file) =>
+                            updateApplicantDocument(
+                              applicant.key,
+                              "photoIdBack",
+                              file,
+                            )
+                          }
+                        />
+                      ) : null}
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="border-t border-slate-100 pt-7">
+                  <div className="mb-4">
+                    <h3 className="text-sm font-semibold text-slate-950">
+                      2. Residential address evidence
+                      <RequiredIndicator />
+                    </h3>
+                    <p className="mt-1 text-xs leading-5 text-slate-500">
+                      A driving licence satisfies this requirement. For another
+                      photo ID type, upload one non-photo address document.
+                    </p>
+                  </div>
+
+                  {documents.photoIdType === "driving-licence" ? (
+                    <div className="flex items-start gap-3 rounded-2xl border border-[rgba(0,52,120,0.14)] bg-[rgba(0,52,120,0.035)] p-4">
+                      <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-[#003478]" />
+                      <div>
+                        <p className="text-xs font-semibold text-slate-900">
+                          No additional address document required
+                        </p>
+                        <p className="mt-1 text-xs leading-5 text-slate-500">
+                          The uploaded driving licence will be used for
+                          residential address verification.
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <Field
+                        label="Non-photo address document"
+                        htmlFor={`${applicant.key}-addressDocumentType`}
+                      >
+                        <CustomSelect
+                          id={`${applicant.key}-addressDocumentType`}
+                          value={documents.addressDocumentType || ""}
+                          onChange={(value) =>
+                            updateAddressDocumentType(
+                              applicant.key,
+                              value as AddressDocumentType,
+                            )
+                          }
+                          options={ADDRESS_DOCUMENT_OPTIONS}
+                          placeholder="Select address document"
+                        />
+                      </Field>
+                      {documents.addressDocumentType ? (
+                        <DocumentUpload
+                          id={`${applicant.key}-addressDocument`}
+                          title={selectedAddressLabel}
+                          description="Upload a clear, recent document showing the applicant’s name and residential address."
+                          value={documents.addressDocument}
+                          onChange={(file) =>
+                            updateApplicantDocument(
+                              applicant.key,
+                              "addressDocument",
+                              file,
+                            )
+                          }
+                        />
+                      ) : null}
+                    </div>
+                  )}
+                </div>
+
+                <div className="border-t border-slate-100 pt-7">
+                  <div className="mb-4">
+                    <h3 className="text-sm font-semibold text-slate-950">
+                      3. Personal details evidence
+                      <RequiredIndicator />
+                    </h3>
+                    <p className="mt-1 text-xs leading-5 text-slate-500">
+                      Complete either option: upload a current CV or provide a
+                      valid website URL.
+                    </p>
+                  </div>
+                  <div className="grid gap-4 lg:grid-cols-2">
+                    <DocumentUpload
+                      id={`${applicant.key}-cv`}
+                      title="Curriculum vitae (CV)"
+                      description="Upload a current CV in PDF or Word format."
+                      value={documents.cv}
+                      onChange={(file) =>
+                        updateApplicantDocument(applicant.key, "cv", file)
+                      }
+                      required={false}
+                      accept=".pdf,.doc,.docx"
+                    />
+                    <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
+                      <Field
+                        label="Website URL"
+                        htmlFor={`${applicant.key}-websiteUrl`}
+                        required={false}
+                        error={websiteError}
+                        hint="A professional, business or personal website can be provided instead of a CV."
+                      >
+                        <input
+                          id={`${applicant.key}-websiteUrl`}
+                          type="url"
+                          inputMode="url"
+                          value={documents.websiteUrl || ""}
+                          onChange={(event) =>
+                            updateApplicantWebsite(
+                              applicant.key,
+                              event.target.value,
+                            )
+                          }
+                          placeholder="https://example.com"
+                          autoCapitalize="none"
+                          spellCheck={false}
+                          className={inputClass(Boolean(websiteError))}
+                        />
+                      </Field>
+                    </div>
                   </div>
                 </div>
-              )}
+
+                <div className="grid gap-3 border-t border-slate-100 pt-5 sm:grid-cols-3">
+                  <CheckRow
+                    checked={photoIdentityComplete}
+                    label="Photo ID complete"
+                  />
+                  <CheckRow
+                    checked={addressEvidenceComplete}
+                    label="Address evidence complete"
+                  />
+                  <CheckRow
+                    checked={personalDetailsComplete}
+                    label="CV or website complete"
+                  />
+                </div>
+              </div>
             </section>
           );
         })}
@@ -3529,12 +3807,6 @@ export function Onboarding() {
             {errors.documents}
           </div>
         ) : null}
-
-        <div className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-xs leading-5 text-slate-500">
-          <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-[#003478]" />
-          Accepted formats: PDF, JPG or PNG. Upload complete, readable documents
-          without cropping or glare.
-        </div>
       </div>
     </div>
   );
@@ -3542,7 +3814,13 @@ export function Onboarding() {
   const renderReview = () => {
     const uploadedProofCount = Object.values(form.documents).reduce(
       (total, documents) =>
-        total + Object.values(documents).filter(Boolean).length,
+        total +
+        [
+          documents.photoIdFront,
+          documents.photoIdBack,
+          documents.addressDocument,
+          documents.cv,
+        ].filter(Boolean).length,
       0,
     );
 
@@ -3836,15 +4114,52 @@ export function Onboarding() {
             icon={FileCheck2}
             onEdit={() => goToStep("documents")}
           >
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="mb-4 grid gap-3 sm:grid-cols-2">
               <CheckRow
                 checked={uploadedProofCount > 0}
-                label={`${uploadedProofCount} identity and address file${uploadedProofCount === 1 ? "" : "s"} attached`}
+                label={`${uploadedProofCount} proof file${uploadedProofCount === 1 ? "" : "s"} attached`}
               />
               <CheckRow
                 checked={documentsComplete}
                 label={`${applicantProfiles.length} applicant proof set${applicantProfiles.length === 1 ? "" : "s"} complete`}
               />
+            </div>
+            <div className="space-y-3">
+              {applicantProfiles.map((applicant) => {
+                const documents = form.documents[applicant.key] || {};
+                const photoIdLabel =
+                  PHOTO_ID_OPTIONS.find(
+                    (option) => option.value === documents.photoIdType,
+                  )?.label || "Not selected";
+                const addressEvidence =
+                  documents.photoIdType === "driving-licence"
+                    ? "Verified with driving licence"
+                    : ADDRESS_DOCUMENT_OPTIONS.find(
+                        (option) =>
+                          option.value === documents.addressDocumentType,
+                      )?.label || "Not selected";
+                const personalEvidence =
+                  documents.cv?.name || documents.websiteUrl || "Not provided";
+                return (
+                  <div
+                    key={applicant.key}
+                    className="grid gap-3 rounded-xl bg-slate-50 px-3.5 py-3 sm:grid-cols-3"
+                  >
+                    <SummaryItem
+                      label={`${applicant.label} · photo ID`}
+                      value={photoIdLabel}
+                    />
+                    <SummaryItem
+                      label="Address evidence"
+                      value={addressEvidence}
+                    />
+                    <SummaryItem
+                      label="CV or website"
+                      value={personalEvidence}
+                    />
+                  </div>
+                );
+              })}
             </div>
           </ReviewSection>
 
