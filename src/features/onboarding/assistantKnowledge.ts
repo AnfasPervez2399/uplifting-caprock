@@ -217,7 +217,7 @@ export function getStepGuidance(
   if (stepId === "trustees")
     return "Add every trustee; the trustee count is calculated automatically. Each needs type, name, valid email and phone. A corporate trustee also needs its company structure and at least one complete director. Select one saved trustee as the default communication recipient.";
   if (stepId === "beneficiaries")
-    return "Add every beneficiary; the beneficiary count is calculated automatically. Each needs type, name, valid email and phone. A corporate beneficiary also needs its company structure and at least one complete director.";
+    return "Add each individual, corporate entity or trust beneficiary with its direct beneficial-interest percentage, full name, valid email and phone. Direct interests cannot exceed 100% and must total exactly 100%, then select Save all beneficiaries. Saving unlocks the beneficiary applications and complete interconnection graph. Type-specific applications and nested ownership follow the same flow as shareholders: every disclosed layer must total exactly 100%, and a corporate entity or trust holding at least 25% requires recursive disclosure until an individual ultimate beneficial owner is identified.";
   if (stepId === "identity")
     return "Add a clear, current selfie in an image format. Face the camera directly, use even lighting and a plain background, and ensure only the applicant appears. The file must be 10 MB or smaller.";
   if (stepId === "bank")
@@ -469,6 +469,35 @@ export function getMissingItems(
   if (stepId === "beneficiaries") {
     if (!form.beneficiaries.length)
       missing.push("At least one saved beneficiary");
+    if (!hasCompletePercentageLayer(form.beneficiaries)) {
+      missing.push(
+        `Direct beneficial interests currently total ${percentageTotal(form.beneficiaries).toFixed(2).replace(/\.00$/, "")}% and must equal exactly 100%`,
+      );
+    }
+    form.beneficiaries.forEach((beneficiary) => {
+      if (!isCompleteShareholder(beneficiary)) {
+        missing.push(
+          `Complete the beneficiary record for ${beneficiary.name || "an unnamed beneficiary"}`,
+        );
+      }
+      if (
+        form.trust.beneficiariesConfirmed &&
+        requiresShareholderApplication(beneficiary) &&
+        !isShareholderApplicationComplete(beneficiary)
+      ) {
+        missing.push(
+          `Complete the required type-specific application and 100% ownership layers for ${beneficiary.name || "a 25%-or-more entity beneficiary"}`,
+        );
+      }
+    });
+    if (
+      hasCompletePercentageLayer(form.beneficiaries) &&
+      !form.trust.beneficiariesConfirmed
+    ) {
+      missing.push(
+        "Select Save all beneficiaries to confirm the complete beneficial-interest structure",
+      );
+    }
     return missing;
   }
   if (stepId === "identity") {

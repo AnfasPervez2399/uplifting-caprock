@@ -422,12 +422,26 @@ export function ReviewStep({
               icon={UsersRound}
               onEdit={() => goToStep("beneficiaries")}
             >
+              <dl className="mb-5 grid gap-x-6 gap-y-5 sm:grid-cols-2">
+                <SummaryItem
+                  label="Direct beneficial-interest total"
+                  value={`${percentageTotal(form.beneficiaries).toFixed(2).replace(/\.00$/, "")}%`}
+                />
+                <SummaryItem
+                  label="Beneficiary structure"
+                  value={
+                    form.trust.beneficiariesConfirmed
+                      ? "Saved and confirmed"
+                      : "Not yet confirmed"
+                  }
+                />
+              </dl>
               <PartyRows
                 title={`${form.beneficiaries.length} saved beneficiar${form.beneficiaries.length === 1 ? "y" : "ies"}`}
                 rows={form.beneficiaries.map((party) => ({
                   id: party.id,
                   name: party.name,
-                  detail: `${party.type}${party.type === "corporate" ? ` · ${party.directors.length} director${party.directors.length === 1 ? "" : "s"}` : ""} · ${party.email}`,
+                  detail: `${party.type || "—"} · ${party.percentage || "—"}% · ${party.email} · ${isShareholderApplicationComplete(party) ? "Application complete" : requiresShareholderApplication(party) ? "Required application incomplete" : "Application available"}`,
                 }))}
               />
             </ReviewSection>

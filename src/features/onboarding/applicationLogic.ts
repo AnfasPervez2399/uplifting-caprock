@@ -6,6 +6,7 @@ import type {
   CompanyState,
   ShareholderOwner,
   ShareholderRelatedParty,
+  TrustBeneficiary,
   TrustParty,
   TrustState,
 } from "./types";
@@ -231,5 +232,12 @@ export const isTrusteesComplete = (trust: TrustState, trustees: TrustParty[]) =>
   trustees.every(isCompleteTrustParty) &&
   trustees.some((trustee) => trustee.id === trust.defaultRecipientId);
 
-export const isBeneficiariesComplete = (_trust: TrustState, beneficiaries: TrustParty[]) =>
-  beneficiaries.length > 0 && beneficiaries.every(isCompleteTrustParty);
+export const isCompleteBeneficiary = (beneficiary: TrustBeneficiary) => isCompleteShareholder(beneficiary);
+
+export const isBeneficiariesComplete = (trust: TrustState, beneficiaries: TrustBeneficiary[]) =>
+  trust.beneficiariesConfirmed &&
+  hasCompletePercentageLayer(beneficiaries) &&
+  beneficiaries.every((beneficiary) =>
+    isCompleteBeneficiary(beneficiary) &&
+    (!requiresShareholderApplication(beneficiary) || isShareholderApplicationComplete(beneficiary)),
+  );

@@ -8,6 +8,7 @@ import type {
   ShareholderOwner,
   ShareholderRelatedParty,
   JointApplicantDraft,
+  TrustBeneficiary,
   TrustParty,
 } from "./types";
 
@@ -84,6 +85,7 @@ export const initialFormState: FormState = {
     applicantCountry: "",
     trusteeCount: "0",
     beneficiaryCount: "0",
+    beneficiariesConfirmed: false,
     defaultRecipientId: "",
   },
   trustees: [],
@@ -177,6 +179,11 @@ export const createEmptyShareholder = (): CompanyShareholder => ({
   email: "",
   phone: "",
   application: createEmptyShareholderApplication(),
+});
+
+export const createEmptyBeneficiary = (): TrustBeneficiary => ({
+  ...createEmptyShareholder(),
+  id: createId("beneficiary"),
 });
 
 export const createEmptyTrustParty = (prefix = "party"): TrustParty => ({

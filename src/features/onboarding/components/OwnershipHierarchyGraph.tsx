@@ -76,6 +76,7 @@ function OwnershipNode({
   onOpen,
   depth,
   siblingIndex,
+  nodeRole,
 }: {
   subject: GraphSubject;
   rootId: string;
@@ -83,6 +84,7 @@ function OwnershipNode({
   onOpen: OpenGraphNode;
   depth: number;
   siblingIndex: number;
+  nodeRole: "shareholder" | "beneficiary";
 }) {
   const Icon = iconFor(subject.type);
   const complete = isShareholderApplicationComplete(subject);
@@ -102,7 +104,7 @@ function OwnershipNode({
         onClick={() => onOpen(rootId, path)}
         style={motionStyle}
         className={`ownership-graph-node group relative min-h-[106px] w-[196px] overflow-hidden rounded-[17px] border p-3 text-left opacity-0 shadow-[0_7px_20px_rgba(15,23,42,0.055)] transition-[transform,border-color,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_14px_28px_rgba(15,23,42,0.12)] focus:outline-none focus-visible:ring-4 focus-visible:ring-[#003478]/15 ${tone.surface} ${tone.border}`}
-        aria-label={`Open ${subject.name || labelFor(subject.type)} shareholder application`}
+        aria-label={`Open ${subject.name || labelFor(subject.type)} ${depth === 1 ? nodeRole : "owner"} application`}
       >
         <span className={`absolute inset-y-0 left-0 w-1 ${tone.accent}`} />
         <span className={`absolute right-3 top-3 h-2 w-2 rounded-full ${complete ? "bg-emerald-500" : required ? "bg-amber-400" : "bg-slate-300"}`} aria-hidden="true" />
@@ -137,6 +139,7 @@ function OwnershipNode({
             parentPath={path}
             onOpen={onOpen}
             depth={depth + 1}
+            nodeRole={nodeRole}
           />
         </div>
       ) : null}
@@ -150,12 +153,14 @@ function OwnershipChildren({
   parentPath,
   onOpen,
   depth,
+  nodeRole,
 }: {
   subjects: ShareholderOwner[];
   rootId: string;
   parentPath: string[];
   onOpen: OpenGraphNode;
   depth: number;
+  nodeRole: "shareholder" | "beneficiary";
 }) {
   return (
     <>
@@ -169,7 +174,7 @@ function OwnershipChildren({
           return (
             <div key={child.id} className="relative pt-4">
               <div className={`ownership-line-y absolute left-1/2 top-0 h-4 w-px origin-top -translate-x-1/2 ${childTone.connector}`} />
-              <OwnershipNode subject={child} rootId={rootId} path={[...parentPath, child.id]} onOpen={onOpen} depth={depth} siblingIndex={index} />
+              <OwnershipNode subject={child} rootId={rootId} path={[...parentPath, child.id]} onOpen={onOpen} depth={depth} siblingIndex={index} nodeRole={nodeRole} />
             </div>
           );
         })}
@@ -185,6 +190,7 @@ function GraphCanvas({
   subjects,
   onOpen,
   nestedRootId,
+  nodeRole,
 }: {
   parentName: string;
   parentLabel: string;
@@ -192,6 +198,7 @@ function GraphCanvas({
   subjects: Array<CompanyShareholder | ShareholderOwner>;
   onOpen: OpenGraphNode;
   nestedRootId?: string;
+  nodeRole: "shareholder" | "beneficiary";
 }) {
   return (
     <div className="ownership-graph-canvas relative overflow-x-auto overscroll-contain rounded-[20px] border border-slate-200 bg-white pb-4 pt-4 shadow-inner">
@@ -218,7 +225,7 @@ function GraphCanvas({
                 return (
                   <div key={subject.id} className="relative pt-4">
                     <div className={`ownership-line-y absolute left-1/2 top-0 h-4 w-px origin-top -translate-x-1/2 ${subjectTone.connector}`} />
-                    <OwnershipNode subject={subject} rootId={rootId} path={path} onOpen={onOpen} depth={1} siblingIndex={index} />
+                    <OwnershipNode subject={subject} rootId={rootId} path={path} onOpen={onOpen} depth={1} siblingIndex={index} nodeRole={nodeRole} />
                   </div>
                 );
               })}
@@ -240,10 +247,12 @@ export function OwnershipHierarchyGraph({
   companyName,
   shareholders,
   onOpen,
+  context = "shareholders",
 }: {
   companyName: string;
   shareholders: CompanyShareholder[];
   onOpen: OpenGraphNode;
+  context?: "shareholders" | "beneficiaries";
 }) {
   const total = formatTotal(shareholders);
   const complete = hasCompletePercentageLayer(shareholders);
@@ -256,11 +265,11 @@ export function OwnershipHierarchyGraph({
             <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#dce7f2] text-[#003478]"><GitBranch className="h-4 w-4" /></span>
             <div>
               <p className="text-[9px] font-black uppercase tracking-[0.12em] text-[#003478]">Ownership map</p>
-              <h3 className="mt-0.5 text-base font-bold tracking-[-0.02em] text-slate-950">Interactive shareholder hierarchy</h3>
-              <p className="mt-1 max-w-2xl text-xs leading-5 text-slate-500">The complete ownership structure is shown across every disclosed layer. Open any card to continue its application.</p>
+              <h3 className="mt-0.5 text-base font-bold tracking-[-0.02em] text-slate-950">Interactive {context === "beneficiaries" ? "beneficiary" : "shareholder"} hierarchy</h3>
+              <p className="mt-1 max-w-2xl text-xs leading-5 text-slate-500">The complete {context === "beneficiaries" ? "beneficial-interest" : "ownership"} structure is shown across every disclosed layer. Open any card to continue its application.</p>
             </div>
           </div>
-          <span className={`inline-flex w-fit items-center gap-2 rounded-full border px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.06em] ${complete ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-amber-200 bg-amber-50 text-amber-700"}`}><span className={`h-1.5 w-1.5 rounded-full ${complete ? "bg-emerald-500" : "bg-amber-500"}`} />Direct ownership {total}%</span>
+          <span className={`inline-flex w-fit items-center gap-2 rounded-full border px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.06em] ${complete ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-amber-200 bg-amber-50 text-amber-700"}`}><span className={`h-1.5 w-1.5 rounded-full ${complete ? "bg-emerald-500" : "bg-amber-500"}`} />Direct {context === "beneficiaries" ? "beneficial interests" : "ownership"} {total}%</span>
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-slate-100 pt-3 text-[8px] font-black uppercase tracking-[0.06em]">
           <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-600">Individual</span>
@@ -273,7 +282,7 @@ export function OwnershipHierarchyGraph({
         </div>
       </div>
       <div className="p-2.5 sm:p-4">
-        <GraphCanvas parentName={companyName || "Applicant company"} parentLabel="Applicant entity" subjects={shareholders} onOpen={onOpen} />
+        <GraphCanvas parentName={companyName || (context === "beneficiaries" ? "Applicant trust" : "Applicant company")} parentLabel={context === "beneficiaries" ? "Applicant trust" : "Applicant entity"} subjects={shareholders} onOpen={onOpen} nodeRole={context === "beneficiaries" ? "beneficiary" : "shareholder"} />
       </div>
     </section>
   );
@@ -282,9 +291,11 @@ export function OwnershipHierarchyGraph({
 export function NestedOwnershipGraph({
   subject,
   onOpenPath,
+  context = "shareholders",
 }: {
   subject: GraphSubject;
   onOpenPath: (path: string[]) => void;
+  context?: "shareholders" | "beneficiaries";
 }) {
   const owners = subject.application.ownershipInterests;
   return (
@@ -296,11 +307,12 @@ export function NestedOwnershipGraph({
       <div className="p-2.5 sm:p-3">
         <GraphCanvas
           parentName={subject.name || "Current shareholder"}
-          parentLabel={`${labelFor(subject.type)} shareholder`}
+          parentLabel={`${labelFor(subject.type)} ${context === "beneficiaries" ? "beneficiary" : "shareholder"}`}
           parentMeta={`${subject.percentage}% in its parent layer`}
           subjects={owners}
           nestedRootId={subject.id}
           onOpen={(_rootId, path) => onOpenPath(path)}
+          nodeRole={context === "beneficiaries" ? "beneficiary" : "shareholder"}
         />
       </div>
     </section>

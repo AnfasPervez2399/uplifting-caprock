@@ -15,6 +15,7 @@ import { IdentityStep } from "../features/onboarding/steps/IdentityStep";
 import { PersonalStep } from "../features/onboarding/steps/PersonalStep";
 import { ReviewStep } from "../features/onboarding/steps/ReviewStep";
 import { SignatureStep } from "../features/onboarding/steps/SignatureStep";
+import { TrustBeneficiariesStep } from "../features/onboarding/steps/TrustBeneficiariesStep";
 import { TrustBusinessStep } from "../features/onboarding/steps/TrustBusinessStep";
 import { TrustPartiesStep } from "../features/onboarding/steps/TrustPartiesStep";
 import { TrustProfileStep } from "../features/onboarding/steps/TrustProfileStep";
@@ -45,11 +46,9 @@ export default function Onboarding() {
       case "shareholders":
         return <CompanyShareholdersStep controller={controller} />;
       case "trustees":
-        return <TrustPartiesStep controller={controller} kind="trustees" />;
+        return <TrustPartiesStep controller={controller} />;
       case "beneficiaries":
-        return (
-          <TrustPartiesStep controller={controller} kind="beneficiaries" />
-        );
+        return <TrustBeneficiariesStep controller={controller} />;
       case "identity":
         return <IdentityStep controller={controller} />;
       case "bank":

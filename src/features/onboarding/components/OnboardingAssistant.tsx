@@ -10,9 +10,12 @@ import {
   ShieldCheck,
   Sparkles,
   UserRound,
+  Wifi,
+  WifiOff,
   X,
 } from "lucide-react";
-import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { type FormEvent, type KeyboardEvent as ReactKeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
+import { checkAssistantService, requestAssistantAnswer, type AssistantServiceMode } from "../assistantApi";
 import {
   ASSISTANT_STEP_NAMES,
   findRequestedStep,
@@ -34,6 +37,7 @@ interface AssistantMessage {
   role: "assistant" | "user";
   text: string;
   actions?: AssistantAction[];
+  source?: "ai" | "grounded";
 }
 
 interface AssistantResponse {
@@ -64,17 +68,20 @@ export function OnboardingAssistant({ controller }: { controller: OnboardingCont
     {
       id: "assistant-welcome",
       role: "assistant",
-      text: "Hi, I’m the Caprock onboarding guide. I use your selected application structure, current section and completion status to provide relevant guidance. You can also open the section list above and jump directly to Personal Information or any other available section.",
+      text: "Hi, I’m the Caprock onboarding assistant. Ask me a question in your own words—I can explain requirements, check what is missing, help you decide what to do next, and take you to any available section.",
+      source: "grounded",
     },
   ]);
   const [draft, setDraft] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [unread, setUnread] = useState(true);
   const [sectionsOpen, setSectionsOpen] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [serviceMode, setServiceMode] = useState<AssistantServiceMode>("checking");
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
-  const timerRef = useRef<number | null>(null);
+  const requestRef = useRef<AbortController | null>(null);
+  const lastTopicRef = useRef<StepId | undefined>(undefined);
 
   const activeStep = visibleSteps.find((step) => step.id === activeStepId);
   const incompleteSteps = visibleSteps.filter((step) => step.id !== "review" && !completion[step.id]);
@@ -109,9 +116,17 @@ export function OnboardingAssistant({ controller }: { controller: OnboardingCont
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [assistantOpen, isTyping, messages]);
 
-  useEffect(() => () => {
-    if (timerRef.current) window.clearTimeout(timerRef.current);
-  }, []);
+  useEffect(() => {
+    if (!assistantOpen) return;
+    const statusRequest = new AbortController();
+    setServiceMode("checking");
+    void checkAssistantService(statusRequest.signal).then((mode) => {
+      if (!statusRequest.signal.aborted) setServiceMode(mode);
+    });
+    return () => statusRequest.abort();
+  }, [assistantOpen]);
+
+  useEffect(() => () => requestRef.current?.abort(), []);
 
   const stepAction = (stepId: StepId, prefix = "Open"): AssistantAction => ({
     label: `${prefix} ${ASSISTANT_STEP_NAMES[stepId]}`,
@@ -173,10 +188,47 @@ export function OnboardingAssistant({ controller }: { controller: OnboardingCont
 
   const createResponse = (question: string): AssistantResponse => {
     const query = question.toLowerCase().replace(/\s+/g, " ").trim();
-    const requestedStep = findRequestedStep(query);
+    const explicitStep = findRequestedStep(query);
+    const refersToCurrentStep = /\b(here|this section|current section|current page)\b/.test(query);
+    const contextualFollowUp = /^(why|why is that|what does that mean|tell me more|open it|go there|take me there|show me|what about that|is it complete)[?.!]*$/.test(query);
+    const requestedStep = explicitStep || (refersToCurrentStep ? activeStepId : contextualFollowUp ? lastTopicRef.current : undefined);
     const asksWhy = query.includes("why") || query.includes("reason");
 
+    if (/^(hi|hello|hey|good morning|good afternoon|good evening)[!. ]*$/.test(query)) {
+      return {
+        text: `Hello. I can see that you’re currently in ${activeStepName}. Ask me what is required, what is missing, why a field is needed, or what you should complete next.`,
+        actions: [stepAction(activeStepId, "Open")],
+      };
+    }
+
+    if (/\b(thank you|thanks|cheers)\b/.test(query)) {
+      return { text: "You’re welcome. I’m here if you want me to check your progress or explain another part of the application." };
+    }
+
+    if (/\b(fill|complete|submit)\b.*\b(for me|on my behalf)\b/.test(query)) {
+      return {
+        text: "I can explain each field, identify missing requirements and take you to the right section, but I cannot invent, approve or submit information on your behalf. You or an authorised adviser must enter and review the application details.",
+        actions: [{ label: form.adviserAccess ? "Manage adviser access" : "Invite an adviser", kind: "adviser" }],
+      };
+    }
+
+    if (/\b(next|what should i do|where should i start|what now)\b/.test(query)) {
+      const nextStep = incompleteSteps[0];
+      if (!nextStep) {
+        return submitted
+          ? { text: "Your application is under review, so there is nothing else to complete right now." }
+          : { text: "Every required section is complete. Review the summaries and declarations before submitting securely.", actions: [stepAction("review", "Go to")] };
+      }
+      lastTopicRef.current = nextStep.id;
+      const missing = getMissingItems(controller, nextStep.id);
+      return {
+        text: `Complete ${ASSISTANT_STEP_NAMES[nextStep.id]} next. ${missing.length ? `The first outstanding item is: ${missing[0]}.` : getStepGuidance(controller, nextStep.id)}`,
+        actions: [stepAction(nextStep.id, "Continue to")],
+      };
+    }
+
     if (requestedStep) {
+      lastTopicRef.current = requestedStep;
       const available = visibleSteps.some((step) => step.id === requestedStep);
       if (!available) {
         return {
@@ -304,23 +356,66 @@ export function OnboardingAssistant({ controller }: { controller: OnboardingCont
     };
   };
 
-  const sendMessage = (messageText: string) => {
+  const sendMessage = async (messageText: string) => {
     const text = messageText.trim();
     if (!text || isTyping) return;
+
+    const groundedResponse = createResponse(text);
+    const requestController = new AbortController();
+    requestRef.current?.abort();
+    requestRef.current = requestController;
+    const recentHistory = messages.slice(-8).map(({ role, text: historyText }) => ({ role, text: historyText }));
+    const minimumThinkingTime = new Promise((resolve) => window.setTimeout(resolve, 280));
+
     setMessages((current) => [...current, { id: createMessageId(), role: "user", text }]);
     setDraft("");
+    if (inputRef.current) inputRef.current.style.height = "40px";
     setIsTyping(true);
-    timerRef.current = window.setTimeout(() => {
-      const response = createResponse(text);
-      setMessages((current) => [...current, { id: createMessageId(), role: "assistant", ...response }]);
-      setIsTyping(false);
-      timerRef.current = null;
-    }, 360);
+
+    let responseText = groundedResponse.text;
+    let responseSource: "ai" | "grounded" = "grounded";
+    if (serviceMode !== "grounded") {
+      try {
+        responseText = await requestAssistantAnswer({
+          message: text,
+          groundedAnswer: groundedResponse.text,
+          history: recentHistory,
+          context: {
+            applicationType: selectedApplicationType,
+            activeStepId,
+            activeStepName,
+            activeStepComplete: isCurrentStepComplete,
+            submitted,
+            incompleteSections: incompleteSteps.map((step) => ASSISTANT_STEP_NAMES[step.id]),
+          },
+        }, requestController.signal);
+        responseSource = "ai";
+        setServiceMode("ai");
+      } catch {
+        if (requestController.signal.aborted) return;
+        setServiceMode("grounded");
+      }
+    }
+
+    await minimumThinkingTime;
+    if (requestController.signal.aborted) return;
+    setMessages((current) => [
+      ...current,
+      { id: createMessageId(), role: "assistant", ...groundedResponse, text: responseText, source: responseSource },
+    ]);
+    setIsTyping(false);
+    if (requestRef.current === requestController) requestRef.current = null;
   };
 
   const submitDraft = (event: FormEvent) => {
     event.preventDefault();
-    sendMessage(draft);
+    void sendMessage(draft);
+  };
+
+  const handleComposerKeyDown = (event: ReactKeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key !== "Enter" || event.shiftKey || event.nativeEvent.isComposing) return;
+    event.preventDefault();
+    void sendMessage(draft);
   };
 
   const runAction = (action: AssistantAction) => {
@@ -347,11 +442,13 @@ export function OnboardingAssistant({ controller }: { controller: OnboardingCont
   };
 
   const resetConversation = () => {
-    if (timerRef.current) window.clearTimeout(timerRef.current);
-    timerRef.current = null;
+    requestRef.current?.abort();
+    requestRef.current = null;
+    lastTopicRef.current = undefined;
     setIsTyping(false);
-    setMessages([{ id: createMessageId(), role: "assistant", text: "Conversation cleared. Ask about the current requirements, what is missing, or choose a section above to navigate directly." }]);
+    setMessages([{ id: createMessageId(), role: "assistant", text: "Conversation cleared. Ask me anything about the current requirements, your progress, or what to complete next.", source: "grounded" }]);
     setDraft("");
+    if (inputRef.current) inputRef.current.style.height = "40px";
   };
 
   return (
@@ -376,8 +473,11 @@ export function OnboardingAssistant({ controller }: { controller: OnboardingCont
           <section role="dialog" aria-modal="true" aria-labelledby="onboarding-assistant-title" className="pointer-events-auto flex h-[min(92vh,780px)] w-full flex-col overflow-hidden rounded-t-3xl border border-slate-200 bg-white shadow-[0_28px_90px_rgba(15,23,42,0.24)] sm:h-[min(80vh,720px)] sm:w-[440px] sm:rounded-3xl">
             <header className="shrink-0 border-b border-slate-100 bg-white px-4 py-4 sm:px-5">
               <div className="flex items-center gap-3">
-                <div className="relative grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[#003478] text-white"><Bot className="h-5 w-5" /><span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-emerald-500" /></div>
-                <div className="min-w-0 flex-1"><div className="flex items-center gap-2"><h2 id="onboarding-assistant-title" className="truncate text-sm font-semibold text-slate-950">Caprock onboarding guide</h2><span className="rounded-full bg-[#dce7f2] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.07em] text-[#003478]">Assistant</span></div><p className="mt-1 truncate text-[11px] text-slate-500">Helping with {activeStepName}</p></div>
+                <div className="relative grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[#003478] text-white"><Bot className="h-5 w-5" /><span className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white ${serviceMode === "ai" ? "bg-emerald-500" : serviceMode === "checking" ? "animate-pulse bg-amber-400" : "bg-[#8aa9c7]"}`} /></div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2"><h2 id="onboarding-assistant-title" className="truncate text-sm font-semibold text-slate-950">Caprock AI assistant</h2><span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.07em] ${serviceMode === "ai" ? "bg-emerald-50 text-emerald-700" : "bg-[#dce7f2] text-[#003478]"}`}>{serviceMode === "ai" ? <Wifi className="h-2.5 w-2.5" /> : <WifiOff className="h-2.5 w-2.5" />}{serviceMode === "ai" ? "AI connected" : serviceMode === "checking" ? "Connecting" : "Verified guide"}</span></div>
+                  <p className="mt-1 truncate text-[11px] text-slate-500">Live help with {activeStepName}</p>
+                </div>
                 <button type="button" onClick={resetConversation} aria-label="Clear assistant conversation" className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"><RefreshCcw className="h-4 w-4" /></button>
                 <button type="button" onClick={() => setAssistantOpen(false)} aria-label="Close onboarding assistant" className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"><X className="h-4 w-4" /></button>
               </div>
@@ -428,6 +528,7 @@ export function OnboardingAssistant({ controller }: { controller: OnboardingCont
                     {message.role === "assistant" ? <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-[#dce7f2] text-[#003478]"><Sparkles className="h-3.5 w-3.5" /></span> : null}
                     <div className={`max-w-[84%] ${message.role === "user" ? "items-end" : "items-start"}`}>
                       <div className={`whitespace-pre-line rounded-2xl px-3.5 py-3 text-xs leading-5 ${message.role === "user" ? "rounded-br-md bg-[#003478] text-white" : "rounded-bl-md border border-slate-200 bg-white text-slate-700 shadow-sm"}`}>{message.text}</div>
+                      {message.role === "assistant" && message.source ? <div className="mt-1.5 flex items-center gap-1 px-1 text-[9px] font-medium text-slate-400">{message.source === "ai" ? <Wifi className="h-2.5 w-2.5" /> : <ShieldCheck className="h-2.5 w-2.5" />}{message.source === "ai" ? "AI response · verified against this application" : "Verified application guidance"}</div> : null}
                       {message.actions?.length ? <div className="mt-2 flex max-h-32 flex-wrap gap-1.5 overflow-y-auto">{message.actions.map((action) => <button key={`${message.id}-${action.label}`} type="button" onClick={() => runAction(action)} className="inline-flex min-h-8 items-center gap-1.5 rounded-lg border border-[#c9d8e7] bg-white px-2.5 py-1.5 text-[10px] font-semibold text-[#003478] transition hover:bg-[#edf3f8]">{action.label}<ArrowRight className="h-3 w-3" /></button>)}</div> : null}
                     </div>
                     {message.role === "user" ? <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-slate-200 text-slate-600"><UserRound className="h-3.5 w-3.5" /></span> : null}
@@ -438,12 +539,23 @@ export function OnboardingAssistant({ controller }: { controller: OnboardingCont
             </div>
 
             <footer className="shrink-0 border-t border-slate-100 bg-white p-4">
-              <div className="mb-3 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">{quickPrompts.map((prompt) => <button key={prompt} type="button" onClick={() => sendMessage(prompt)} disabled={isTyping} className="shrink-0 rounded-full border border-slate-200 bg-white px-3 py-2 text-[10px] font-semibold text-slate-600 transition hover:border-[#b8cadc] hover:bg-[#f6f9fc] hover:text-[#003478] disabled:opacity-50">{prompt}</button>)}</div>
-              <form onSubmit={submitDraft} className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-sm focus-within:border-[#9eb6cf] focus-within:ring-4 focus-within:ring-[#003478]/5">
-                <input ref={inputRef} value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Ask about a field or section…" aria-label="Message the onboarding assistant" className="h-10 min-w-0 flex-1 border-0 bg-transparent px-2.5 text-xs text-slate-800 outline-none placeholder:text-slate-400" />
+              <div className="mb-3 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">{quickPrompts.map((prompt) => <button key={prompt} type="button" onClick={() => { void sendMessage(prompt); }} disabled={isTyping} className="shrink-0 rounded-full border border-slate-200 bg-white px-3 py-2 text-[10px] font-semibold text-slate-600 transition hover:border-[#b8cadc] hover:bg-[#f6f9fc] hover:text-[#003478] disabled:opacity-50">{prompt}</button>)}</div>
+              <form onSubmit={submitDraft} className="flex items-end gap-2 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-sm focus-within:border-[#9eb6cf] focus-within:ring-4 focus-within:ring-[#003478]/5">
+                <textarea
+                  ref={inputRef}
+                  value={draft}
+                  rows={1}
+                  maxLength={1200}
+                  onChange={(event) => setDraft(event.target.value)}
+                  onInput={(event) => { event.currentTarget.style.height = "40px"; event.currentTarget.style.height = `${Math.min(event.currentTarget.scrollHeight, 96)}px`; }}
+                  onKeyDown={handleComposerKeyDown}
+                  placeholder="Ask anything about your application…"
+                  aria-label="Message the onboarding assistant"
+                  className="min-h-10 max-h-24 min-w-0 flex-1 resize-none overflow-y-auto border-0 bg-transparent px-2.5 py-2.5 text-xs leading-5 text-slate-800 outline-none placeholder:text-slate-400"
+                />
                 <button type="submit" disabled={!draft.trim() || isTyping} aria-label="Send message" className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#003478] text-white transition hover:bg-[#002b63] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"><Send className="h-4 w-4" /></button>
               </form>
-              <p className="mt-2.5 flex items-center justify-center gap-1.5 text-[9px] leading-4 text-slate-400"><LifeBuoy className="h-3 w-3" />Guidance only—confirm legal or tax decisions with your adviser.</p>
+              <p className="mt-2.5 flex items-center justify-center gap-1.5 text-center text-[9px] leading-4 text-slate-400"><LifeBuoy className="h-3 w-3 shrink-0" />Application guidance only. Don’t enter passwords, security codes or full ID numbers.</p>
             </footer>
           </section>
         </div>

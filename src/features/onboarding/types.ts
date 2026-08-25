@@ -246,6 +246,7 @@ export interface TrustState {
   applicantCountry: string;
   trusteeCount: string;
   beneficiaryCount: string;
+  beneficiariesConfirmed: boolean;
   defaultRecipientId: string;
 }
 
@@ -277,6 +278,9 @@ export interface TrustParty {
   phone: string;
   directors: CompanyDirector[];
 }
+
+/** A direct trust beneficiary uses the same recursive application and ownership model as a shareholder. */
+export type TrustBeneficiary = CompanyShareholder;
 
 export interface BankAccount {
   id: string;
@@ -333,7 +337,7 @@ export interface FormState {
   shareholders: CompanyShareholder[];
   trust: TrustState;
   trustees: TrustParty[];
-  beneficiaries: TrustParty[];
+  beneficiaries: TrustBeneficiary[];
   identity: IdentityState;
   bankAccounts: BankAccount[];
   cashAccounts: string[];
