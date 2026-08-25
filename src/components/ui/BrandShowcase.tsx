@@ -660,7 +660,7 @@ export function BrandShowcase() {
     <section
       onPointerMove={handlePointerMove}
       onPointerLeave={resetPointer}
-      className="relative hidden min-h-[100svh] overflow-hidden border-r border-black/[0.065] bg-[#edf1f6] lg:flex lg:w-[52%] xl:w-[55%]"
+      className="relative hidden h-full shrink-0 overflow-hidden border-r border-black/[0.065] bg-[#edf1f6] lg:flex lg:w-[52%] xl:w-[55%]"
     >
       <div
         aria-hidden="true"
@@ -685,19 +685,31 @@ export function BrandShowcase() {
           className="flex items-center justify-between"
         >
           <a
-            href="/Caprock-Logo.svg"
+            href="/"
             aria-label="Caprock home"
-            className="rounded-xl  py-2   backdrop-blur-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(0,52,120,0.28)]"
+            className="rounded-xl bg-white/75 px-2.5 py-2 shadow-[0_8px_24px_-18px_rgba(15,23,42,0.20)] ring-1 ring-slate-200/75 backdrop-blur-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(0,52,120,0.28)]"
           >
             <img
-              src="/Caprock-Logo.svg"
+              src="/company-logo.svg"
               alt="Caprock"
-              className="h-18 w-auto xl:18"
+              className="h-7 w-auto xl:h-8"
             />
           </a>
+
+          <div className="flex items-center gap-2 rounded-full border border-white bg-white/70 px-3 py-2 shadow-[0_10px_28px_-20px_rgba(15,23,42,0.18)] backdrop-blur-xl">
+            <span className="relative flex h-2 w-2">
+              {!reduceMotion ? (
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#003478] opacity-50" />
+              ) : null}
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-[#003478]" />
+            </span>
+            <span className="text-[9px] font-bold tracking-wide text-slate-600 xl:text-[10px]">
+              GLOBAL INVESTOR NETWORK
+            </span>
+          </div>
         </motion.header>
 
-        <div className="flex flex-1 items-center pb-7 xl:pb-8">
+        <div className="flex flex-1 items-center py-7 xl:py-8">
           <div className="grid w-full grid-cols-[minmax(0,0.86fr)_minmax(250px,1.14fr)] items-center gap-5 xl:grid-cols-[minmax(0,0.9fr)_minmax(300px,1.1fr)] xl:gap-8 2xl:gap-12">
             <div className="min-w-0 max-w-md">
               <AnimatePresence mode="wait" initial={false}>
@@ -902,14 +914,18 @@ export function BrandShowcase() {
               )}
             </div>
             <p className="text-[9px] font-medium text-slate-500 xl:text-[10px]">
-              Built for investors
+              Built for sophisticated investors
             </p>
           </div>
 
           <div className="hidden items-center gap-4 text-[9px] font-semibold text-slate-400 xl:flex xl:text-[10px]">
             <span className="inline-flex items-center gap-1.5">
               <LockKeyhole className="h-3 w-3 text-[#003478]" />
-              Join caprock today and start investing with 0 commission
+              Institutional controls
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <Wallet className="h-3 w-3 text-[#003478]" />
+              Connected capital
             </span>
           </div>
         </motion.footer>

@@ -1,67 +1,38 @@
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { Outlet } from "react-router-dom";
-import { BrandShowcase } from "../ui/BrandShowcase";
-import { Logo } from "../ui/Logo";
+import { BrandShowcase } from "../../components/ui/BrandShowcase";
+
+const EASE = [0.22, 1, 0.36, 1] as const;
 
 export function AuthLayout() {
-  return (
-    <div className="relative flex min-h-screen overflow-hidden bg-[#edf2ff]">
-      {/* Left Panel */}
+  const reduceMotion = useReducedMotion();
 
+  return (
+    <div className="flex h-[100svh] overflow-hidden bg-[#f4f6f8] selection:bg-[#dce7f2] selection:text-[#0f172a]">
       <BrandShowcase />
 
-      {/* Divider */}
-
-      {/* Right Panel */}
-
-      <div className="relative flex flex-1 items-center justify-center overflow-hidden bg-white px-6 py-10">
-        {/* Background */}
-
+      <main className="relative min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden bg-[#fbfbfa]">
         <motion.div
-          initial={{
-            opacity: 0,
-            x: 60,
-            scale: 0.95,
-          }}
-          animate={{
-            opacity: 1,
-            x: 0,
-            scale: 1,
-          }}
-          transition={{
-            duration: 0.8,
-            ease: [0.22, 1, 0.36, 1],
-          }}
-          className="relative z-10 w-full max-w-md"
+          initial={reduceMotion ? false : { opacity: 0, x: 24 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.58, ease: EASE }}
+          className="mx-auto flex min-h-full w-full max-w-[510px] items-center px-4 py-5 sm:px-8 sm:py-8 xl:px-12"
         >
-          <div className="mb-8 lg:hidden">
-            <Logo size="md" variant="dark" />
-          </div>
-
-          <motion.div
-            whileHover={{
-              y: -4,
-            }}
-            className="
-              relative
-              overflow-hidden
-              rounded-[36px]
-              border
-              border-black/10
-              bg-white/95
-              p-8
-              shadow-[0_30px_80px_rgba(0,0,0,0.12)]
-              backdrop-blur-xl
-            "
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-white via-white to-slate-50" />
-
-            <div className="relative z-10">
-              <Outlet />
+          <div className="w-full">
+            <div className="relative overflow-hidden rounded-[24px] border border-black/[0.075] bg-white shadow-[0_28px_70px_-46px_rgba(15,23,42,0.32),0_8px_24px_-20px_rgba(15,23,42,0.14)] sm:rounded-[28px]">
+              <div className="relative px-1 sm:px-5">
+                <Outlet />
+              </div>
             </div>
-          </motion.div>
+
+            <p className="mt-5 text-center text-[11px] font-medium tracking-[0.01em] text-slate-400">
+              Secure access to the Caprock investor network
+            </p>
+          </div>
         </motion.div>
-      </div>
+      </main>
     </div>
   );
 }
+
+export default AuthLayout;
