@@ -17,6 +17,13 @@ import {
   useState,
 } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import {
+  getCountries,
+  getCountryCallingCode,
+  parsePhoneNumberFromString,
+  type CountryCode,
+} from "libphonenumber-js/max";
+import { CustomSelect, type SelectOption } from "../components/ui/CustomSelect";
 import { useLoader } from "../components/ui/LoaderProvider";
 
 type FieldName =
@@ -119,10 +126,38 @@ const strengthSegmentColors = [
   "#059669",
 ] as const;
 
-const isValidMobile = (value: string) => {
-  const normalised = value.replace(/[\s().-]/g, "");
-  if (/^04\d{8}$/.test(normalised)) return true;
-  return /^\+[1-9]\d{7,14}$/.test(normalised);
+const regionNames = new Intl.DisplayNames(["en-AU"], { type: "region" });
+const countryName = (country: CountryCode) =>
+  regionNames.of(country) || country;
+const countryFlag = (country: CountryCode) =>
+  String.fromCodePoint(
+    ...country.split("").map((character) => 127397 + character.charCodeAt(0)),
+  );
+
+const mobileCountryOptions: SelectOption[] = getCountries()
+  .map((country) => ({
+    value: country,
+    label: `${countryFlag(country)} +${getCountryCallingCode(country)}`,
+    description: countryName(country),
+  }))
+  .sort((left, right) =>
+    (left.description || "").localeCompare(right.description || ""),
+  );
+
+const parseMobileNumber = (value: string, country: CountryCode) => {
+  const input = value.trim();
+  if (!input) return undefined;
+  return input.startsWith("+")
+    ? parsePhoneNumberFromString(input)
+    : parsePhoneNumberFromString(input, country);
+};
+
+const isValidMobile = (value: string, country: CountryCode) => {
+  const phone = parseMobileNumber(value, country);
+  if (!phone?.isPossible() || !phone.isValid()) return false;
+  if (phone.country && phone.country !== country) return false;
+  const type = phone.getType();
+  return !type || type === "MOBILE" || type === "FIXED_LINE_OR_MOBILE";
 };
 
 function ErrorText({
@@ -203,6 +238,79 @@ function TextField({
         {error}
       </ErrorText>
     </div>
+  );
+}
+
+function MobileField({
+  value,
+  country,
+  error,
+  onChange,
+  onCountryChange,
+  reducedMotion,
+}: {
+  value: string;
+  country: CountryCode;
+  error?: string;
+  onChange: (event: ChangeEvent<HTMLInputElement>) => void;
+  onCountryChange: (country: CountryCode) => void;
+  reducedMotion: boolean | null;
+}) {
+  const errorId = "mobile-error";
+  const hintId = "mobile-hint";
+
+  return (
+    <fieldset>
+      <legend className="mb-2 block text-sm font-medium text-slate-800">
+        Mobile number
+      </legend>
+      <div className="grid grid-cols-[128px_minmax(0,1fr)] gap-2.5 sm:grid-cols-[138px_minmax(0,1fr)]">
+        <div>
+          <label htmlFor="mobile-country" className="sr-only">
+            Country calling code
+          </label>
+          <CustomSelect
+            id="mobile-country"
+            value={country}
+            options={mobileCountryOptions}
+            onChange={(nextCountry) =>
+              onCountryChange(nextCountry as CountryCode)
+            }
+            placeholder="Code"
+            error={Boolean(error)}
+            searchable
+            searchPlaceholder="Search country or code"
+          />
+        </div>
+        <div>
+          <label htmlFor="mobile" className="sr-only">
+            National mobile number
+          </label>
+          <input
+            id="mobile"
+            name="mobile"
+            type="tel"
+            value={value}
+            onChange={onChange}
+            autoComplete="tel-national"
+            inputMode="tel"
+            placeholder={country === "AU" ? "412 345 678" : "Mobile number"}
+            required
+            aria-invalid={Boolean(error)}
+            aria-describedby={[hintId, error ? errorId : ""]
+              .filter(Boolean)
+              .join(" ")}
+            className={`h-12 w-full rounded-xl border bg-white px-3.5 text-[15px] text-slate-950 outline-none transition placeholder:text-slate-400 focus:ring-2 ${error ? "border-red-500 focus:border-red-500 focus:ring-red-500/10" : "border-slate-300 hover:border-slate-400 focus:border-[#003478] focus:ring-[#003478]/10"}`}
+          />
+        </div>
+      </div>
+      <p id={hintId} className="mt-1.5 text-[11px] leading-4 text-slate-500">
+        Select the country code, then enter the mobile number without it.
+      </p>
+      <ErrorText id={errorId} reducedMotion={reducedMotion}>
+        {error}
+      </ErrorText>
+    </fieldset>
   );
 }
 
@@ -557,6 +665,7 @@ export function SignUp() {
   const reducedMotion = useReducedMotion();
   const { withLoader } = useLoader();
   const [values, setValues] = useState<FormValues>(initialValues);
+  const [mobileCountry, setMobileCountry] = useState<CountryCode>("AU");
   const [errors, setErrors] = useState<FormErrors>({});
   const [status, setStatus] = useState<Status>("idle");
   const [showPassword, setShowPassword] = useState(false);
@@ -593,9 +702,8 @@ export function SignUp() {
       nextErrors.lastName =
         "Enter a valid last name using letters, spaces, apostrophes or hyphens.";
     if (!values.mobile.trim()) nextErrors.mobile = "Mobile number is required.";
-    else if (!isValidMobile(values.mobile))
-      nextErrors.mobile =
-        "Enter an Australian mobile number or an international number with its country code.";
+    else if (!isValidMobile(values.mobile, mobileCountry))
+      nextErrors.mobile = `Enter a valid mobile number for ${countryName(mobileCountry)}.`;
     if (!email) nextErrors.email = "Email address is required.";
     else if (!emailPattern.test(email))
       nextErrors.email = "Enter a valid email address.";
@@ -649,7 +757,11 @@ export function SignUp() {
             "caprockUserName",
             `${values.firstName.trim()} ${values.lastName.trim()}`,
           );
-          sessionStorage.setItem("caprockUserMobile", values.mobile.trim());
+          const mobile = parseMobileNumber(values.mobile, mobileCountry);
+          sessionStorage.setItem(
+            "caprockUserMobile",
+            mobile?.number || values.mobile.trim(),
+          );
           setStatus("success");
           await wait(400);
           navigate("/onboarding");
@@ -732,16 +844,19 @@ export function SignUp() {
             reducedMotion={reducedMotion}
           />
         </div>
-        <TextField
-          id="mobile"
-          label="Mobile number"
+        <MobileField
           value={values.mobile}
+          country={mobileCountry}
           error={errors.mobile}
-          type="tel"
-          autoComplete="tel"
-          inputMode="tel"
-          placeholder="04xx xxx xxx or +61…"
           onChange={updateField("mobile")}
+          onCountryChange={(country) => {
+            setMobileCountry(country);
+            setErrors((current) => ({
+              ...current,
+              mobile: undefined,
+              form: undefined,
+            }));
+          }}
           reducedMotion={reducedMotion}
         />
         <TextField
