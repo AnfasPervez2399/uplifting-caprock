@@ -258,7 +258,7 @@ export function Login() {
           >
             {/* Replace public/company-logo.svg with the official logo file. */}
             <img
-              src="/company-logo.svg"
+              src="/blue-logo.svg"
               alt="Caprock"
               className="h-9 w-auto max-w-[116px] object-contain object-left sm:h-10 sm:max-w-[168px]"
             />

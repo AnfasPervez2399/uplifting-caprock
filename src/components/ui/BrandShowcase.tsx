@@ -686,13 +686,12 @@ export function BrandShowcase() {
         >
           <a
             href="/"
-            aria-label="Caprock home"
-            className="rounded-xl bg-white/75 px-2.5 py-2 shadow-[0_8px_24px_-18px_rgba(15,23,42,0.20)] ring-1 ring-slate-200/75 backdrop-blur-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(0,52,120,0.28)]"
+            aria-label="Caprock backdrop-blur-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(0,52,120,0.28)]"
           >
             <img
               src="/company-logo.svg"
               alt="Caprock"
-              className="h-7 w-auto xl:h-8"
+              className="h-10 w-auto xl:h-20"
             />
           </a>
 
