@@ -1,6 +1,6 @@
 import { isAtLeastAge } from "../../components/ui/DatePicker";
 import type { StepId } from "./types";
-import { isShareholderApplicationComplete, requiresShareholderApplication } from "./applicationLogic";
+import { hasCompletePercentageLayer, isCompleteShareholder, isShareholderApplicationComplete, percentageTotal, requiresShareholderApplication } from "./applicationLogic";
 import type { OnboardingController } from "./useOnboardingController";
 import {
   hasAddressEvidence,
@@ -120,7 +120,7 @@ export function getStepGuidance(controller: OnboardingController, stepId: StepId
     }
   }
   if (stepId === "directors") return "Add every director or partner with their full name, valid email and phone. The required director count is calculated automatically after records are saved. Then select one saved director as the default communication recipient. Invitations are queued and sent after submission.";
-  if (stepId === "shareholders") return "Add each individual, corporate entity or trust shareholder with its ownership percentage, full name, valid email and phone. The shareholder count is calculated automatically. Every shareholder has a Fill application action. A corporate entity or trust holding 25% or more must complete its profile and disclose the next ownership layer recursively until an individual ultimate beneficial owner is identified. You cannot continue while one of these required applications is incomplete.";
+  if (stepId === "shareholders") return "Add each individual, corporate entity or trust shareholder with its ownership percentage, full name, valid email and phone. Direct ownership must total exactly 100%, then use Save all shareholders to confirm the group. Every shareholder has a type-specific application and appears in the interactive ownership hierarchy. Individual applications include Personal Information, Identity, Upload Proof, E-Signature and Review. Corporate and Trust applications include their matching profile, business, related-party, ownership, document, signature and Review sections. Cash Accounts and Link External Account stay in the main application. A corporate entity or trust holding 25% or more must complete its application and disclose complete 100% ownership layers recursively until an individual ultimate beneficial owner is identified.";
   if (stepId === "trustees") return "Add every trustee; the trustee count is calculated automatically. Each needs type, name, valid email and phone. A corporate trustee also needs its company structure and at least one complete director. Select one saved trustee as the default communication recipient.";
   if (stepId === "beneficiaries") return "Add every beneficiary; the beneficiary count is calculated automatically. Each needs type, name, valid email and phone. A corporate beneficiary also needs its company structure and at least one complete director.";
   if (stepId === "identity") return "Add a clear, current selfie in an image format. Face the camera directly, use even lighting and a plain background, and ensure only the applicant appears. The file must be 10 MB or smaller.";
@@ -265,11 +265,20 @@ export function getMissingItems(controller: OnboardingController, stepId: StepId
   }
   if (stepId === "shareholders") {
     if (!form.shareholders.length) missing.push("At least one saved shareholder");
+    if (!hasCompletePercentageLayer(form.shareholders)) {
+      missing.push(`Direct ownership currently totals ${percentageTotal(form.shareholders).toFixed(2).replace(/\.00$/, "")}% and must equal exactly 100%`);
+    }
     form.shareholders.forEach((shareholder) => {
+      if (!isCompleteShareholder(shareholder)) {
+        missing.push(`Complete the shareholder record for ${shareholder.name || "an unnamed shareholder"}`);
+      }
       if (requiresShareholderApplication(shareholder) && !isShareholderApplicationComplete(shareholder)) {
-        missing.push(`Complete the required ownership application for ${shareholder.name || "a 25%-or-more entity shareholder"}`);
+        missing.push(`Complete the required type-specific application and 100% ownership layers for ${shareholder.name || "a 25%-or-more entity shareholder"}`);
       }
     });
+    if (hasCompletePercentageLayer(form.shareholders) && !form.company.shareholdersConfirmed) {
+      missing.push("Select Save all shareholders to confirm the complete ownership structure");
+    }
     return missing;
   }
   if (stepId === "trustees") {

@@ -5,6 +5,7 @@ import type {
   CompanyShareholder,
   CompanyState,
   ShareholderOwner,
+  ShareholderRelatedParty,
   TrustParty,
   TrustState,
 } from "./types";
@@ -85,6 +86,66 @@ export const isCompleteShareholder = (shareholder: CompanyShareholder) => {
   );
 };
 
+export const percentageTotal = (subjects: Array<{ percentage: string }>) =>
+  subjects.reduce((total, subject) => total + (Number(subject.percentage) || 0), 0);
+
+export const hasCompletePercentageLayer = (subjects: Array<{ percentage: string }>) =>
+  subjects.length > 0 && Math.abs(percentageTotal(subjects) - 100) < 0.0001;
+
+const isCompleteShareholderRelatedParty = (party: ShareholderRelatedParty) => Boolean(
+  party.type &&
+    (party.type !== "corporate" || party.companyType) &&
+    present(party.name) &&
+    isValidEmail(party.email) &&
+    present(party.phone),
+);
+
+export const isShareholderBusinessComplete = (subject: ShareholderApplicationSubject) => {
+  if (subject.type === "individual") return true;
+  const business = subject.application.business;
+  return Boolean(
+    present(business.principalBusinessAddress) &&
+      present(business.businessActivity) &&
+      business.sourceOfFunds &&
+      present(business.intendedTransactions),
+  );
+};
+
+export const isShareholderRelatedPartiesComplete = (subject: ShareholderApplicationSubject) => {
+  if (subject.type === "individual") return true;
+  if (subject.type === "corporate") {
+    return subject.application.directors.length > 0 &&
+      subject.application.directors.every((director) =>
+        present(director.name) && isValidEmail(director.email) && present(director.phone),
+      );
+  }
+  return subject.application.trustees.length > 0 &&
+    subject.application.trustees.every(isCompleteShareholderRelatedParty) &&
+    subject.application.beneficiaries.length > 0 &&
+    subject.application.beneficiaries.every(isCompleteShareholderRelatedParty);
+};
+
+export const isShareholderDocumentsComplete = (subject: ShareholderApplicationSubject) => {
+  const documents = subject.application.documents;
+  if (subject.type === "individual") {
+    return Boolean(documents.photoIdentity && documents.addressEvidence && documents.selfie);
+  }
+  if (subject.type === "corporate") {
+    return Boolean(documents.entityRegistration && documents.ownershipChart);
+  }
+  return Boolean(documents.trustDeed && documents.ownershipChart);
+};
+
+export const isShareholderSignatureComplete = (subject: ShareholderApplicationSubject) => {
+  const signature = subject.application.signature;
+  return Boolean(
+    present(signature.name) &&
+      isValidEmail(signature.email) &&
+      present(signature.phone) &&
+      isAtLeastAge(signature.dateOfBirth, 18),
+  );
+};
+
 export const isCompleteOwnershipInterest = (owner: ShareholderOwner): boolean => {
   const percentage = Number(owner.percentage);
   const baseComplete = Boolean(
@@ -125,16 +186,21 @@ const identifiesIndividualUltimateOwner = (owner: ShareholderOwner): boolean => 
   return requiresShareholderApplication(owner) && isShareholderOwnershipComplete(owner);
 };
 
-export const isShareholderOwnershipComplete = (subject: ShareholderApplicationSubject): boolean =>
-  !requiresShareholderApplication(subject) || (
-    subject.application.ownershipInterests.length > 0 &&
-    subject.application.ownershipInterests.every(isCompleteOwnershipInterest) &&
-    subject.application.ownershipInterests.some(identifiesIndividualUltimateOwner)
-  );
+export const isShareholderOwnershipComplete = (subject: ShareholderApplicationSubject): boolean => {
+  if (subject.type === "individual") return true;
+  const interests = subject.application.ownershipInterests;
+  return hasCompletePercentageLayer(interests) &&
+    interests.every(isCompleteOwnershipInterest) &&
+    interests.some(identifiesIndividualUltimateOwner);
+};
 
 export const isShareholderApplicationComplete = (subject: ShareholderApplicationSubject): boolean =>
   isShareholderApplicationProfileComplete(subject) &&
+  isShareholderBusinessComplete(subject) &&
+  isShareholderRelatedPartiesComplete(subject) &&
   isShareholderOwnershipComplete(subject) &&
+  isShareholderDocumentsComplete(subject) &&
+  isShareholderSignatureComplete(subject) &&
   subject.application.declarationAccepted;
 
 export const isCompanyDirectorsComplete = (company: CompanyState, directors: CompanyDirector[]) =>
@@ -142,8 +208,10 @@ export const isCompanyDirectorsComplete = (company: CompanyState, directors: Com
   directors.every(isCompleteDirector) &&
   directors.some((director) => director.id === company.defaultRecipientId);
 
-export const isCompanyShareholdersComplete = (_company: CompanyState, shareholders: CompanyShareholder[]) =>
-  shareholders.length > 0 && shareholders.every((shareholder) =>
+export const isCompanyShareholdersComplete = (company: CompanyState, shareholders: CompanyShareholder[]) =>
+  company.shareholdersConfirmed &&
+  hasCompletePercentageLayer(shareholders) &&
+  shareholders.every((shareholder) =>
     isCompleteShareholder(shareholder) &&
     (!requiresShareholderApplication(shareholder) || isShareholderApplicationComplete(shareholder)),
   );

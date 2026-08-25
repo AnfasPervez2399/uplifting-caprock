@@ -48,12 +48,43 @@ export type TrustApplicationType = Exclude<Extract<ApplicationType,
 export type CorporateEntityType = "australian-company" | "asic-non-australian-company" | "non-australian-company" | "";
 export type ShareholderTrustType = "discretionary" | "unit" | "regulated" | "other" | "";
 
+export interface ShareholderBusinessProfile {
+  principalBusinessAddress: string;
+  businessActivity: string;
+  sourceOfFunds: string;
+  intendedTransactions: string;
+}
+
+export interface ShareholderRelatedParty {
+  id: string;
+  type: PartyType;
+  companyType: CorporateEntityType;
+  name: string;
+  email: string;
+  phone: string;
+}
+
+export interface ShareholderApplicationDocuments {
+  selfie?: UploadedDocument;
+  photoIdentity?: UploadedDocument;
+  addressEvidence?: UploadedDocument;
+  entityRegistration?: UploadedDocument;
+  ownershipChart?: UploadedDocument;
+  trustDeed?: UploadedDocument;
+}
+
 export interface ShareholderApplication {
   country: string;
   address: string;
   dateOfBirth: string;
   registrationNumber: string;
+  business: ShareholderBusinessProfile;
+  directors: CompanyDirector[];
+  trustees: ShareholderRelatedParty[];
+  beneficiaries: ShareholderRelatedParty[];
   ownershipInterests: ShareholderOwner[];
+  documents: ShareholderApplicationDocuments;
+  signature: SignatureState;
   declarationAccepted: boolean;
 }
 
@@ -198,6 +229,7 @@ export interface CompanyState {
   domicileCountry: string;
   directorCount: string;
   shareholderCount: string;
+  shareholdersConfirmed: boolean;
   defaultRecipientId: string;
 }
 

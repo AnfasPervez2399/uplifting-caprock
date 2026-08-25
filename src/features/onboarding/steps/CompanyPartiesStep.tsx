@@ -5,6 +5,7 @@ import { CORPORATE_ENTITY_TYPE_OPTIONS, SHAREHOLDER_PARTY_TYPE_OPTIONS, SHAREHOL
 import { createEmptyDirector, createEmptyShareholder } from "../initialState";
 import { isCompleteDirector, isCompleteShareholder, isShareholderApplicationComplete, requiresShareholderApplication } from "../applicationLogic";
 import { ShareholderApplicationScreen } from "../components/ShareholderApplicationScreen";
+import { OwnershipHierarchyGraph } from "../components/OwnershipHierarchyGraph";
 import { Field, SectionIntro, SubsectionHeading, inputClass } from "../components/FormPrimitives";
 import type { CompanyDirector, CompanyShareholder, PartyType } from "../types";
 import type { OnboardingController } from "../useOnboardingController";
@@ -83,11 +84,23 @@ export function CompanyDirectorsStep({ controller }: { controller: OnboardingCon
 }
 
 export function CompanyShareholdersStep({ controller }: { controller: OnboardingController }) {
-  const { form, errors, sectionEyebrow, addShareholder, updateShareholder, removeShareholder, isPublicCompany } = controller;
+  const {
+    form,
+    errors,
+    sectionEyebrow,
+    addShareholder,
+    updateShareholder,
+    removeShareholder,
+    confirmAllShareholders,
+    shareholderPercentageTotal,
+    canConfirmShareholders,
+    isPublicCompany,
+    openDocumentPreview,
+  } = controller;
   const [draft, setDraft] = useState<CompanyShareholder>(createEmptyShareholder);
   const [draftError, setDraftError] = useState("");
-  const [activeShareholderId, setActiveShareholderId] = useState<string | null>(null);
-  const activeShareholder = form.shareholders.find((shareholder) => shareholder.id === activeShareholderId);
+  const [activeApplication, setActiveApplication] = useState<{ rootId: string; path: string[] } | null>(null);
+  const activeShareholder = form.shareholders.find((shareholder) => shareholder.id === activeApplication?.rootId);
 
   const add = () => {
     if (!isCompleteShareholder(draft)) {
@@ -112,8 +125,10 @@ export function CompanyShareholdersStep({ controller }: { controller: Onboarding
       {activeShareholder ? (
         <ShareholderApplicationScreen
           shareholder={activeShareholder}
+          initialOwnerPath={activeApplication?.path || []}
           onChange={updateShareholder}
-          onClose={() => setActiveShareholderId(null)}
+          onOpenDocument={openDocumentPreview}
+          onClose={() => setActiveApplication(null)}
         />
       ) : null}
 
@@ -172,7 +187,7 @@ export function CompanyShareholdersStep({ controller }: { controller: Onboarding
                     <div className="min-w-0 flex-1"><p className="text-sm font-semibold text-slate-950">{index + 1}. {shareholder.name}</p><p className="mt-1 text-xs text-slate-500">{typeLabel} · {shareholder.percentage}% · {shareholder.email}</p></div>
                     <span className={`inline-flex w-fit items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.06em] ${complete ? "bg-emerald-50 text-emerald-700" : required ? "bg-amber-50 text-amber-700" : "bg-slate-100 text-slate-600"}`}>{complete ? <CheckCircle2 className="h-3 w-3" /> : <Info className="h-3 w-3" />}{complete ? "Application complete" : required ? "Application required" : "Application available"}</span>
                     <div className="flex flex-wrap items-center gap-2">
-                      <button type="button" onClick={() => setActiveShareholderId(shareholder.id)} className="inline-flex h-10 items-center gap-2 rounded-xl border border-[#003478]/20 bg-white px-3.5 text-xs font-semibold text-[#003478] transition hover:bg-[#f3f7fb]">{complete ? "Review application" : "Fill application"}<ChevronRight className="h-3.5 w-3.5" /></button>
+                      <button type="button" onClick={() => setActiveApplication({ rootId: shareholder.id, path: [] })} className="inline-flex h-10 items-center gap-2 rounded-xl border border-[#003478]/20 bg-white px-3.5 text-xs font-semibold text-[#003478] transition hover:bg-[#f3f7fb]">{complete ? "Review application" : "Fill application"}<ChevronRight className="h-3.5 w-3.5" /></button>
                       <button type="button" onClick={() => removeShareholder(shareholder.id)} aria-label={`Remove ${shareholder.name}`} className="grid h-10 w-10 place-items-center rounded-xl text-slate-400 transition hover:bg-red-50 hover:text-red-600"><Trash2 className="h-4 w-4" /></button>
                     </div>
                   </div>
@@ -184,12 +199,25 @@ export function CompanyShareholdersStep({ controller }: { controller: Onboarding
           {errors.shareholders ? <p className="mt-3 text-xs font-medium text-red-600">{errors.shareholders}</p> : null}
         </section>
 
+        <OwnershipHierarchyGraph
+          companyName={form.company.name}
+          shareholders={form.shareholders}
+          onOpen={(rootId, path) => setActiveApplication({ rootId, path })}
+        />
+
         <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
-          <SubsectionHeading title="Shareholder declaration" description="The shareholder count is calculated automatically from the saved records above." />
-          <div className="max-w-md">
+          <SubsectionHeading title="Save the complete shareholder structure" description="The shareholder count and ownership total are calculated automatically. All required applications and exactly 100% direct ownership are required before saving." />
+          <div className="grid gap-5 sm:grid-cols-2">
             <Field label="Number of shareholders or partners" htmlFor="shareholderCount" error={errors.shareholderCount} hint="Calculated automatically from saved shareholders.">
               <input id="shareholderCount" type="number" value={form.shareholders.length} readOnly aria-readonly="true" className={`${inputClass(Boolean(errors.shareholderCount))} cursor-not-allowed bg-slate-100/80 text-slate-700`} />
             </Field>
+            <Field label="Total direct ownership" htmlFor="shareholderTotal" error={errors.shareholderTotal} hint="Must equal exactly 100%.">
+              <div className="relative"><input id="shareholderTotal" value={shareholderPercentageTotal.toFixed(2).replace(/\.00$/, "")} readOnly aria-readonly="true" className={`${inputClass(Boolean(errors.shareholderTotal))} cursor-not-allowed bg-slate-100/80 pr-10 text-slate-700`} /><span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-slate-500">%</span></div>
+            </Field>
+          </div>
+          <div className={`mt-5 flex flex-col gap-4 rounded-2xl border p-4 sm:flex-row sm:items-center sm:justify-between ${form.company.shareholdersConfirmed ? "border-emerald-200 bg-emerald-50/70" : "border-slate-200 bg-slate-50"}`}>
+            <div className="flex items-start gap-3">{form.company.shareholdersConfirmed ? <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-700" /> : <GitBranch className="mt-0.5 h-5 w-5 shrink-0 text-[#003478]" />}<div><p className="text-sm font-semibold text-slate-950">{form.company.shareholdersConfirmed ? "Shareholders saved" : "Ready to confirm?"}</p><p className="mt-1 text-xs leading-5 text-slate-600">{form.company.shareholdersConfirmed ? "The direct ownership structure is complete and totals 100%. Changes will require confirmation again." : "Complete all required applications and bring direct ownership to exactly 100%."}</p></div></div>
+            <button type="button" onClick={confirmAllShareholders} disabled={!canConfirmShareholders || form.company.shareholdersConfirmed} className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#003478] px-4 text-xs font-semibold text-white transition hover:bg-[#002b63] disabled:cursor-not-allowed disabled:bg-slate-300"><CheckCircle2 className="h-4 w-4" /> {form.company.shareholdersConfirmed ? "All shareholders saved" : "Save all shareholders"}</button>
           </div>
         </section>
       </div>

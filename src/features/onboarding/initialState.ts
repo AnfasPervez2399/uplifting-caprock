@@ -6,6 +6,7 @@ import type {
   FormState,
   ShareholderApplication,
   ShareholderOwner,
+  ShareholderRelatedParty,
   JointApplicantDraft,
   TrustParty,
 } from "./types";
@@ -66,6 +67,7 @@ export const initialFormState: FormState = {
     domicileCountry: "",
     directorCount: "0",
     shareholderCount: "0",
+    shareholdersConfirmed: false,
     defaultRecipientId: "",
   },
   directors: [],
@@ -129,8 +131,28 @@ export const createEmptyShareholderApplication = (): ShareholderApplication => (
   address: "",
   dateOfBirth: "",
   registrationNumber: "",
+  business: {
+    principalBusinessAddress: "",
+    businessActivity: "",
+    sourceOfFunds: "",
+    intendedTransactions: "",
+  },
+  directors: [],
+  trustees: [],
+  beneficiaries: [],
   ownershipInterests: [],
+  documents: {},
+  signature: { name: "", email: "", phone: "", dateOfBirth: "" },
   declarationAccepted: false,
+});
+
+export const createEmptyShareholderRelatedParty = (prefix = "related-party"): ShareholderRelatedParty => ({
+  id: createId(prefix),
+  type: "",
+  companyType: "",
+  name: "",
+  email: "",
+  phone: "",
 });
 
 export const createEmptyShareholderOwner = (): ShareholderOwner => ({

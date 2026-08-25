@@ -49,17 +49,22 @@ import {
   usesSharedAddress,
 } from "./utils";
 import {
+  hasCompletePercentageLayer,
   isBeneficiariesComplete,
   isCompanyApplication,
   isCompanyBusinessComplete,
   isCompanyDirectorsComplete,
   isCompanyProfileComplete,
   isCompanyShareholdersComplete,
+  isCompleteShareholder,
   isIndividualApplication,
+  isShareholderApplicationComplete,
   isTrustApplication,
   isTrustBusinessComplete,
   isTrustProfileComplete,
   isTrusteesComplete,
+  percentageTotal,
+  requiresShareholderApplication,
 } from "./applicationLogic";
 
 export function useOnboardingController() {
@@ -192,6 +197,11 @@ export function useOnboardingController() {
 
   const companyProfileComplete = isCompanyProfileComplete(applicationType, form.company);
   const directorsComplete = !isCompany || isCompanyDirectorsComplete(form.company, form.directors);
+  const shareholderPercentageTotal = percentageTotal(form.shareholders);
+  const canConfirmShareholders = hasCompletePercentageLayer(form.shareholders) && form.shareholders.every((shareholder) =>
+    isCompleteShareholder(shareholder) &&
+    (!requiresShareholderApplication(shareholder) || isShareholderApplicationComplete(shareholder)),
+  );
   const shareholdersComplete = !isCompany || isPublicCompany || isCompanyShareholdersComplete(form.company, form.shareholders);
   const trustProfileComplete = isTrustProfileComplete(applicationType, form.trust);
   const trusteesComplete = !isTrust || isTrusteesComplete(form.trust, form.trustees);
@@ -441,18 +451,23 @@ export function useOnboardingController() {
       return {
         ...current,
         shareholders,
-        company: { ...current.company, shareholderCount: String(shareholders.length) },
+        company: {
+          ...current.company,
+          shareholderCount: String(shareholders.length),
+          shareholdersConfirmed: false,
+        },
       };
     });
-    setErrors((current) => ({ ...current, shareholders: "", shareholderCount: "" }));
+    setErrors((current) => ({ ...current, shareholders: "", shareholderCount: "", shareholderTotal: "" }));
   };
 
   const updateShareholder = (shareholder: CompanyShareholder) => {
     setForm((current) => ({
       ...current,
       shareholders: current.shareholders.map((saved) => saved.id === shareholder.id ? shareholder : saved),
+      company: { ...current.company, shareholdersConfirmed: false },
     }));
-    setErrors((current) => ({ ...current, shareholders: "" }));
+    setErrors((current) => ({ ...current, shareholders: "", shareholderTotal: "" }));
   };
 
   const removeShareholder = (id: string) => {
@@ -461,9 +476,39 @@ export function useOnboardingController() {
       return {
         ...current,
         shareholders,
-        company: { ...current.company, shareholderCount: String(shareholders.length) },
+        company: {
+          ...current.company,
+          shareholderCount: String(shareholders.length),
+          shareholdersConfirmed: false,
+        },
       };
     });
+    setErrors((current) => ({ ...current, shareholders: "", shareholderTotal: "" }));
+  };
+
+  const confirmAllShareholders = () => {
+    if (!canConfirmShareholders) {
+      const totalComplete = hasCompletePercentageLayer(form.shareholders);
+      setErrors((current) => ({
+        ...current,
+        shareholders: totalComplete
+          ? "Complete every required shareholder application before saving the ownership structure."
+          : "Shareholder ownership must total exactly 100% before all shareholders can be saved.",
+        shareholderTotal: totalComplete ? "" : "Adjust ownership so the total equals exactly 100%.",
+      }));
+      setSuccessNotice("");
+      setNotice(totalComplete
+        ? "Complete every required shareholder application before saving all shareholders."
+        : `The current shareholder total is ${shareholderPercentageTotal.toFixed(2).replace(/\.00$/, "")}% and must equal 100%.`);
+      return;
+    }
+    setForm((current) => ({
+      ...current,
+      company: { ...current.company, shareholdersConfirmed: true },
+    }));
+    setErrors((current) => ({ ...current, shareholders: "", shareholderTotal: "" }));
+    setNotice("");
+    setSuccessNotice("All shareholders have been saved as a complete 100% ownership structure.");
   };
 
   const addTrustParty = (kind: "trustees" | "beneficiaries", party: TrustParty) => {
@@ -1065,7 +1110,12 @@ export function useOnboardingController() {
     }
     if (stepId === "shareholders" && !shareholdersComplete) {
       if (!form.shareholders.length) nextErrors.shareholderCount = "Add at least one shareholder.";
-      nextErrors.shareholders = "Complete each shareholder record. Corporate entities and trusts holding 25% or more must also complete every required ownership layer.";
+      if (!hasCompletePercentageLayer(form.shareholders)) {
+        nextErrors.shareholderTotal = "Direct shareholder ownership must total exactly 100%.";
+      } else if (!form.company.shareholdersConfirmed) {
+        nextErrors.shareholderTotal = "Select Save all shareholders to confirm the complete ownership structure.";
+      }
+      nextErrors.shareholders = "Complete each shareholder record, every required type-specific application and all required 100% ownership layers, then save all shareholders.";
     }
     if (stepId === "trustees" && !trusteesComplete) {
       if (!form.trustees.length) nextErrors.trusteeCount = "Add at least one trustee.";
@@ -1347,6 +1397,8 @@ export function useOnboardingController() {
     companyProfileComplete,
     directorsComplete,
     shareholdersComplete,
+    shareholderPercentageTotal,
+    canConfirmShareholders,
     trustProfileComplete,
     trusteesComplete,
     beneficiariesComplete,
@@ -1373,6 +1425,7 @@ export function useOnboardingController() {
     addShareholder,
     updateShareholder,
     removeShareholder,
+    confirmAllShareholders,
     addTrustParty,
     removeTrustParty,
     updateEntityDocument,
