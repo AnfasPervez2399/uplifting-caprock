@@ -53,20 +53,6 @@ export function TrustPartiesStep({ controller, kind }: { controller: OnboardingC
         icon={UsersRound}
       />
       <div className="space-y-8">
-        <section>
-          <SubsectionHeading title={`${title} declaration`} description="The declared count must match the complete records saved below." />
-          <div className="grid gap-5 sm:grid-cols-2">
-            <Field label={`Number of ${title.toLowerCase()}`} htmlFor={`${kind}Count`} error={errors[countErrorKey]}>
-              <input id={`${kind}Count`} type="number" min="1" step="1" value={form.trust[countKey]} onChange={(event) => updateTrust(countKey, event.target.value)} placeholder="For example, 2" className={inputClass(Boolean(errors[countErrorKey]))} />
-            </Field>
-            {trusteeMode ? (
-              <Field label="Default communication recipient" htmlFor="defaultTrustee" error={errors.defaultTrustee}>
-                <CustomSelect id="defaultTrustee" value={form.trust.defaultRecipientId} onChange={(value) => updateTrust("defaultRecipientId", value)} options={recipientOptions} placeholder={form.trustees.length ? "Select a trustee" : "Add a trustee first"} disabled={!form.trustees.length} error={Boolean(errors.defaultTrustee)} />
-              </Field>
-            ) : null}
-          </div>
-        </section>
-
         <section className="rounded-2xl border border-slate-200 bg-slate-50/55 p-5 sm:p-6">
           <SubsectionHeading title={`Add a ${singular}`} description={`Capture the ${singular} contact and its individual or corporate structure. KYC invitations are sent after the trust application is submitted.`} />
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -118,6 +104,20 @@ export function TrustPartiesStep({ controller, kind }: { controller: OnboardingC
             )) : <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500">No {title.toLowerCase()} added yet.</div>}
           </div>
           {errors[kind] ? <p className="mt-3 text-xs font-medium text-red-600">{errors[kind]}</p> : null}
+        </section>
+
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+          <SubsectionHeading title={`${title} declaration`} description={`The ${singular} count is calculated automatically from the saved records above.`} />
+          <div className="grid gap-5 sm:grid-cols-2">
+            <Field label={`Number of ${title.toLowerCase()}`} htmlFor={`${kind}Count`} error={errors[countErrorKey]} hint={`Calculated automatically from saved ${title.toLowerCase()}.`}>
+              <input id={`${kind}Count`} type="number" value={parties.length} readOnly aria-readonly="true" className={`${inputClass(Boolean(errors[countErrorKey]))} cursor-not-allowed bg-slate-100/80 text-slate-700`} />
+            </Field>
+            {trusteeMode ? (
+              <Field label="Default communication recipient" htmlFor="defaultTrustee" error={errors.defaultTrustee}>
+                <CustomSelect id="defaultTrustee" value={form.trust.defaultRecipientId} onChange={(value) => updateTrust("defaultRecipientId", value)} options={recipientOptions} placeholder={form.trustees.length ? "Select a trustee" : "Add a trustee first"} disabled={!form.trustees.length} error={Boolean(errors.defaultTrustee)} />
+              </Field>
+            ) : null}
+          </div>
         </section>
       </div>
     </div>

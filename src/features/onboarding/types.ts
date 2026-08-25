@@ -36,7 +36,7 @@ export type ApplicationCategory = "individual" | "company" | "trust";
 export type AssessmentNature = "australian" | "foreign" | "";
 export type YesNo = "yes" | "no" | "";
 export type JointMethod = "existing" | "new";
-export type PartyType = "individual" | "corporate" | "";
+export type PartyType = "individual" | "corporate" | "trust" | "";
 export type CompanyStructure = "proprietor" | "partnership" | "private" | "public" | "";
 export type AustralianRegistrationType = "public" | "proprietary" | "";
 export type CompanyApplicationType = Exclude<Extract<ApplicationType,
@@ -46,6 +46,29 @@ export type TrustApplicationType = Exclude<Extract<ApplicationType,
   "regulated-trust" | "custodian-trust" | "non-custodian-trust"
 >, "">;
 export type CorporateEntityType = "australian-company" | "asic-non-australian-company" | "non-australian-company" | "";
+export type ShareholderTrustType = "discretionary" | "unit" | "regulated" | "other" | "";
+
+export interface ShareholderApplication {
+  country: string;
+  address: string;
+  dateOfBirth: string;
+  registrationNumber: string;
+  ownershipInterests: ShareholderOwner[];
+  declarationAccepted: boolean;
+}
+
+export interface ShareholderOwner {
+  id: string;
+  type: PartyType;
+  companyType: CorporateEntityType;
+  trustType: ShareholderTrustType;
+  percentage: string;
+  name: string;
+  email: string;
+  phone: string;
+  application: ShareholderApplication;
+}
+
 export type PhotoIdType = "passport" | "driving-licence" | "photo-id" | "";
 export type AddressDocumentType = "utility-bill" | "lease-agreement" | "tax-document" | "";
 export type ProofFileField =
@@ -205,10 +228,12 @@ export interface CompanyShareholder {
   id: string;
   type: PartyType;
   companyType: CorporateEntityType;
+  trustType: ShareholderTrustType;
   percentage: string;
   name: string;
   email: string;
   phone: string;
+  application: ShareholderApplication;
 }
 
 export interface TrustParty {

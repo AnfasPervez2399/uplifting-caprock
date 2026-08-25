@@ -4,6 +4,8 @@ import type {
   CompanyDirector,
   CompanyShareholder,
   FormState,
+  ShareholderApplication,
+  ShareholderOwner,
   JointApplicantDraft,
   TrustParty,
 } from "./types";
@@ -62,8 +64,8 @@ export const initialFormState: FormState = {
     usTaxId: "",
     identificationNumber: "",
     domicileCountry: "",
-    directorCount: "",
-    shareholderCount: "",
+    directorCount: "0",
+    shareholderCount: "0",
     defaultRecipientId: "",
   },
   directors: [],
@@ -78,8 +80,8 @@ export const initialFormState: FormState = {
     settlorName: "",
     address: "",
     applicantCountry: "",
-    trusteeCount: "",
-    beneficiaryCount: "",
+    trusteeCount: "0",
+    beneficiaryCount: "0",
     defaultRecipientId: "",
   },
   trustees: [],
@@ -122,8 +124,37 @@ export const createEmptyBank = (): BankAccount => ({
 
 export const createEmptyDirector = (): CompanyDirector => ({ id: createId("director"), name: "", email: "", phone: "" });
 
+export const createEmptyShareholderApplication = (): ShareholderApplication => ({
+  country: "",
+  address: "",
+  dateOfBirth: "",
+  registrationNumber: "",
+  ownershipInterests: [],
+  declarationAccepted: false,
+});
+
+export const createEmptyShareholderOwner = (): ShareholderOwner => ({
+  id: createId("owner"),
+  type: "",
+  companyType: "",
+  trustType: "",
+  percentage: "",
+  name: "",
+  email: "",
+  phone: "",
+  application: createEmptyShareholderApplication(),
+});
+
 export const createEmptyShareholder = (): CompanyShareholder => ({
-  id: createId("shareholder"), type: "", companyType: "", percentage: "", name: "", email: "", phone: "",
+  id: createId("shareholder"),
+  type: "",
+  companyType: "",
+  trustType: "",
+  percentage: "",
+  name: "",
+  email: "",
+  phone: "",
+  application: createEmptyShareholderApplication(),
 });
 
 export const createEmptyTrustParty = (prefix = "party"): TrustParty => ({

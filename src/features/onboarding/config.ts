@@ -24,7 +24,7 @@ import type {
 
 export const allSteps: StepDefinition[] = [
   { id: "application", shortLabel: "Type", label: "Application Type", description: "Choose who is applying", icon: Sparkles },
-  { id: "personal", shortLabel: "Personal", label: "Personal", description: "Applicant and investment details", icon: CircleUserRound },
+  { id: "personal", shortLabel: "Personal", label: "Personal Information", description: "Applicant and investment details", icon: CircleUserRound },
   { id: "entity", shortLabel: "Company", label: "Company Profile", description: "Registration and investment details", icon: Building2 },
   { id: "trust", shortLabel: "Trust", label: "Trust Profile", description: "Trust and trustee details", icon: ShieldCheck },
   { id: "business", shortLabel: "Business", label: "Business", description: "Registration, tax and activity", icon: BriefcaseBusiness },
@@ -97,6 +97,16 @@ export const AUSTRALIAN_REGISTRATION_OPTIONS: SelectOption[] = [
 export const PARTY_TYPE_OPTIONS: SelectOption[] = [
   { value: "individual", label: "Individual" },
   { value: "corporate", label: "Corporate" },
+];
+export const SHAREHOLDER_PARTY_TYPE_OPTIONS: SelectOption[] = [
+  ...PARTY_TYPE_OPTIONS,
+  { value: "trust", label: "Trust" },
+];
+export const SHAREHOLDER_TRUST_TYPE_OPTIONS: SelectOption[] = [
+  { value: "discretionary", label: "Discretionary trust" },
+  { value: "unit", label: "Unit trust" },
+  { value: "regulated", label: "Regulated trust" },
+  { value: "other", label: "Other trust" },
 ];
 export const CORPORATE_ENTITY_TYPE_OPTIONS: SelectOption[] = [
   { value: "australian-company", label: "Australian Domestic Company" },

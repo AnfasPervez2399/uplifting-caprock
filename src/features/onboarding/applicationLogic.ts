@@ -1,8 +1,10 @@
+import { isAtLeastAge } from "../../components/ui/DatePicker";
 import type {
   ApplicationType,
   CompanyDirector,
   CompanyShareholder,
   CompanyState,
+  ShareholderOwner,
   TrustParty,
   TrustState,
 } from "./types";
@@ -65,11 +67,17 @@ export const isTrustBusinessComplete = (type: ApplicationType, trust: TrustState
 export const isCompleteDirector = (director: CompanyDirector) =>
   present(director.name) && isValidEmail(director.email) && present(director.phone);
 
+type ShareholderApplicationSubject = CompanyShareholder | ShareholderOwner;
+
+export const requiresShareholderApplication = (shareholder: ShareholderApplicationSubject) =>
+  (shareholder.type === "corporate" || shareholder.type === "trust") && Number(shareholder.percentage) >= 25;
+
 export const isCompleteShareholder = (shareholder: CompanyShareholder) => {
   const percentage = Number(shareholder.percentage);
   return Boolean(
     shareholder.type &&
       (shareholder.type !== "corporate" || shareholder.companyType) &&
+      (shareholder.type !== "trust" || shareholder.trustType) &&
       percentage > 0 && percentage <= 100 &&
       present(shareholder.name) &&
       isValidEmail(shareholder.email) &&
@@ -77,18 +85,68 @@ export const isCompleteShareholder = (shareholder: CompanyShareholder) => {
   );
 };
 
-export const countMatches = (declared: string, actual: number) => {
-  const count = Number(declared);
-  return Number.isInteger(count) && count > 0 && count === actual;
+export const isCompleteOwnershipInterest = (owner: ShareholderOwner): boolean => {
+  const percentage = Number(owner.percentage);
+  const baseComplete = Boolean(
+    owner.type &&
+      (owner.type !== "corporate" || owner.companyType) &&
+      (owner.type !== "trust" || owner.trustType) &&
+      percentage > 0 && percentage <= 100 &&
+      present(owner.name) &&
+      isValidEmail(owner.email) &&
+      present(owner.phone),
+  );
+  if (!baseComplete) return false;
+  if (owner.type === "individual") return isShareholderApplicationComplete(owner);
+  return !requiresShareholderApplication(owner) || isShareholderApplicationComplete(owner);
 };
 
+export const isShareholderApplicationProfileComplete = (subject: ShareholderApplicationSubject) => {
+  const application = subject.application;
+  const percentage = Number(subject.percentage);
+  return Boolean(
+    subject.type &&
+      (subject.type !== "corporate" || subject.companyType) &&
+      (subject.type !== "trust" || subject.trustType) &&
+      percentage > 0 && percentage <= 100 &&
+      present(subject.name) &&
+      isValidEmail(subject.email) &&
+      present(subject.phone) &&
+      application.country &&
+      present(application.address) &&
+      (subject.type === "individual"
+        ? isAtLeastAge(application.dateOfBirth, 18)
+        : present(application.registrationNumber)),
+  );
+};
+
+const identifiesIndividualUltimateOwner = (owner: ShareholderOwner): boolean => {
+  if (owner.type === "individual") return isShareholderApplicationComplete(owner);
+  return requiresShareholderApplication(owner) && isShareholderOwnershipComplete(owner);
+};
+
+export const isShareholderOwnershipComplete = (subject: ShareholderApplicationSubject): boolean =>
+  !requiresShareholderApplication(subject) || (
+    subject.application.ownershipInterests.length > 0 &&
+    subject.application.ownershipInterests.every(isCompleteOwnershipInterest) &&
+    subject.application.ownershipInterests.some(identifiesIndividualUltimateOwner)
+  );
+
+export const isShareholderApplicationComplete = (subject: ShareholderApplicationSubject): boolean =>
+  isShareholderApplicationProfileComplete(subject) &&
+  isShareholderOwnershipComplete(subject) &&
+  subject.application.declarationAccepted;
+
 export const isCompanyDirectorsComplete = (company: CompanyState, directors: CompanyDirector[]) =>
-  countMatches(company.directorCount, directors.length) &&
+  directors.length > 0 &&
   directors.every(isCompleteDirector) &&
   directors.some((director) => director.id === company.defaultRecipientId);
 
-export const isCompanyShareholdersComplete = (company: CompanyState, shareholders: CompanyShareholder[]) =>
-  countMatches(company.shareholderCount, shareholders.length) && shareholders.every(isCompleteShareholder);
+export const isCompanyShareholdersComplete = (_company: CompanyState, shareholders: CompanyShareholder[]) =>
+  shareholders.length > 0 && shareholders.every((shareholder) =>
+    isCompleteShareholder(shareholder) &&
+    (!requiresShareholderApplication(shareholder) || isShareholderApplicationComplete(shareholder)),
+  );
 
 export const isCompleteTrustParty = (party: TrustParty) =>
   Boolean(
@@ -101,9 +159,9 @@ export const isCompleteTrustParty = (party: TrustParty) =>
   );
 
 export const isTrusteesComplete = (trust: TrustState, trustees: TrustParty[]) =>
-  countMatches(trust.trusteeCount, trustees.length) &&
+  trustees.length > 0 &&
   trustees.every(isCompleteTrustParty) &&
   trustees.some((trustee) => trustee.id === trust.defaultRecipientId);
 
-export const isBeneficiariesComplete = (trust: TrustState, beneficiaries: TrustParty[]) =>
-  countMatches(trust.beneficiaryCount, beneficiaries.length) && beneficiaries.every(isCompleteTrustParty);
+export const isBeneficiariesComplete = (_trust: TrustState, beneficiaries: TrustParty[]) =>
+  beneficiaries.length > 0 && beneficiaries.every(isCompleteTrustParty);

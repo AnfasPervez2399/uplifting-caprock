@@ -72,8 +72,8 @@ export function PersonalStep({ controller }: StepProps) {
     <div className="animate-[fadeUp_.35s_ease-out]">
       <SectionIntro
         eyebrow={sectionEyebrow("personal")}
-        title="Personal"
-        description="Tell us who is applying and provide the investment profile details required for this application."
+        title="Personal Information"
+        description="Tell us who is applying and provide the identity, address and investment-profile details required for this application."
         icon={CircleUserRound}
       />
 
@@ -119,6 +119,18 @@ export function PersonalStep({ controller }: StepProps) {
                 required={false}
               />
             </div>
+            <Field label="Applicant country" htmlFor="applicantCountry" error={errors.applicantCountry}>
+              <CustomSelect
+                id="applicantCountry"
+                value={form.personal.applicantCountry}
+                onChange={(value) => updatePersonal("applicantCountry", value)}
+                options={COUNTRY_OPTIONS}
+                placeholder="Select applicant country"
+                searchable
+                searchPlaceholder="Search countries"
+                error={Boolean(errors.applicantCountry)}
+              />
+            </Field>
             <Field label="First name" htmlFor="firstName" error={errors.firstName}>
               <input
                 id="firstName"

@@ -16,6 +16,7 @@ import {
   UsersRound,
 } from "lucide-react";
 import { ADDRESS_DOCUMENT_OPTIONS, PHOTO_ID_OPTIONS } from "../config";
+import { isShareholderApplicationComplete, requiresShareholderApplication } from "../applicationLogic";
 import { CheckRow, RequiredIndicator, ReviewSection, SectionIntro, SummaryItem } from "../components/FormPrimitives";
 import { formatApplicantName, hasDrivingLicenceProof, requiresTwoPhotoIds } from "../utils";
 import type { OnboardingController } from "../useOnboardingController";
@@ -82,7 +83,7 @@ export function ReviewStep({ controller }: { controller: OnboardingController })
               </dl>
             </ReviewSection>
             <ReviewSection title="M.D. & Owners" icon={UsersRound} onEdit={() => goToStep("directors")}><PartyRows title={`${form.directors.length} saved director${form.directors.length === 1 ? "" : "s"}`} rows={form.directors.map((director) => ({ id: director.id, name: director.name, detail: `${director.email} · ${director.phone}${form.company.defaultRecipientId === director.id ? " · Default recipient" : ""}` }))} /></ReviewSection>
-            <ReviewSection title="Shareholders" icon={UsersRound} onEdit={() => goToStep("shareholders")}><PartyRows title={`${form.shareholders.length} saved shareholder${form.shareholders.length === 1 ? "" : "s"}`} rows={form.shareholders.map((shareholder) => ({ id: shareholder.id, name: shareholder.name, detail: `${shareholder.type || "—"} · ${shareholder.percentage || "—"}% · ${shareholder.email}` }))} /></ReviewSection>
+            {form.company.companyType !== "public" ? <ReviewSection title="Shareholders" icon={UsersRound} onEdit={() => goToStep("shareholders")}><PartyRows title={`${form.shareholders.length} saved shareholder${form.shareholders.length === 1 ? "" : "s"}`} rows={form.shareholders.map((shareholder) => ({ id: shareholder.id, name: shareholder.name, detail: `${shareholder.type || "—"} · ${shareholder.percentage || "—"}% · ${shareholder.email} · ${isShareholderApplicationComplete(shareholder) ? "Application complete" : requiresShareholderApplication(shareholder) ? "Required application incomplete" : "Application optional"}` }))} /></ReviewSection> : null}
           </>
         ) : null}
 
