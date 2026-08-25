@@ -1,6 +1,8 @@
 import {
   ArrowRight,
   Bot,
+  CheckCircle2,
+  ChevronDown,
   LifeBuoy,
   MessageCircle,
   RefreshCcw,
@@ -11,6 +13,13 @@ import {
   X,
 } from "lucide-react";
 import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import {
+  ASSISTANT_STEP_NAMES,
+  findRequestedStep,
+  getMissingItems,
+  getStepGuidance,
+  getWhyGuidance,
+} from "../assistantKnowledge";
 import type { StepId } from "../types";
 import type { OnboardingController } from "../useOnboardingController";
 
@@ -32,70 +41,14 @@ interface AssistantResponse {
   actions?: AssistantAction[];
 }
 
-const stepGuidance: Partial<Record<StepId, string>> = {
-  application:
-    "Choose the legal structure that will own the account. Your choice controls the fields, people and evidence required throughout the application.",
-  personal:
-    "Enter the main applicant’s country, legal names, former names or “None”, date of birth, residential address and investment profile. Applicants must be at least 18.",
-  entity:
-    "Use the company’s official registration records for its legal name, registration identifier, incorporation details and investment profile. Optional website details must still be valid.",
-  trust:
-    "Enter the trust’s full legal name, trustee business name and establishment country exactly as recorded in the trust documents.",
-  business:
-    "Complete every visible registration, address, investment and tax field. The questions shown here are tailored to the selected application structure.",
-  directors:
-    "Declare the number of directors or partners, save that many complete contacts, and choose one as the default communication recipient.",
-  shareholders:
-    "Declare the shareholder count and save each individual or corporate shareholder with ownership percentage and complete contact details.",
-  trustees:
-    "Declare all trustees. Corporate trustees require their company structure and at least one complete nested director. Select a default communication recipient.",
-  beneficiaries:
-    "Declare all beneficiaries. Corporate beneficiaries require their company structure and at least one complete nested director.",
-  identity:
-    "Provide a clear, current selfie for identity matching. Make sure your face is visible and the image is not blurred or heavily edited.",
-  bank: "Add at least one external bank account with bank name, SWIFT code, address, account number, currency and verification evidence.",
-  cash: "Select one or more currencies. Caprock will create one cash account for each selected currency.",
-  documents:
-    "Upload every proof item displayed. Requirements change automatically according to applicant country, entity subtype and company structure.",
-  signature:
-    "Enter the authorised signatory’s legal name, valid email, phone and date of birth. The signatory must be at least 18.",
-  review:
-    "Review each summary, open uploaded evidence if needed, complete both declarations and submit securely. Incomplete sections remain identified in the navigation.",
-};
-
-const whyGuidance: Partial<Record<StepId, string>> = {
-  application:
-    "The legal structure determines who must be verified, which compliance checks apply and which documents Caprock must collect.",
-  personal:
-    "These details support identity, eligibility and customer due-diligence checks.",
-  entity:
-    "Company registration details allow Caprock to verify the entity against authoritative registers.",
-  trust:
-    "Trust identity details establish the legal arrangement and connect it to its trustee and governing documents.",
-  business:
-    "Registration, tax and activity information is required for customer risk assessment and regulatory due diligence.",
-  directors:
-    "Directors and controlling persons must be identified before the company account can be approved.",
-  shareholders:
-    "Ownership information helps establish beneficial ownership and control of the company.",
-  trustees:
-    "Trustees control or administer the trust and therefore require customer due-diligence checks.",
-  beneficiaries:
-    "Beneficiary information supports beneficial-interest and trust compliance checks.",
-  identity:
-    "The selfie helps confirm that the applicant matches their identity documents.",
-  bank: "Bank evidence verifies the external account used for settlement and reduces payment and fraud risk.",
-  cash: "Currency choices determine which cash ledgers are opened for the account.",
-  documents:
-    "The evidence supports independent verification of identity, registration, ownership and trust status.",
-  signature:
-    "The signatory details establish who is authorised to approve and electronically sign the application.",
-  review:
-    "Final review and declarations create a clear, auditable confirmation before submission.",
-};
-
 const createMessageId = () =>
   `assistant-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+const asksForMissingInformation = (query: string) =>
+  /still|left|missing|incomplete|need to complete|not complete|progress/.test(
+    query,
+  );
+const asksForNavigation = (query: string) =>
+  /go to|open|take me|navigate|jump|show me|visit|redirect|section/.test(query);
 
 export function OnboardingAssistant({
   controller,
@@ -110,9 +63,6 @@ export function OnboardingAssistant({
     completion,
     selectedApplicationType,
     form,
-    isIndividual,
-    isCompany,
-    isTrust,
     requiredEntityDocuments,
     goToStep,
     openAdviserInvite,
@@ -123,12 +73,13 @@ export function OnboardingAssistant({
     {
       id: "assistant-welcome",
       role: "assistant",
-      text: "Hi, I’m the Caprock onboarding guide. I can explain any field, identify what is still incomplete, help with document requirements, or take you to the right section.",
+      text: "Hi, I’m the Caprock onboarding guide. I use your selected application structure, current section and completion status to provide relevant guidance. You can also open the section list above and jump directly to Personal Information or any other available section.",
     },
   ]);
   const [draft, setDraft] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [unread, setUnread] = useState(true);
+  const [sectionsOpen, setSectionsOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
@@ -139,12 +90,13 @@ export function OnboardingAssistant({
     (step) => step.id !== "review" && !completion[step.id],
   );
   const isCurrentStepComplete = Boolean(completion[activeStepId]);
+  const activeStepName = ASSISTANT_STEP_NAMES[activeStepId];
 
   const quickPrompts = useMemo(() => {
     if (activeStepId === "application")
       return [
         "Which application type should I choose?",
-        "Why does the structure matter?",
+        "Show application requirements",
         "Can my adviser help?",
       ];
     if (activeStepId === "documents")
@@ -209,61 +161,114 @@ export function OnboardingAssistant({
     [],
   );
 
-  const documentResponse = (): AssistantResponse => {
-    if (!isIndividual) {
-      const missing = requiredEntityDocuments.filter(
-        (requirement) => !form.entityDocuments[requirement.key],
-      );
-      if (!missing.length)
-        return {
-          text: "All entity documents currently required for this structure have been uploaded. You can open any file from Upload Proof or Review.",
-          actions: [
-            { label: "Open Upload Proof", kind: "step", stepId: "documents" },
-          ],
-        };
+  const stepAction = (stepId: StepId, prefix = "Open"): AssistantAction => ({
+    label: `${prefix} ${ASSISTANT_STEP_NAMES[stepId]}`,
+    kind: "step",
+    stepId,
+  });
+
+  const missingResponse = (stepId: StepId): AssistantResponse => {
+    const missing = getMissingItems(controller, stepId);
+    const label = ASSISTANT_STEP_NAMES[stepId];
+    const available = visibleSteps.some((step) => step.id === stepId);
+    const actions = available
+      ? [stepAction(stepId)]
+      : [stepAction("application", "Return to")];
+
+    if (!available) {
       return {
-        text: `You still need ${missing.length} document${missing.length === 1 ? "" : "s"}:\n• ${missing.map((item) => item.title).join("\n• ")}\n\nAccepted formats are PDF, PNG and JPG.`,
-        actions: [
-          { label: "Upload documents", kind: "step", stepId: "documents" },
-        ],
+        text: `${label} is not part of the currently available flow. Select an application type first, or choose a structure whose section list includes ${label}.`,
+        actions,
       };
     }
+    if (!missing.length) {
+      return {
+        text: `${label} is complete. No required items are currently missing from this section.`,
+        actions,
+      };
+    }
+
+    const visibleMissing = missing.slice(0, 10);
+    const additionalCount = missing.length - visibleMissing.length;
     return {
-      text: "For individual applications, Upload Proof shows the exact identity evidence for each applicant. Non-Australian applicants may need two different photo IDs, address evidence, and either a CV or website. The checklist updates from the applicant country and selected ID types.",
-      actions: [
-        { label: "Open Upload Proof", kind: "step", stepId: "documents" },
-      ],
+      text: `${label} still needs ${missing.length} item${missing.length === 1 ? "" : "s"}:\n• ${visibleMissing.join("\n• ")}${additionalCount > 0 ? `\n• And ${additionalCount} more` : ""}`,
+      actions,
+    };
+  };
+
+  const documentResponse = (): AssistantResponse => {
+    const missing = getMissingItems(controller, "documents");
+    const available = visibleSteps.some((step) => step.id === "documents");
+    if (!available) {
+      return {
+        text: "Upload Proof becomes available after you select an application type. Its checklist changes according to applicant country, entity subtype and company structure.",
+        actions: [stepAction("application", "Return to")],
+      };
+    }
+    if (!missing.length) {
+      return {
+        text: `All proof currently required for this ${selectedApplicationType} application has been supplied. Uploaded entries can be opened from Upload Proof or Review and Submit.`,
+        actions: [stepAction("documents")],
+      };
+    }
+    const requirementSummary = getStepGuidance(controller, "documents");
+    const names = controller.isIndividual
+      ? missing
+      : requiredEntityDocuments
+          .filter((document) => !form.entityDocuments[document.key])
+          .map((document) => document.title);
+    return {
+      text: `${requirementSummary}\n\nStill missing:\n• ${names.join("\n• ")}`,
+      actions: [stepAction("documents")],
     };
   };
 
   const createResponse = (question: string): AssistantResponse => {
-    const query = question.toLowerCase();
-    const currentLabel = activeStep?.label || "this section";
+    const query = question.toLowerCase().replace(/\s+/g, " ").trim();
+    const requestedStep = findRequestedStep(query);
+    const asksWhy = query.includes("why") || query.includes("reason");
 
-    if (
-      query.includes("what is still") ||
-      query.includes("what's left") ||
-      query.includes("incomplete") ||
-      query.includes("progress")
-    ) {
-      if (!incompleteSteps.length)
+    if (requestedStep) {
+      const available = visibleSteps.some((step) => step.id === requestedStep);
+      if (!available) {
+        return {
+          text: `${ASSISTANT_STEP_NAMES[requestedStep]} is not available in the current section list. Select an application type first; the onboarding flow will then display only the sections required for that legal structure.`,
+          actions: [stepAction("application", "Return to")],
+        };
+      }
+      if (asksForMissingInformation(query))
+        return missingResponse(requestedStep);
+      if (requestedStep === "documents" && !asksWhy) return documentResponse();
+      if (asksWhy) {
+        return {
+          text: `${getWhyGuidance(requestedStep)}\n\n${getStepGuidance(controller, requestedStep)}`,
+          actions: [stepAction(requestedStep)],
+        };
+      }
+      if (asksForNavigation(query) || query.length <= 48) {
+        return {
+          text: `${getStepGuidance(controller, requestedStep)}\n\nSelect the button below to go directly to ${ASSISTANT_STEP_NAMES[requestedStep]}.`,
+          actions: [stepAction(requestedStep, "Go to")],
+        };
+      }
+      return {
+        text: `${getStepGuidance(controller, requestedStep)}\n\nCurrent status: ${completion[requestedStep] ? "Complete" : "Incomplete"}.`,
+        actions: [stepAction(requestedStep)],
+      };
+    }
+
+    if (asksForMissingInformation(query)) {
+      if (!incompleteSteps.length) {
         return {
           text: submitted
             ? "Your application has been submitted and is under review. No further action is currently required."
             : "Every application section is complete. Review the summaries, confirm both final declarations and submit securely.",
-          actions: submitted
-            ? undefined
-            : [{ label: "Go to Review", kind: "step", stepId: "review" }],
+          actions: submitted ? undefined : [stepAction("review", "Go to")],
         };
+      }
       return {
-        text: `You have ${incompleteSteps.length} incomplete section${incompleteSteps.length === 1 ? "" : "s"}:\n• ${incompleteSteps.map((step) => step.label).join("\n• ")}\n\nSelect a section below or use the application navigation.`,
-        actions: incompleteSteps
-          .slice(0, 4)
-          .map((step) => ({
-            label: step.shortLabel,
-            kind: "step",
-            stepId: step.id,
-          })),
+        text: `You have ${incompleteSteps.length} incomplete section${incompleteSteps.length === 1 ? "" : "s"}. Each button below opens that exact section:\n• ${incompleteSteps.map((step) => ASSISTANT_STEP_NAMES[step.id]).join("\n• ")}`,
+        actions: incompleteSteps.map((step) => stepAction(step.id, "Go to")),
       };
     }
 
@@ -271,30 +276,29 @@ export function OnboardingAssistant({
       query.includes("document") ||
       query.includes("upload") ||
       query.includes("file") ||
-      query.includes("proof")
+      query.includes("proof") ||
+      query.includes("cv")
     ) {
-      if (query.includes("type") || query.includes("format"))
+      if (query.includes("type") || query.includes("format")) {
         return {
-          text: "Document uploads accept PDF, PNG, JPG and JPEG files. Profile images accept common image formats. Use a clear, complete and current copy, then click the uploaded entry to preview it.",
+          text: "Standard proof uploads accept PDF, PNG, JPG and JPEG. The CV field accepts PDF, DOC and DOCX. Selfies and profile images accept image files. Use a clear, complete file; after upload, click its file entry to open the document viewer.",
+          actions: visibleSteps.some((step) => step.id === "documents")
+            ? [stepAction("documents")]
+            : undefined,
         };
+      }
       return documentResponse();
     }
 
     if (
       query.includes("application type") ||
       query.includes("which type") ||
+      query.includes("legal owner") ||
       query.includes("structure")
     ) {
       return {
-        text: "Choose the structure that will legally own the Caprock account:\n• Individual covers one person, joint applicants and Sole Traders.\n• Company covers Australian, ASIC-registered foreign and other non-Australian companies.\n• Trust covers regulated, custodian and non-custodian trusts.\n\nIf the legal owner is unclear, confirm it with your adviser before continuing; Caprock cannot choose the legal structure for you.",
-        actions: [
-          {
-            label: "View application types",
-            kind: "step",
-            stepId: "application",
-          },
-          { label: "Invite an adviser", kind: "adviser" },
-        ],
+        text: getStepGuidance(controller, "application"),
+        actions: [stepAction("application", "View")],
       };
     }
 
@@ -307,8 +311,8 @@ export function OnboardingAssistant({
     ) {
       return {
         text: form.adviserAccess
-          ? `${form.adviserAccess.name} currently has access to help with every section. You remain responsible for reviewing and approving the final application.`
-          : "You can invite a trusted adviser to help complete any section. Their access is recorded, applies to the whole application and can be revoked at any time.",
+          ? `${form.adviserAccess.name} currently has access to help with every application section. You remain responsible for reviewing and approving the final application.`
+          : "You can invite a trusted adviser using their full name and email. Adviser access applies to every application section, is recorded, and can be revoked later.",
         actions: [
           {
             label: form.adviserAccess
@@ -326,21 +330,42 @@ export function OnboardingAssistant({
       query.includes("draft")
     ) {
       return {
-        text: "Use Save draft at any time. Your current application changes will be recorded so you can continue later.",
+        text: "Save draft records the current application changes so you can continue later.",
         actions: [{ label: "Save my draft", kind: "save" }],
       };
     }
 
     if (
-      query.includes("bank") ||
-      query.includes("swift") ||
-      query.includes("settlement")
+      query.includes("abn") ||
+      query.includes("acn") ||
+      query.includes("arbn") ||
+      query.includes("tax") ||
+      query.includes("source of funds")
     ) {
+      const target: StepId = query.includes("arbn") ? "entity" : "business";
       return {
-        text: "Each external bank account needs the bank name, SWIFT code, bank address, account number, currency and a verification document. At least one complete account is required.",
-        actions: [
-          { label: "Open bank accounts", kind: "step", stepId: "bank" },
-        ],
+        text: getStepGuidance(controller, target),
+        actions: visibleSteps.some((step) => step.id === target)
+          ? [stepAction(target)]
+          : [stepAction("application", "Return to")],
+      };
+    }
+
+    if (
+      query.includes("date of birth") ||
+      query.includes("dob") ||
+      query.includes("age")
+    ) {
+      const target: StepId =
+        activeStepId === "signature" ? "signature" : "personal";
+      return {
+        text:
+          target === "signature"
+            ? "The authorised signatory’s date of birth is required and must show they are at least 18. Use the date control to navigate directly by month and year."
+            : "The main applicant’s date of birth is required and must show they are at least 18. Use the date control to navigate directly by month and year.",
+        actions: visibleSteps.some((step) => step.id === target)
+          ? [stepAction(target)]
+          : undefined,
       };
     }
 
@@ -350,20 +375,7 @@ export function OnboardingAssistant({
       query.includes("party")
     ) {
       return {
-        text: "Save each required party with complete contact details. Invitations are queued during the draft and sent after the entity application is submitted. Corporate trustees and beneficiaries also require at least one complete nested director before they can be saved.",
-      };
-    }
-
-    if (
-      query.includes("signature") ||
-      query.includes("signatory") ||
-      query.includes("sign")
-    ) {
-      return {
-        text: "The authorised signatory must provide their legal name, valid email, phone and date of birth, and must be at least 18. The electronic signature request follows the compliance checks.",
-        actions: [
-          { label: "Open E-Signature", kind: "step", stepId: "signature" },
-        ],
+        text: "Joint applicants can be added using a verified Caprock client ID or invited with full name and email; a separate address is required only for the different-address joint structure. Company and trust party invitations are queued while drafting and sent after entity submission. Corporate trustees and beneficiaries also require a company structure and at least one complete nested director.",
       };
     }
 
@@ -373,7 +385,7 @@ export function OnboardingAssistant({
       query.includes("what happens")
     ) {
       return {
-        text: "After secure submission, a confirmation appears over Review. The application then remains on Review with an Under review status. Caprock will contact you if additional information is required.",
+        text: "After secure submission, a confirmation appears over Review and Submit. When dismissed, the same Review screen remains visible with an Under review status. Caprock will contact the applicant if more information is needed.",
       };
     }
 
@@ -384,8 +396,8 @@ export function OnboardingAssistant({
     ) {
       return {
         text: submitted
-          ? "The application is already under review. Use your Caprock relationship contact if submitted information needs to be corrected."
-          : "You can use the left navigation or any Edit button on Review to return to a section. Save your draft after making the correction.",
+          ? "The application is already under review. Contact your Caprock relationship contact if submitted information needs correction."
+          : "Open the section list above, select the section you want to change, and save the draft after making the correction. Review and Submit also includes Edit actions.",
       };
     }
 
@@ -395,13 +407,13 @@ export function OnboardingAssistant({
       query.includes("safe")
     ) {
       return {
-        text: "The onboarding interface treats the application as a protected session. Identity, banking and compliance information is collected only for onboarding and verification purposes. Avoid sharing passwords or security codes in this chat.",
+        text: "Identity, banking and compliance details are collected for onboarding and verification. Avoid entering passwords, one-time codes or unrelated sensitive information in this assistant.",
       };
     }
 
     if (query.includes("why") || query.includes("required")) {
       return {
-        text: `${whyGuidance[activeStepId] || "This information supports Caprock’s onboarding and regulatory verification process."}\n\nFor ${currentLabel}, only fields marked Required must be completed; fields marked Optional can be left blank.`,
+        text: `${getWhyGuidance(activeStepId)}\n\n${getStepGuidance(controller, activeStepId)}`,
       };
     }
 
@@ -411,18 +423,10 @@ export function OnboardingAssistant({
       query.includes("this section") ||
       query.includes("current")
     ) {
+      const missing = getMissingItems(controller, activeStepId);
       return {
-        text: `${stepGuidance[activeStepId] || "Complete every required field shown in this section."}\n\nCurrent status: ${isCurrentStepComplete ? "Complete" : "Incomplete"}.`,
-        actions:
-          isCurrentStepComplete && activeStepId !== "review"
-            ? [
-                {
-                  label: "See what’s left",
-                  kind: "step",
-                  stepId: incompleteSteps[0]?.id || "review",
-                },
-              ]
-            : undefined,
+        text: `${getStepGuidance(controller, activeStepId)}\n\nCurrent status: ${isCurrentStepComplete ? "Complete" : "Incomplete"}.${missing.length ? `\nStill missing: ${missing.slice(0, 5).join(", ")}${missing.length > 5 ? ` and ${missing.length - 5} more` : ""}.` : ""}`,
+        actions: [stepAction(activeStepId)],
       };
     }
 
@@ -431,7 +435,8 @@ export function OnboardingAssistant({
         ? "Start by selecting the legal application type."
         : `You’re completing a ${selectedApplicationType} application.`;
     return {
-      text: `${structureNote}\n\nFor ${currentLabel}: ${stepGuidance[activeStepId] || "complete each required field shown."}\n\nYou can ask me “What is still incomplete?”, “Which documents do I need?” or “Why is this required?”`,
+      text: `${structureNote}\n\nFor ${activeStepName}: ${getStepGuidance(controller, activeStepId)}\n\nAsk what is missing, name a section such as “Personal Information”, or open the section list above to navigate directly.`,
+      actions: [stepAction(activeStepId)],
     };
   };
 
@@ -452,7 +457,7 @@ export function OnboardingAssistant({
       ]);
       setIsTyping(false);
       timerRef.current = null;
-    }, 420);
+    }, 360);
   };
 
   const submitDraft = (event: FormEvent) => {
@@ -473,24 +478,28 @@ export function OnboardingAssistant({
         {
           id: createMessageId(),
           role: "assistant",
-          text: "I’ve started saving your draft. You’ll see confirmation in the application when it is recorded.",
+          text: "Your draft is being saved. The application will show confirmation when the save is complete.",
         },
       ]);
       return;
     }
     if (action.stepId) {
-      goToStep(action.stepId);
-      if (window.matchMedia("(max-width: 639px)").matches)
-        setAssistantOpen(false);
+      const available = visibleSteps.some((step) => step.id === action.stepId);
+      goToStep(available ? action.stepId : "application");
+      setSectionsOpen(false);
+      setAssistantOpen(false);
     }
   };
 
   const resetConversation = () => {
+    if (timerRef.current) window.clearTimeout(timerRef.current);
+    timerRef.current = null;
+    setIsTyping(false);
     setMessages([
       {
         id: createMessageId(),
         role: "assistant",
-        text: "Conversation cleared. How can I help with your onboarding application?",
+        text: "Conversation cleared. Ask about the current requirements, what is missing, or choose a section above to navigate directly.",
       },
     ]);
     setDraft("");
@@ -534,7 +543,7 @@ export function OnboardingAssistant({
             role="dialog"
             aria-modal="true"
             aria-labelledby="onboarding-assistant-title"
-            className="pointer-events-auto flex h-[min(92vh,760px)] w-full flex-col overflow-hidden rounded-t-3xl border border-slate-200 bg-white shadow-[0_28px_90px_rgba(15,23,42,0.24)] sm:h-[min(76vh,690px)] sm:w-[420px] sm:rounded-3xl"
+            className="pointer-events-auto flex h-[min(92vh,780px)] w-full flex-col overflow-hidden rounded-t-3xl border border-slate-200 bg-white shadow-[0_28px_90px_rgba(15,23,42,0.24)] sm:h-[min(80vh,720px)] sm:w-[440px] sm:rounded-3xl"
           >
             <header className="shrink-0 border-b border-slate-100 bg-white px-4 py-4 sm:px-5">
               <div className="flex items-center gap-3">
@@ -555,7 +564,7 @@ export function OnboardingAssistant({
                     </span>
                   </div>
                   <p className="mt-1 truncate text-[11px] text-slate-500">
-                    Helping with {activeStep?.label || "your application"}
+                    Helping with {activeStepName}
                   </p>
                 </div>
                 <button
@@ -578,7 +587,7 @@ export function OnboardingAssistant({
               <div className="mt-3 flex items-center gap-2 rounded-xl bg-[#f6f8fb] px-3 py-2 text-[10px] text-slate-500">
                 <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-[#003478]" />
                 <span className="truncate">
-                  Context: {selectedApplicationType} · {activeStep?.label}
+                  {selectedApplicationType} · {activeStepName}
                 </span>
                 <span
                   className={`ml-auto shrink-0 font-bold ${isCurrentStepComplete ? "text-emerald-600" : "text-amber-600"}`}
@@ -586,6 +595,68 @@ export function OnboardingAssistant({
                   {isCurrentStepComplete ? "Complete" : "In progress"}
                 </span>
               </div>
+
+              <button
+                type="button"
+                onClick={() => setSectionsOpen((current) => !current)}
+                aria-expanded={sectionsOpen}
+                aria-controls="assistant-section-navigation"
+                className="mt-2 flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-left transition hover:border-[#b8cadc] hover:bg-[#f8fafc]"
+              >
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400">
+                    Jump to a section
+                  </span>
+                  <span className="mt-0.5 block truncate text-xs font-semibold text-slate-800">
+                    {activeStepName}
+                  </span>
+                </span>
+                <span className="text-[10px] font-semibold text-slate-400">
+                  {visibleSteps.length} sections
+                </span>
+                <ChevronDown
+                  className={`h-4 w-4 text-slate-400 transition ${sectionsOpen ? "rotate-180" : ""}`}
+                />
+              </button>
+
+              {sectionsOpen ? (
+                <nav
+                  id="assistant-section-navigation"
+                  aria-label="Application sections"
+                  className="mt-2 max-h-48 overflow-y-auto rounded-xl border border-slate-200 bg-[#f8fafc] p-2"
+                >
+                  <div className="grid gap-1 sm:grid-cols-2">
+                    {visibleSteps.map((step) => {
+                      const active = step.id === activeStepId;
+                      const complete = Boolean(completion[step.id]);
+                      return (
+                        <button
+                          key={step.id}
+                          type="button"
+                          onClick={() =>
+                            runAction(stepAction(step.id, "Go to"))
+                          }
+                          aria-current={active ? "step" : undefined}
+                          className={`flex min-h-10 items-center gap-2 rounded-lg px-2.5 py-2 text-left text-[11px] font-semibold transition ${active ? "bg-[#dce7f2] text-[#0f172a]" : "bg-white text-slate-600 hover:bg-[#edf3f8] hover:text-[#003478]"}`}
+                        >
+                          <span
+                            className={`grid h-5 w-5 shrink-0 place-items-center rounded-md ${complete ? "bg-[#003478] text-white" : "bg-slate-100 text-slate-400"}`}
+                          >
+                            {complete ? (
+                              <CheckCircle2 className="h-3 w-3" />
+                            ) : (
+                              <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                            )}
+                          </span>
+                          <span className="min-w-0 flex-1 truncate">
+                            {ASSISTANT_STEP_NAMES[step.id]}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </nav>
+              ) : null}
             </header>
 
             <div
@@ -613,13 +684,13 @@ export function OnboardingAssistant({
                         {message.text}
                       </div>
                       {message.actions?.length ? (
-                        <div className="mt-2 flex flex-wrap gap-1.5">
+                        <div className="mt-2 flex max-h-32 flex-wrap gap-1.5 overflow-y-auto">
                           {message.actions.map((action) => (
                             <button
                               key={`${message.id}-${action.label}`}
                               type="button"
                               onClick={() => runAction(action)}
-                              className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[#c9d8e7] bg-white px-2.5 text-[10px] font-semibold text-[#003478] transition hover:bg-[#edf3f8]"
+                              className="inline-flex min-h-8 items-center gap-1.5 rounded-lg border border-[#c9d8e7] bg-white px-2.5 py-1.5 text-[10px] font-semibold text-[#003478] transition hover:bg-[#edf3f8]"
                             >
                               {action.label}
                               <ArrowRight className="h-3 w-3" />
@@ -672,7 +743,7 @@ export function OnboardingAssistant({
                   ref={inputRef}
                   value={draft}
                   onChange={(event) => setDraft(event.target.value)}
-                  placeholder="Ask about your application…"
+                  placeholder="Ask about a field or section…"
                   aria-label="Message the onboarding assistant"
                   className="h-10 min-w-0 flex-1 border-0 bg-transparent px-2.5 text-xs text-slate-800 outline-none placeholder:text-slate-400"
                 />
