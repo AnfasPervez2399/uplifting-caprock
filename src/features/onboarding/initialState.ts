@@ -12,7 +12,7 @@ import type {
   TrustParty,
 } from "./types";
 
-export const initialFormState: FormState = {
+export const createEmptyForm = (): FormState => ({
   personal: {
     applicationType: "",
     referenceNumber: "",
@@ -97,7 +97,9 @@ export const initialFormState: FormState = {
   documents: {},
   entityDocuments: {},
   agreements: { accurate: false, consent: false },
-};
+});
+
+export const initialFormState: FormState = createEmptyForm();
 
 export const emptyAdviserDraft: AdviserDraft = { name: "", email: "" };
 
@@ -114,7 +116,8 @@ export const emptyJointDraft: JointApplicantDraft = {
   residentialAddress: "",
 };
 
-const createId = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+const createId = (prefix: string) =>
+  `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
 export const createEmptyBank = (): BankAccount => ({
   id: createId("bank"),
@@ -126,29 +129,37 @@ export const createEmptyBank = (): BankAccount => ({
   currency: "",
 });
 
-export const createEmptyDirector = (): CompanyDirector => ({ id: createId("director"), name: "", email: "", phone: "" });
-
-export const createEmptyShareholderApplication = (): ShareholderApplication => ({
-  country: "",
-  address: "",
-  dateOfBirth: "",
-  registrationNumber: "",
-  business: {
-    principalBusinessAddress: "",
-    businessActivity: "",
-    sourceOfFunds: "",
-    intendedTransactions: "",
-  },
-  directors: [],
-  trustees: [],
-  beneficiaries: [],
-  ownershipInterests: [],
-  documents: {},
-  signature: { name: "", email: "", phone: "", dateOfBirth: "" },
-  declarationAccepted: false,
+export const createEmptyDirector = (): CompanyDirector => ({
+  id: createId("director"),
+  name: "",
+  email: "",
+  phone: "",
 });
 
-export const createEmptyShareholderRelatedParty = (prefix = "related-party"): ShareholderRelatedParty => ({
+export const createEmptyShareholderApplication =
+  (): ShareholderApplication => ({
+    country: "",
+    address: "",
+    dateOfBirth: "",
+    registrationNumber: "",
+    business: {
+      principalBusinessAddress: "",
+      businessActivity: "",
+      sourceOfFunds: "",
+      intendedTransactions: "",
+    },
+    directors: [],
+    trustees: [],
+    beneficiaries: [],
+    ownershipInterests: [],
+    documents: {},
+    signature: { name: "", email: "", phone: "", dateOfBirth: "" },
+    declarationAccepted: false,
+  });
+
+export const createEmptyShareholderRelatedParty = (
+  prefix = "related-party",
+): ShareholderRelatedParty => ({
   id: createId(prefix),
   type: "",
   companyType: "",
@@ -187,5 +198,11 @@ export const createEmptyBeneficiary = (): TrustBeneficiary => ({
 });
 
 export const createEmptyTrustParty = (prefix = "party"): TrustParty => ({
-  id: createId(prefix), type: "", companyType: "", name: "", email: "", phone: "", directors: [],
+  id: createId(prefix),
+  type: "",
+  companyType: "",
+  name: "",
+  email: "",
+  phone: "",
+  directors: [],
 });
