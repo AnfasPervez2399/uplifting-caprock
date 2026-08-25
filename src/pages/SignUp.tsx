@@ -788,13 +788,16 @@ export function SignUp() {
           <Link
             to="/"
             aria-label="Caprock home"
-            className="inline-flex rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003478]/20 focus-visible:ring-offset-4"
+            className="inline-flex items-center gap-2.5 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003478]/20 focus-visible:ring-offset-4"
           >
             <img
-              src="/company-logo.svg"
+              src="/blue-logo.svg"
               alt="Caprock"
-              className="h-9 w-auto max-w-[150px] object-contain object-left"
+              className="h-10 w-auto max-w-[140px] object-contain object-left sm:max-w-[168px]"
             />
+            <span className="text-sm font-bold tracking-[0.14em] text-slate-950">
+              CAPROCK
+            </span>
           </Link>
           <span className="grid h-11 w-11 place-items-center rounded-xl bg-[#dce7f2] text-[#003478]">
             <UserPlus className="h-5 w-5" />

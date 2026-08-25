@@ -250,18 +250,20 @@ export function Login() {
       className="mx-auto w-full max-w-[420px] px-5 py-8 sm:px-0 sm:py-10"
     >
       <motion.header variants={item} className="mb-9">
-        <div className="mb-8 flex items-start justify-between gap-3 sm:mb-9 sm:gap-5">
+        <div className="mb-9 flex items-start justify-between gap-5">
           <Link
             to="/"
             aria-label="Caprock home"
-            className="inline-flex min-h-10 items-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003478]/20 focus-visible:ring-offset-4"
+            className="inline-flex items-center gap-2.5 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003478]/20 focus-visible:ring-offset-4"
           >
-            {/* Replace public/company-logo.svg with the official logo file. */}
             <img
               src="/blue-logo.svg"
               alt="Caprock"
-              className="h-9 w-auto max-w-[116px] object-contain object-left sm:h-10 sm:max-w-[168px]"
+              className="h-10 w-auto max-w-[140px] object-contain object-left sm:max-w-[168px]"
             />
+            <span className="text-sm font-bold tracking-[0.14em] text-slate-950">
+              CAPROCK
+            </span>
           </Link>
 
           <HeaderVisual reduceMotion={reduceMotion} />
