@@ -176,8 +176,8 @@ export function DatePicker({
 
   return (
     <div>
-      <div className="grid grid-cols-[0.8fr_1.35fr_1fr] gap-2.5">
-        <div>
+      <div className="grid min-w-0 grid-cols-1 gap-2.5 min-[420px]:grid-cols-[minmax(0,0.75fr)_minmax(0,1.45fr)_minmax(0,1fr)]">
+        <div className="min-w-0">
           <span className="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400">
             {fieldLabels.day}
           </span>
@@ -191,7 +191,7 @@ export function DatePicker({
             disabled={disabled}
           />
         </div>
-        <div>
+        <div className="min-w-0">
           <span className="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400">
             {fieldLabels.month}
           </span>
@@ -205,7 +205,7 @@ export function DatePicker({
             disabled={disabled}
           />
         </div>
-        <div>
+        <div className="min-w-0">
           <span className="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400">
             {fieldLabels.year}
           </span>
