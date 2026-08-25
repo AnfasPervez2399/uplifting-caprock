@@ -90,6 +90,15 @@ export function OnboardingShell({
     saveDraft,
   } = controller;
 
+  const draftButtonLabel = submitted
+    ? "Application submitted"
+    : draftStatus === "saving"
+      ? "Saving…"
+      : draftStatus === "saved"
+        ? "Draft saved"
+        : "Save draft";
+  const draftButtonDisabled = submitted || draftStatus !== "idle";
+
   return (
     <div className="min-h-screen bg-[#f6f8fb] text-slate-950 selection:bg-[#dce7f2] selection:text-slate-950">
       <style>{`
@@ -163,34 +172,29 @@ export function OnboardingShell({
             <button
               type="button"
               onClick={saveDraft}
-              disabled={isSaving}
-              aria-label={
-                draftStatus === "saving"
-                  ? "Saving draft"
+              disabled={draftButtonDisabled}
+              aria-label={draftButtonLabel}
+              aria-busy={isSaving}
+              title={draftButtonLabel}
+              className={`inline-flex h-10 w-10 shrink-0 items-center justify-center gap-2 overflow-hidden rounded-xl border px-0 text-xs font-semibold whitespace-nowrap transition-[background-color,border-color,color,box-shadow] duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#003478]/10 disabled:cursor-default md:w-[132px] md:px-3 ${
+                submitted
+                  ? "border-slate-200 bg-slate-100 text-slate-500"
                   : draftStatus === "saved"
-                    ? "Draft saved"
-                    : "Save draft"
-              }
-              aria-live="polite"
-              className={`inline-flex h-10 min-w-10 items-center justify-center gap-2 rounded-xl border px-3 text-xs font-semibold transition-all duration-300 sm:px-3.5 ${
-                draftStatus === "saved"
-                  ? "border-[#dce7f2] bg-[#dce7f2] text-[#0f172a]"
-                  : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:text-[#003478] disabled:opacity-60"
+                    ? "border-[#c5d6e6] bg-[#dce7f2] text-[#0f172a]"
+                    : "border-slate-200 bg-white text-slate-700 shadow-sm hover:border-[#003478]/25 hover:bg-[#f7fafd] hover:text-[#003478]"
               }`}
             >
               {draftStatus === "saving" ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : draftStatus === "saved" ? (
-                <CheckCircle2 className="h-4 w-4 text-[#003478]" />
+                <Loader2 className="h-4 w-4 shrink-0 animate-spin motion-reduce:animate-none" />
+              ) : draftStatus === "saved" || submitted ? (
+                <CheckCircle2
+                  className={`h-4 w-4 shrink-0 ${draftStatus === "saved" ? "text-[#003478]" : "text-slate-400"}`}
+                />
               ) : (
-                <Save className="h-4 w-4" />
+                <Save className="h-4 w-4 shrink-0" />
               )}
               <span className="hidden md:inline">
-                {draftStatus === "saving"
-                  ? "Saving…"
-                  : draftStatus === "saved"
-                    ? "Draft saved"
-                    : "Save draft"}
+                {submitted ? "Submitted" : draftButtonLabel}
               </span>
             </button>
 
@@ -593,8 +597,10 @@ export function OnboardingShell({
               ) : null}
               {notice ? (
                 <div
+                  id="application-error-summary"
                   role="alert"
-                  className="mb-6 flex items-start gap-3 rounded-2xl border border-red-100 bg-red-50 p-4 text-sm leading-6 text-red-800"
+                  tabIndex={-1}
+                  className="mb-6 flex items-start gap-3 rounded-2xl border border-red-100 bg-red-50 p-4 text-sm leading-6 text-red-800 outline-none focus-visible:ring-4 focus-visible:ring-red-100"
                 >
                   <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
                   {notice}
@@ -618,35 +624,27 @@ export function OnboardingShell({
                 <button
                   type="button"
                   onClick={saveDraft}
-                  disabled={isSaving}
-                  aria-label={
-                    draftStatus === "saving"
-                      ? "Saving draft"
+                  disabled={draftButtonDisabled}
+                  aria-label={draftButtonLabel}
+                  aria-busy={isSaving}
+                  className={`inline-flex h-12 w-full items-center justify-center gap-2 overflow-hidden rounded-xl border px-5 text-sm font-semibold whitespace-nowrap transition-[background-color,border-color,color,box-shadow,transform] duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#003478]/10 disabled:cursor-default sm:w-[164px] ${
+                    submitted
+                      ? "border-slate-200 bg-slate-100 text-slate-500"
                       : draftStatus === "saved"
-                        ? "Draft saved"
-                        : "Save draft"
-                  }
-                  aria-live="polite"
-                  className={`inline-flex h-12 min-w-[148px] items-center justify-center gap-2 rounded-xl border px-5 text-sm font-semibold transition-all duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#003478]/10 disabled:opacity-70 ${
-                    draftStatus === "saved"
-                      ? "border-[#dce7f2] bg-[#dce7f2] text-[#0f172a]"
-                      : "border-slate-200 bg-white text-slate-700 hover:border-[#003478]/25 hover:bg-[#f7fafd] hover:text-[#003478]"
+                        ? "border-[#c5d6e6] bg-[#dce7f2] text-[#0f172a] shadow-sm"
+                        : "border-slate-200 bg-white text-slate-700 shadow-sm hover:border-[#003478]/25 hover:bg-[#f7fafd] hover:text-[#003478] active:translate-y-px"
                   }`}
                 >
                   {draftStatus === "saving" ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : draftStatus === "saved" ? (
-                    <CheckCircle2 className="h-4 w-4 text-[#003478]" />
+                    <Loader2 className="h-4 w-4 shrink-0 animate-spin motion-reduce:animate-none" />
+                  ) : draftStatus === "saved" || submitted ? (
+                    <CheckCircle2
+                      className={`h-4 w-4 shrink-0 ${draftStatus === "saved" ? "text-[#003478]" : "text-slate-400"}`}
+                    />
                   ) : (
-                    <Save className="h-4 w-4" />
+                    <Save className="h-4 w-4 shrink-0" />
                   )}
-                  <span>
-                    {draftStatus === "saving"
-                      ? "Saving…"
-                      : draftStatus === "saved"
-                        ? "Draft saved"
-                        : "Save draft"}
-                  </span>
+                  <span>{submitted ? "Submitted" : draftButtonLabel}</span>
                 </button>
                 <button
                   type="button"
@@ -654,44 +652,49 @@ export function OnboardingShell({
                   disabled={
                     isSubmitting || (activeStepId === "review" && submitted)
                   }
+                  aria-busy={isSubmitting}
                   aria-label={
                     activeStepId === "review"
                       ? submitted
                         ? "Application under review"
-                        : "Submit application securely"
+                        : isSubmitting
+                          ? "Submitting application securely"
+                          : "Submit application securely"
                       : "Continue to next section"
                   }
-                  className={`group inline-flex h-12 items-center justify-center rounded-xl bg-[#003478] text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#002b63] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#003478]/15 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:bg-[#003478] ${
+                  className={`group inline-flex h-12 w-full items-center justify-center overflow-hidden rounded-xl text-sm font-semibold whitespace-nowrap transition-[background-color,border-color,color,box-shadow,transform] duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#003478]/15 sm:w-auto ${
                     activeStepId === "review"
-                      ? "min-w-[210px] gap-3 px-4"
-                      : "min-w-40 gap-2 px-6"
+                      ? submitted
+                        ? "gap-3 border border-[#c5d6e6] bg-[#f3f7fb] px-4 text-[#003478] shadow-none disabled:cursor-default sm:w-[224px]"
+                        : "gap-3 border border-[#003478] bg-[#003478] px-4 text-white shadow-[0_8px_20px_rgba(0,52,120,0.16)] hover:border-[#002b63] hover:bg-[#002b63] hover:shadow-[0_10px_24px_rgba(0,52,120,0.2)] active:translate-y-px disabled:cursor-wait sm:w-[224px]"
+                      : "min-w-40 gap-2 border border-[#003478] bg-[#003478] px-6 text-white shadow-sm hover:border-[#002b63] hover:bg-[#002b63] active:translate-y-px disabled:cursor-wait disabled:opacity-70"
                   }`}
                 >
                   {isSubmitting ? (
                     <>
-                      <span className="grid h-8 w-8 place-items-center rounded-lg bg-white/10">
-                        <Loader2 className="h-4 w-4 animate-spin" />
+                      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-white/10 ring-1 ring-white/10">
+                        <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" />
                       </span>
-                      Submitting securely…
+                      <span>Submitting securely…</span>
                     </>
                   ) : activeStepId === "review" && submitted ? (
                     <>
-                      <span className="grid h-8 w-8 place-items-center rounded-lg bg-white/10 ring-1 ring-white/10">
+                      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[#dce7f2] ring-1 ring-[#c5d6e6]">
                         <Clock3 className="h-4 w-4" />
                       </span>
                       <span>Under review</span>
                     </>
                   ) : activeStepId === "review" ? (
                     <>
-                      <span className="grid h-8 w-8 place-items-center rounded-lg bg-white/10 ring-1 ring-white/10">
+                      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-white/10 ring-1 ring-white/10">
                         <LockKeyhole className="h-4 w-4" />
                       </span>
                       <span>Submit securely</span>
                     </>
                   ) : (
                     <>
-                      Continue
-                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                      <span>Continue</span>
+                      <ArrowRight className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-0.5" />
                     </>
                   )}
                 </button>

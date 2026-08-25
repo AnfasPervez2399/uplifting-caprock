@@ -79,6 +79,8 @@ export function useOnboardingController() {
     .toUpperCase();
   const [form, setForm] = useState<FormState>(initialFormState);
   const [activeStepId, setActiveStepId] = useState<StepId>("application");
+  const [applicationTypeConfirmed, setApplicationTypeConfirmed] =
+    useState(false);
   const [jointDraft, setJointDraft] =
     useState<JointApplicantDraft>(emptyJointDraft);
   const [showJointComposer, setShowJointComposer] = useState(false);
@@ -117,7 +119,14 @@ export function useOnboardingController() {
     "idle",
   );
   const isSaving = draftStatus === "saving";
+  const draftRequestRef = useRef(false);
+  const draftSaveTimerRef = useRef<number | null>(null);
+  const draftResetTimerRef = useRef<number | null>(null);
+  const previousFormRef = useRef(form);
+  const latestFormRef = useRef(form);
+  latestFormRef.current = form;
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const submissionRequestRef = useRef(false);
   const [submitted, setSubmitted] = useState(false);
   const [submissionConfirmationOpen, setSubmissionConfirmationOpen] =
     useState(false);
@@ -130,9 +139,14 @@ export function useOnboardingController() {
   const isCompany = isCompanyApplication(applicationType);
   const isTrust = isTrustApplication(applicationType);
   const isIndividual = isIndividualApplication(applicationType);
-  const visibleSteps = useMemo(
+  const applicationSteps = useMemo(
     () => getStepsForApplication(applicationType),
     [applicationType],
+  );
+  const visibleSteps = useMemo(
+    () =>
+      applicationTypeConfirmed ? applicationSteps : getStepsForApplication(""),
+    [applicationSteps, applicationTypeConfirmed],
   );
   const activeStepIndex = visibleSteps.findIndex(
     (step) => step.id === activeStepId,
@@ -303,7 +317,7 @@ export function useOnboardingController() {
       );
 
   const sectionCompletion: Omit<Record<StepId, boolean>, "review"> = {
-    application: Boolean(applicationType),
+    application: Boolean(applicationType && applicationTypeConfirmed),
     personal: personalComplete,
     entity: companyProfileComplete,
     trust: trustProfileComplete,
@@ -328,7 +342,9 @@ export function useOnboardingController() {
       form.agreements.accurate &&
       form.agreements.consent,
   };
-  const applicationSectionCount = Math.max(0, visibleSteps.length - 1);
+  const applicationSectionCount = visibleSteps.filter(
+    (step) => step.id !== "review",
+  ).length;
   const completedSectionCount = visibleSteps.filter(
     (step) => step.id !== "review" && completion[step.id],
   ).length;
@@ -337,6 +353,24 @@ export function useOnboardingController() {
   );
   const sectionEyebrow = (stepId: StepId) =>
     `Section ${visibleSteps.findIndex((step) => step.id === stepId) + 1} of ${visibleSteps.length}`;
+
+  useEffect(() => {
+    const formChanged = previousFormRef.current !== form;
+    previousFormRef.current = form;
+    if (formChanged && draftStatus === "saved") setDraftStatus("idle");
+  }, [draftStatus, form]);
+
+  useEffect(
+    () => () => {
+      if (draftSaveTimerRef.current)
+        window.clearTimeout(draftSaveTimerRef.current);
+      if (draftResetTimerRef.current)
+        window.clearTimeout(draftResetTimerRef.current);
+      draftRequestRef.current = false;
+      submissionRequestRef.current = false;
+    },
+    [],
+  );
 
   const openDocumentPreview = (
     uploadedDocument: UploadedDocument,
@@ -767,6 +801,7 @@ export function useOnboardingController() {
 
   const handleApplicationTypeChange = (value: string) => {
     const nextType = value as ApplicationType;
+    setApplicationTypeConfirmed(false);
     setForm((current) => ({
       ...current,
       personal: { ...current.personal, applicationType: nextType },
@@ -1434,10 +1469,18 @@ export function useOnboardingController() {
 
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) {
+      setSuccessNotice("");
       setNotice(
         Object.values(nextErrors)[0] ||
           "Please review the highlighted information before continuing.",
       );
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
+          const feedback = document.getElementById("application-error-summary");
+          feedback?.scrollIntoView({ behavior: "smooth", block: "center" });
+          feedback?.focus({ preventScroll: true });
+        });
+      });
       return false;
     }
     setNotice("");
@@ -1445,6 +1488,7 @@ export function useOnboardingController() {
   };
 
   const goToStep = (stepId: StepId) => {
+    if (stepId === "application") setApplicationTypeConfirmed(false);
     setActiveStepId(stepId);
     setMobileNavOpen(false);
   };
@@ -1454,11 +1498,26 @@ export function useOnboardingController() {
   };
 
   const goNext = () => {
-    if (!validateStep(activeStepId)) return;
-    if (activeStepId === "review") {
-      submitApplication();
+    if (
+      isSubmitting ||
+      submissionRequestRef.current ||
+      (activeStepId === "review" && submitted)
+    )
+      return;
+    if (activeStepId === "application") {
+      if (!validateStep("application")) return;
+      const firstTailoredStep = applicationSteps[1];
+      if (!firstTailoredStep) return;
+      setApplicationTypeConfirmed(true);
+      setActiveStepId(firstTailoredStep.id);
+      setMobileNavOpen(false);
       return;
     }
+    if (activeStepId === "review") {
+      void submitApplication();
+      return;
+    }
+    if (!validateStep(activeStepId)) return;
     goToStep(
       visibleSteps[Math.min(activeStepIndex + 1, visibleSteps.length - 1)].id,
     );
@@ -1510,39 +1569,71 @@ export function useOnboardingController() {
   };
 
   const saveDraft = () => {
-    if (isSaving) return;
+    if (draftRequestRef.current || submitted) return;
+    draftRequestRef.current = true;
+    if (draftSaveTimerRef.current)
+      window.clearTimeout(draftSaveTimerRef.current);
+    if (draftResetTimerRef.current)
+      window.clearTimeout(draftResetTimerRef.current);
     setDraftStatus("saving");
+    setNotice("");
     setSuccessNotice("");
 
-    // Replace this timeout with the draft-saving API request.
-    window.setTimeout(() => {
-      setDraftStatus("saved");
-      setSuccessNotice(
-        "Draft saved. Your latest application changes have been recorded.",
-      );
-      window.setTimeout(() => {
-        setDraftStatus((current) => (current === "saved" ? "idle" : current));
-      }, 2200);
-    }, 700);
+    // Replace this timeout and session record with the draft-saving API request.
+    draftSaveTimerRef.current = window.setTimeout(() => {
+      try {
+        sessionStorage.setItem(
+          "caprockOnboardingDraft",
+          JSON.stringify({
+            savedAt: new Date().toISOString(),
+            form: latestFormRef.current,
+          }),
+        );
+        setDraftStatus("saved");
+        setSuccessNotice(
+          "Draft saved. Your latest application changes have been recorded.",
+        );
+        draftResetTimerRef.current = window.setTimeout(() => {
+          setDraftStatus((current) => (current === "saved" ? "idle" : current));
+          draftResetTimerRef.current = null;
+        }, 2200);
+      } catch {
+        setDraftStatus("idle");
+        setNotice(
+          "We could not save this draft. Your entries remain on this page—please try again.",
+        );
+      } finally {
+        draftRequestRef.current = false;
+        draftSaveTimerRef.current = null;
+      }
+    }, 550);
   };
 
   const submitApplication = async () => {
-    if (!validateStep("review") || submitted) return;
+    if (submissionRequestRef.current || submitted || !validateStep("review"))
+      return;
+    submissionRequestRef.current = true;
     setIsSubmitting(true);
+    setNotice("");
+    setSuccessNotice("");
 
     try {
       await withLoader(
-        // Replace this promise with the secure application-submission request.
-        new Promise<void>((resolve) => window.setTimeout(resolve, 1400)),
+        () => new Promise<void>((resolve) => window.setTimeout(resolve, 1250)),
+        {
+          message: "Submitting securely",
+          detail: "Encrypting and sending your application to Caprock.",
+          minimumDuration: 900,
+        },
       );
       setSubmitted(true);
       setSubmissionConfirmationOpen(true);
-      setSuccessNotice("");
     } catch {
       setNotice(
         "We could not submit your application. Your progress is safe—please try again.",
       );
     } finally {
+      submissionRequestRef.current = false;
       setIsSubmitting(false);
     }
   };
@@ -1557,6 +1648,8 @@ export function useOnboardingController() {
     setForm,
     activeStepId,
     setActiveStepId,
+    applicationTypeConfirmed,
+    setApplicationTypeConfirmed,
     jointDraft,
     setJointDraft,
     showJointComposer,
