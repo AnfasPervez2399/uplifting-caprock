@@ -263,7 +263,7 @@ export function CompanyShareholdersStep({
     confirmAllShareholders,
     shareholderPercentageTotal,
     canConfirmShareholders,
-    isPublicCompany,
+    isPrivateCompany,
     openDocumentPreview,
   } = controller;
   const [draft, setDraft] = useState<CompanyShareholder>(
@@ -280,8 +280,32 @@ export function CompanyShareholdersStep({
   const shareholderStructureSaved =
     form.company.shareholdersConfirmed &&
     Math.abs(shareholderPercentageTotal - 100) < 0.0001;
+  const remainingOwnership = Math.max(0, 100 - shareholderPercentageTotal);
+  const remainingOwnershipLabel = remainingOwnership
+    .toFixed(2)
+    .replace(/\.00$/, "");
+
+  const updateDraftPercentage = (value: string) => {
+    if (value !== "" && Number(value) > remainingOwnership) {
+      setDraftError(
+        `Total ownership cannot exceed 100%. You can allocate up to ${remainingOwnershipLabel}% more.`,
+      );
+      return;
+    }
+    setDraft((current) => ({ ...current, percentage: value }));
+    setDraftError("");
+  };
 
   const add = () => {
+    if (
+      shareholderPercentageTotal + (Number(draft.percentage) || 0) >
+      100.0001
+    ) {
+      setDraftError(
+        `Total ownership cannot exceed 100%. You can allocate up to ${remainingOwnershipLabel}% more.`,
+      );
+      return;
+    }
     if (!isCompleteShareholder(draft)) {
       setDraftError(
         "Complete the shareholder type, structure where applicable, ownership percentage, full name, valid email and phone number.",
@@ -293,18 +317,7 @@ export function CompanyShareholdersStep({
     setDraftError("");
   };
 
-  if (isPublicCompany) {
-    return (
-      <div className="animate-[fadeUp_.35s_ease-out]">
-        <SectionIntro
-          eyebrow={sectionEyebrow("shareholders")}
-          title="Shareholders"
-          description="Shareholder details are not requested for a public company in this application flow."
-          icon={UsersRound}
-        />
-      </div>
-    );
-  }
+  if (!isPrivateCompany) return null;
 
   return (
     <div className="animate-[fadeUp_.35s_ease-out]">
@@ -353,6 +366,18 @@ export function CompanyShareholdersStep({
             title="Add a shareholder"
             description="Choose the correct shareholder structure so the application can create the appropriate ownership path."
           />
+          <div
+            className={`mb-5 flex flex-col gap-2 rounded-xl border px-4 py-3 text-xs sm:flex-row sm:items-center sm:justify-between ${Math.abs(shareholderPercentageTotal - 100) < 0.0001 ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-amber-200 bg-amber-50 text-amber-800"}`}
+          >
+            <span className="font-semibold">
+              Total ownership must equal exactly 100%.
+            </span>
+            <span className="font-bold tabular-nums">
+              Allocated{" "}
+              {shareholderPercentageTotal.toFixed(2).replace(/\.00$/, "")}% ·
+              Remaining {remainingOwnershipLabel}%
+            </span>
+          </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <Field label="Shareholder type" htmlFor="shareholderType">
               <CustomSelect
@@ -403,21 +428,25 @@ export function CompanyShareholdersStep({
                 />
               </Field>
             ) : null}
-            <Field label="Ownership percentage" htmlFor="shareholderPercentage">
+            <Field
+              label="Ownership percentage"
+              htmlFor="shareholderPercentage"
+              hint={`Maximum available: ${remainingOwnershipLabel}%`}
+            >
               <input
                 id="shareholderPercentage"
                 type="number"
                 min="0.01"
-                max="100"
+                max={remainingOwnership}
                 step="0.01"
                 value={draft.percentage}
-                onChange={(event) =>
-                  setDraft((current) => ({
-                    ...current,
-                    percentage: event.target.value,
-                  }))
+                onChange={(event) => updateDraftPercentage(event.target.value)}
+                placeholder={
+                  remainingOwnership > 0
+                    ? `Up to ${remainingOwnershipLabel}`
+                    : "100% allocated"
                 }
-                placeholder="For example, 25"
+                disabled={remainingOwnership <= 0}
                 className={inputClass()}
               />
             </Field>
@@ -483,9 +512,11 @@ export function CompanyShareholdersStep({
           <button
             type="button"
             onClick={add}
-            className="mt-5 inline-flex h-11 items-center gap-2 rounded-xl bg-[#003478] px-4 text-xs font-semibold text-white transition hover:bg-[#002b63]"
+            disabled={remainingOwnership <= 0}
+            className="mt-5 inline-flex h-11 items-center gap-2 rounded-xl bg-[#003478] px-4 text-xs font-semibold text-white transition hover:bg-[#002b63] disabled:cursor-not-allowed disabled:bg-slate-300"
           >
-            <Plus className="h-4 w-4" /> Add shareholder
+            <Plus className="h-4 w-4" />{" "}
+            {remainingOwnership <= 0 ? "100% allocated" : "Add shareholder"}
           </button>
         </section>
 

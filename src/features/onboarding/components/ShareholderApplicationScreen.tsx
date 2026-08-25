@@ -1228,7 +1228,27 @@ function OwnershipScreen({
   const owners = subject.application.ownershipInterests;
   const total = percentageTotal(owners);
   const layerComplete = hasCompletePercentageLayer(owners);
+  const remainingOwnership = Math.max(0, 100 - total);
+  const remainingOwnershipLabel = remainingOwnership
+    .toFixed(2)
+    .replace(/\.00$/, "");
+  const updateDraftPercentage = (value: string) => {
+    if (value !== "" && Number(value) > remainingOwnership) {
+      setDraftError(
+        `This ownership layer cannot exceed 100%. You can allocate up to ${remainingOwnershipLabel}% more.`,
+      );
+      return;
+    }
+    setDraft((current) => ({ ...current, percentage: value }));
+    setDraftError("");
+  };
   const addOwner = () => {
+    if (total + (Number(draft.percentage) || 0) > 100.0001) {
+      setDraftError(
+        `This ownership layer cannot exceed 100%. You can allocate up to ${remainingOwnershipLabel}% more.`,
+      );
+      return;
+    }
     if (!isOwnerDraftComplete(draft)) {
       setDraftError(
         "Complete the owner type, structure where applicable, ownership percentage, legal name, valid email and phone number.",
@@ -1270,13 +1290,14 @@ function OwnershipScreen({
               Add an owner
             </h3>
             <p className="mt-1 text-sm text-slate-500">
-              Record ownership at this layer.
+              This ownership layer must total exactly 100% and cannot exceed it.
             </p>
           </div>
           <span
             className={`w-fit rounded-full px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.06em] ${layerComplete ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}
           >
-            Layer total {total.toFixed(2).replace(/\.00$/, "")}%
+            Allocated {total.toFixed(2).replace(/\.00$/, "")}% · Remaining{" "}
+            {remainingOwnershipLabel}%
           </span>
         </div>
         <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -1337,21 +1358,22 @@ function OwnershipScreen({
           <Field
             label="Ownership percentage"
             htmlFor={`nested-percentage-${subject.id}`}
+            hint={`Maximum available: ${remainingOwnershipLabel}%`}
           >
             <input
               id={`nested-percentage-${subject.id}`}
               type="number"
               min="0.01"
-              max="100"
+              max={remainingOwnership}
               step="0.01"
               value={draft.percentage}
-              onChange={(event) =>
-                setDraft((current) => ({
-                  ...current,
-                  percentage: event.target.value,
-                }))
+              onChange={(event) => updateDraftPercentage(event.target.value)}
+              placeholder={
+                remainingOwnership > 0
+                  ? `Up to ${remainingOwnershipLabel}`
+                  : "100% allocated"
               }
-              placeholder="For example, 25"
+              disabled={remainingOwnership <= 0}
               className={inputClass()}
             />
           </Field>
@@ -1414,9 +1436,11 @@ function OwnershipScreen({
         <button
           type="button"
           onClick={addOwner}
-          className="mt-5 inline-flex h-11 items-center gap-2 rounded-xl bg-[#003478] px-4 text-xs font-semibold text-white hover:bg-[#002b63]"
+          disabled={remainingOwnership <= 0}
+          className="mt-5 inline-flex h-11 items-center gap-2 rounded-xl bg-[#003478] px-4 text-xs font-semibold text-white hover:bg-[#002b63] disabled:cursor-not-allowed disabled:bg-slate-300"
         >
-          <Plus className="h-4 w-4" /> Add owner
+          <Plus className="h-4 w-4" />{" "}
+          {remainingOwnership <= 0 ? "100% allocated" : "Add owner"}
         </button>
       </section>
       {layerComplete ? (
