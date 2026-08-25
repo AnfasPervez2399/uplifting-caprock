@@ -198,10 +198,8 @@ export function useOnboardingController() {
   const companyProfileComplete = isCompanyProfileComplete(applicationType, form.company);
   const directorsComplete = !isCompany || isCompanyDirectorsComplete(form.company, form.directors);
   const shareholderPercentageTotal = percentageTotal(form.shareholders);
-  const canConfirmShareholders = hasCompletePercentageLayer(form.shareholders) && form.shareholders.every((shareholder) =>
-    isCompleteShareholder(shareholder) &&
-    (!requiresShareholderApplication(shareholder) || isShareholderApplicationComplete(shareholder)),
-  );
+  const canConfirmShareholders = hasCompletePercentageLayer(form.shareholders) &&
+    form.shareholders.every(isCompleteShareholder);
   const shareholdersComplete = !isCompany || isPublicCompany || isCompanyShareholdersComplete(form.company, form.shareholders);
   const trustProfileComplete = isTrustProfileComplete(applicationType, form.trust);
   const trusteesComplete = !isTrust || isTrusteesComplete(form.trust, form.trustees);
@@ -465,9 +463,8 @@ export function useOnboardingController() {
     setForm((current) => ({
       ...current,
       shareholders: current.shareholders.map((saved) => saved.id === shareholder.id ? shareholder : saved),
-      company: { ...current.company, shareholdersConfirmed: false },
     }));
-    setErrors((current) => ({ ...current, shareholders: "", shareholderTotal: "" }));
+    setErrors((current) => ({ ...current, shareholders: "" }));
   };
 
   const removeShareholder = (id: string) => {
@@ -492,13 +489,13 @@ export function useOnboardingController() {
       setErrors((current) => ({
         ...current,
         shareholders: totalComplete
-          ? "Complete every required shareholder application before saving the ownership structure."
+          ? "Complete every shareholder record before saving the ownership structure."
           : "Shareholder ownership must total exactly 100% before all shareholders can be saved.",
         shareholderTotal: totalComplete ? "" : "Adjust ownership so the total equals exactly 100%.",
       }));
       setSuccessNotice("");
       setNotice(totalComplete
-        ? "Complete every required shareholder application before saving all shareholders."
+        ? "Complete every shareholder’s type and contact details before saving."
         : `The current shareholder total is ${shareholderPercentageTotal.toFixed(2).replace(/\.00$/, "")}% and must equal 100%.`);
       return;
     }
@@ -508,7 +505,7 @@ export function useOnboardingController() {
     }));
     setErrors((current) => ({ ...current, shareholders: "", shareholderTotal: "" }));
     setNotice("");
-    setSuccessNotice("All shareholders have been saved as a complete 100% ownership structure.");
+    setSuccessNotice("The 100% direct ownership structure is saved. Shareholder applications and interconnection layers are now available.");
   };
 
   const addTrustParty = (kind: "trustees" | "beneficiaries", party: TrustParty) => {
@@ -1115,7 +1112,9 @@ export function useOnboardingController() {
       } else if (!form.company.shareholdersConfirmed) {
         nextErrors.shareholderTotal = "Select Save all shareholders to confirm the complete ownership structure.";
       }
-      nextErrors.shareholders = "Complete each shareholder record, every required type-specific application and all required 100% ownership layers, then save all shareholders.";
+      nextErrors.shareholders = form.company.shareholdersConfirmed
+        ? "Complete every required shareholder application and each recursively disclosed 100% ownership layer."
+        : "Complete the shareholder records, bring direct ownership to exactly 100%, then select Save all shareholders.";
     }
     if (stepId === "trustees" && !trusteesComplete) {
       if (!form.trustees.length) nextErrors.trusteeCount = "Add at least one trustee.";

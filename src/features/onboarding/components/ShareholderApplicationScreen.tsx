@@ -706,9 +706,10 @@ function ProfileScreen({
             autoComplete="email"
             spellCheck={false}
             value={subject.email}
-            onChange={(event) =>
-              updateSubject({ email: event.currentTarget.value })
-            }
+            onChange={(event) => {
+              const email = event.currentTarget.value;
+              updateSubject({ email });
+            }}
             placeholder={
               subject.type === "trust"
                 ? "trust.contact@example.com"
@@ -1380,12 +1381,10 @@ function OwnershipScreen({
               autoComplete="email"
               spellCheck={false}
               value={draft.email}
-              onChange={(event) =>
-                setDraft((current) => ({
-                  ...current,
-                  email: event.currentTarget.value,
-                }))
-              }
+              onChange={(event) => {
+                const email = event.currentTarget.value;
+                setDraft((current) => ({ ...current, email }));
+              }}
               placeholder={
                 draft.type === "trust"
                   ? "trust.contact@example.com"
@@ -1420,9 +1419,19 @@ function OwnershipScreen({
           <Plus className="h-4 w-4" /> Add owner
         </button>
       </section>
-      <div className="mt-7">
-        <NestedOwnershipGraph subject={subject} onOpenPath={openOwnerPath} />
-      </div>
+      {layerComplete ? (
+        <div className="mt-7">
+          <NestedOwnershipGraph subject={subject} onOpenPath={openOwnerPath} />
+        </div>
+      ) : owners.length ? (
+        <div className="mt-7 flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-800">
+          <Info className="mt-0.5 h-4 w-4 shrink-0" />
+          <p>
+            Bring this ownership layer to exactly 100% to reveal its
+            interconnection graph and shareholder application actions.
+          </p>
+        </div>
+      ) : null}
       <section className="mt-7 space-y-3">
         {owners.length ? (
           owners.map((owner, index) => {
@@ -1452,31 +1461,40 @@ function OwnershipScreen({
                       {owner.email}
                     </p>
                   </div>
-                  <span
-                    className={`inline-flex w-fit items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.06em] ${applicationComplete ? "bg-emerald-50 text-emerald-700" : applicationRequired ? "bg-amber-50 text-amber-700" : "bg-slate-100 text-slate-600"}`}
-                  >
-                    {applicationComplete ? (
-                      <CheckCircle2 className="h-3 w-3" />
-                    ) : (
-                      <Info className="h-3 w-3" />
-                    )}
-                    {applicationComplete
-                      ? "Application complete"
-                      : applicationRequired
-                        ? "Application required"
-                        : "Below 25% · no cascade"}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => openOwnerPath([owner.id])}
-                      className="inline-flex h-9 items-center gap-2 rounded-xl border border-[#003478]/20 bg-white px-3 text-xs font-semibold text-[#003478] hover:bg-[#f3f7fb]"
+                  {layerComplete ? (
+                    <span
+                      className={`inline-flex w-fit items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.06em] ${applicationComplete ? "bg-emerald-50 text-emerald-700" : applicationRequired ? "bg-amber-50 text-amber-700" : "bg-slate-100 text-slate-600"}`}
                     >
+                      {applicationComplete ? (
+                        <CheckCircle2 className="h-3 w-3" />
+                      ) : (
+                        <Info className="h-3 w-3" />
+                      )}
                       {applicationComplete
-                        ? "Review application"
-                        : "Fill application"}
-                      <ChevronRight className="h-3.5 w-3.5" />
-                    </button>
+                        ? "Application complete"
+                        : applicationRequired
+                          ? "Application required"
+                          : "Below 25% · no cascade"}
+                    </span>
+                  ) : (
+                    <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.06em] text-slate-500">
+                      <Info className="h-3 w-3" />
+                      Awaiting 100% layer
+                    </span>
+                  )}
+                  <div className="flex items-center gap-2">
+                    {layerComplete ? (
+                      <button
+                        type="button"
+                        onClick={() => openOwnerPath([owner.id])}
+                        className="inline-flex h-9 items-center gap-2 rounded-xl border border-[#003478]/20 bg-white px-3 text-xs font-semibold text-[#003478] hover:bg-[#f3f7fb]"
+                      >
+                        {applicationComplete
+                          ? "Review application"
+                          : "Fill application"}
+                        <ChevronRight className="h-3.5 w-3.5" />
+                      </button>
+                    ) : null}
                     <button
                       type="button"
                       onClick={() =>
