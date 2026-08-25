@@ -6,6 +6,7 @@ import {
   EyeOff,
   Loader2,
   LockKeyhole,
+  ShieldCheck,
   UserPlus,
 } from "lucide-react";
 import {
@@ -62,6 +63,61 @@ const passwordChecks = (password: string) => [
     met: Boolean(password) && !/\s/.test(password),
   },
 ];
+
+type PasswordCheck = ReturnType<typeof passwordChecks>[number];
+
+const strengthStates = [
+  {
+    label: "Start typing",
+    detail: "Build a password you do not use anywhere else.",
+    color: "#64748b",
+    soft: "#f8fafc",
+    border: "#e2e8f0",
+  },
+  {
+    label: "Very weak",
+    detail: "A few more ingredients will make this safer.",
+    color: "#be123c",
+    soft: "#fff1f2",
+    border: "#fecdd3",
+  },
+  {
+    label: "Weak",
+    detail: "Keep going — length and variety both matter.",
+    color: "#c2410c",
+    soft: "#fff7ed",
+    border: "#fed7aa",
+  },
+  {
+    label: "Fair",
+    detail: "Good progress. Complete the remaining checks.",
+    color: "#a16207",
+    soft: "#fefce8",
+    border: "#fde68a",
+  },
+  {
+    label: "Strong",
+    detail: "Nearly there. One final security check remains.",
+    color: "#003478",
+    soft: "#eff6ff",
+    border: "#bfdbfe",
+  },
+  {
+    label: "Excellent",
+    detail: "All password security requirements are met.",
+    color: "#047857",
+    soft: "#ecfdf5",
+    border: "#a7f3d0",
+  },
+] as const;
+
+const strengthSegmentColors = [
+  "#e11d48",
+  "#f97316",
+  "#eab308",
+  "#2563eb",
+  "#059669",
+] as const;
 
 const isValidMobile = (value: string) => {
   const normalised = value.replace(/[\s().-]/g, "");
@@ -213,17 +269,286 @@ function PasswordField({
           aria-pressed={visible}
           className="absolute inset-y-1 right-1 grid w-10 place-items-center rounded-md text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003478]/20"
         >
-          {visible ? (
-            <EyeOff className="h-[18px] w-[18px]" />
-          ) : (
-            <Eye className="h-[18px] w-[18px]" />
-          )}
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.span
+              key={visible ? "visible" : "hidden"}
+              initial={
+                reducedMotion ? false : { opacity: 0, rotate: -12, scale: 0.72 }
+              }
+              animate={{ opacity: 1, rotate: 0, scale: 1 }}
+              exit={
+                reducedMotion
+                  ? undefined
+                  : { opacity: 0, rotate: 12, scale: 0.72 }
+              }
+              transition={{ duration: 0.16, ease: EASE }}
+              className="flex"
+            >
+              {visible ? (
+                <EyeOff className="h-[18px] w-[18px]" />
+              ) : (
+                <Eye className="h-[18px] w-[18px]" />
+              )}
+            </motion.span>
+          </AnimatePresence>
         </button>
       </div>
       <ErrorText id={errorId} reducedMotion={reducedMotion}>
         {error}
       </ErrorText>
     </div>
+  );
+}
+
+function PasswordStrengthPanel({
+  checks,
+  strength,
+  password,
+  reducedMotion,
+}: {
+  checks: PasswordCheck[];
+  strength: number;
+  password: string;
+  reducedMotion: boolean | null;
+}) {
+  const state = strengthStates[strength] ?? strengthStates[0];
+  const transition = reducedMotion
+    ? { duration: 0 }
+    : { duration: 0.42, ease: EASE };
+
+  return (
+    <motion.section
+      id="password-requirements"
+      aria-label={`Password strength: ${state.label}, ${strength} of 5 requirements met`}
+      initial={false}
+      animate={{ backgroundColor: state.soft, borderColor: state.border }}
+      transition={transition}
+      className="relative overflow-hidden rounded-2xl border p-4 sm:p-[18px]"
+    >
+      <motion.div
+        aria-hidden="true"
+        className="absolute inset-x-0 top-0 h-1 origin-left"
+        initial={false}
+        animate={{ backgroundColor: state.color, scaleX: strength / 5 }}
+        transition={transition}
+      />
+
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex min-w-0 items-start gap-3">
+          <motion.span
+            initial={false}
+            animate={{
+              backgroundColor: state.color,
+              rotate: strength === 5 ? 0 : -4,
+            }}
+            transition={
+              reducedMotion
+                ? { duration: 0 }
+                : { type: "spring", stiffness: 360, damping: 24 }
+            }
+            className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-xl text-white shadow-sm"
+            aria-hidden="true"
+          >
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.span
+                key={strength === 5 ? "complete" : "building"}
+                initial={
+                  reducedMotion
+                    ? false
+                    : { opacity: 0, scale: 0.55, rotate: -18 }
+                }
+                animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                exit={
+                  reducedMotion
+                    ? undefined
+                    : { opacity: 0, scale: 0.55, rotate: 18 }
+                }
+                transition={{ duration: 0.2, ease: EASE }}
+                className="flex"
+              >
+                {strength === 5 ? (
+                  <ShieldCheck className="h-[18px] w-[18px]" />
+                ) : (
+                  <LockKeyhole className="h-[17px] w-[17px]" />
+                )}
+              </motion.span>
+            </AnimatePresence>
+          </motion.span>
+
+          <div className="min-w-0">
+            <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-500">
+              Password security
+            </p>
+            <div className="mt-1 flex flex-wrap items-center gap-2">
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.span
+                  key={state.label}
+                  aria-live="polite"
+                  initial={reducedMotion ? false : { opacity: 0, y: 7 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={reducedMotion ? undefined : { opacity: 0, y: -7 }}
+                  transition={{ duration: 0.2, ease: EASE }}
+                  className="text-sm font-bold"
+                  style={{ color: state.color }}
+                >
+                  {state.label}
+                </motion.span>
+              </AnimatePresence>
+              {password ? (
+                <span className="rounded-full bg-white/75 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.07em] text-slate-500 ring-1 ring-black/5">
+                  Live score
+                </span>
+              ) : null}
+            </div>
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.p
+                key={state.detail}
+                initial={reducedMotion ? false : { opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={reducedMotion ? undefined : { opacity: 0, y: -4 }}
+                transition={{ duration: 0.18, ease: EASE }}
+                className="mt-1 text-[11px] leading-4 text-slate-600"
+              >
+                {state.detail}
+              </motion.p>
+            </AnimatePresence>
+          </div>
+        </div>
+
+        <div
+          className="relative grid h-12 w-12 shrink-0 place-items-center"
+          aria-hidden="true"
+        >
+          <svg
+            viewBox="0 0 44 44"
+            className="absolute inset-0 h-full w-full -rotate-90"
+          >
+            <circle
+              cx="22"
+              cy="22"
+              r="18"
+              fill="none"
+              stroke="#e2e8f0"
+              strokeWidth="3.5"
+            />
+            <motion.circle
+              cx="22"
+              cy="22"
+              r="18"
+              fill="none"
+              stroke={state.color}
+              strokeWidth="3.5"
+              strokeLinecap="round"
+              pathLength="1"
+              initial={false}
+              animate={{ pathLength: strength / 5, stroke: state.color }}
+              transition={
+                reducedMotion ? { duration: 0 } : { duration: 0.46, ease: EASE }
+              }
+            />
+          </svg>
+          <AnimatePresence mode="popLayout" initial={false}>
+            <motion.span
+              key={strength}
+              initial={
+                reducedMotion ? false : { opacity: 0, scale: 0.55, y: 4 }
+              }
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={
+                reducedMotion ? undefined : { opacity: 0, scale: 0.55, y: -4 }
+              }
+              transition={
+                reducedMotion
+                  ? { duration: 0 }
+                  : { type: "spring", stiffness: 440, damping: 25 }
+              }
+              className="text-sm font-extrabold tabular-nums"
+              style={{ color: state.color }}
+            >
+              {strength}
+            </motion.span>
+          </AnimatePresence>
+          <span className="absolute bottom-0.5 right-0 text-[8px] font-bold text-slate-400">
+            /5
+          </span>
+        </div>
+      </div>
+
+      <div className="my-4 grid grid-cols-5 gap-1.5" aria-hidden="true">
+        {strengthSegmentColors.map((color, index) => {
+          const active = index < strength;
+          return (
+            <motion.span
+              key={color}
+              initial={false}
+              animate={{
+                backgroundColor: active ? color : "#e2e8f0",
+                opacity: active ? 1 : 0.7,
+                scaleY: active ? 1 : 0.58,
+              }}
+              transition={
+                reducedMotion
+                  ? { duration: 0 }
+                  : {
+                      duration: 0.3,
+                      delay: active ? index * 0.035 : 0,
+                      ease: EASE,
+                    }
+              }
+              className="h-2 origin-bottom rounded-full"
+            />
+          );
+        })}
+      </div>
+
+      <ul className="grid gap-2 sm:grid-cols-2">
+        {checks.map((check) => (
+          <motion.li
+            key={check.id}
+            layout={!reducedMotion}
+            initial={false}
+            animate={{
+              backgroundColor: check.met ? "#ffffff" : "rgba(255,255,255,0.46)",
+              borderColor: check.met ? "#a7f3d0" : "rgba(203,213,225,0.72)",
+            }}
+            transition={
+              reducedMotion ? { duration: 0 } : { duration: 0.24, ease: EASE }
+            }
+            className={`flex min-h-9 items-center gap-2 rounded-lg border px-2.5 py-2 text-[11px] font-medium ${check.met ? "text-emerald-800" : "text-slate-500"}`}
+          >
+            <motion.span
+              initial={false}
+              animate={{
+                backgroundColor: check.met ? "#059669" : "#e2e8f0",
+                color: check.met ? "#ffffff" : "#94a3b8",
+                scale: check.met ? 1 : 0.9,
+              }}
+              transition={
+                reducedMotion
+                  ? { duration: 0 }
+                  : { type: "spring", stiffness: 460, damping: 25 }
+              }
+              className="grid h-[18px] w-[18px] shrink-0 place-items-center rounded-full"
+              aria-hidden="true"
+            >
+              <AnimatePresence initial={false}>
+                {check.met ? (
+                  <motion.span
+                    initial={reducedMotion ? false : { scale: 0, rotate: -25 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    exit={{ scale: 0 }}
+                    className="flex"
+                  >
+                    <Check className="h-3 w-3" strokeWidth={3} />
+                  </motion.span>
+                ) : null}
+              </AnimatePresence>
+            </motion.span>
+            <span>{check.label}</span>
+          </motion.li>
+        ))}
+      </ul>
+    </motion.section>
   );
 }
 
@@ -443,45 +768,12 @@ export function SignUp() {
           describedBy="password-requirements"
         />
 
-        <div
-          id="password-requirements"
-          className="rounded-xl border border-slate-200 bg-slate-50/70 p-4"
-        >
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <LockKeyhole className="h-4 w-4 text-[#003478]" />
-              <p className="text-xs font-semibold text-slate-800">
-                Password security
-              </p>
-            </div>
-            <span className="text-[10px] font-bold uppercase tracking-[0.07em] text-slate-400">
-              {passwordStrength}/5
-            </span>
-          </div>
-          <div className="mb-3 grid grid-cols-5 gap-1" aria-hidden="true">
-            {checks.map((check) => (
-              <span
-                key={check.id}
-                className={`h-1.5 rounded-full transition-colors ${check.met ? "bg-[#003478]" : "bg-slate-200"}`}
-              />
-            ))}
-          </div>
-          <ul className="grid gap-2 sm:grid-cols-2">
-            {checks.map((check) => (
-              <li
-                key={check.id}
-                className={`flex items-center gap-2 text-[11px] ${check.met ? "text-emerald-700" : "text-slate-500"}`}
-              >
-                <span
-                  className={`grid h-4 w-4 shrink-0 place-items-center rounded-full ${check.met ? "bg-emerald-100" : "bg-slate-200"}`}
-                >
-                  {check.met ? <Check className="h-2.5 w-2.5" /> : null}
-                </span>
-                {check.label}
-              </li>
-            ))}
-          </ul>
-        </div>
+        <PasswordStrengthPanel
+          checks={checks}
+          strength={passwordStrength}
+          password={values.password}
+          reducedMotion={reducedMotion}
+        />
 
         <PasswordField
           id="confirmPassword"
