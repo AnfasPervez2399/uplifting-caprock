@@ -56,6 +56,7 @@ export function PersonalStep({ controller }: StepProps) {
     setLookupVerifiedAt,
     lookupRequestRef,
     errors,
+    setErrors,
     isJoint,
     sharedAddress,
     sectionEyebrow,
@@ -98,7 +99,7 @@ export function PersonalStep({ controller }: StepProps) {
                 className={`${inputClass()} cursor-not-allowed bg-slate-100/80 text-slate-500`}
               />
             </Field>
-            {/* <Field
+            <Field
               label="Adviser reference number"
               htmlFor="advisorReferenceNumber"
               required={false}
@@ -111,7 +112,7 @@ export function PersonalStep({ controller }: StepProps) {
                 placeholder="Provided by adviser"
                 className={`${inputClass()} cursor-not-allowed bg-slate-100/80 text-slate-500`}
               />
-            </Field> */}
+            </Field>
           </div>
         </section>
 
@@ -277,7 +278,7 @@ export function PersonalStep({ controller }: StepProps) {
                       <p className="mt-0.5 text-xs text-slate-500">
                         Applicant {index + 1} ·{" "}
                         {applicant.method === "existing"
-                          ? `Existing Caprock client`
+                          ? `Existing Caprock client · ${applicant.applicantCountry}`
                           : applicant.email}
                       </p>
                     </div>
@@ -331,6 +332,14 @@ export function PersonalStep({ controller }: StepProps) {
                         setJointDraft({ ...emptyJointDraft, method });
                         setLookupState("idle");
                         setLookupVerifiedAt("");
+                        setErrors((current) => ({
+                          ...current,
+                          jointApplicants: "",
+                          jointClientId: "",
+                          jointFullName: "",
+                          jointEmail: "",
+                          jointResidentialAddress: "",
+                        }));
                       }}
                       className={`rounded-lg px-3 py-2.5 text-xs font-semibold transition ${
                         jointDraft.method === method
@@ -350,6 +359,7 @@ export function PersonalStep({ controller }: StepProps) {
                     <Field
                       label="Caprock client ID"
                       htmlFor="jointClientId"
+                      error={errors.jointClientId}
                       hint="Client IDs are verified before the applicant is added."
                     >
                       <div className="flex flex-col gap-2 sm:flex-row">
@@ -360,7 +370,10 @@ export function PersonalStep({ controller }: StepProps) {
                             updateJointDraft("clientId", event.target.value)
                           }
                           placeholder="For example, CM-10284"
-                          className={inputClass(lookupState === "error")}
+                          className={inputClass(
+                            Boolean(errors.jointClientId) ||
+                              lookupState === "error",
+                          )}
                         />
                         <button
                           type="button"
@@ -371,7 +384,9 @@ export function PersonalStep({ controller }: StepProps) {
                           className={`inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-xl border px-4 text-xs font-semibold transition ${
                             lookupState === "found"
                               ? "cursor-default border-[rgba(0,52,120,0.16)] bg-[#dce7f2] text-[#003478]"
-                              : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:text-[#003478] disabled:cursor-wait disabled:opacity-60"
+                              : lookupState === "loading"
+                                ? "cursor-wait border-[rgba(0,52,120,0.18)] bg-[#003478] text-white"
+                                : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:text-[#003478] disabled:cursor-wait disabled:opacity-60"
                           }`}
                         >
                           {lookupState === "loading" ? (
@@ -382,14 +397,41 @@ export function PersonalStep({ controller }: StepProps) {
                             <BadgeCheck className="h-4 w-4" />
                           )}
                           {lookupState === "loading"
-                            ? "Checking…"
+                            ? "Verifying…"
                             : lookupState === "found"
                               ? "Verified"
                               : "Verify ID"}
                         </button>
                       </div>
                     </Field>
-                    {lookupState === "found" ? (
+                    {lookupState === "loading" ? (
+                      <div
+                        role="status"
+                        aria-live="polite"
+                        className="mt-4 overflow-hidden rounded-2xl border border-[rgba(0,52,120,0.14)] bg-[#f7f9fb] p-4 sm:p-5"
+                      >
+                        <div className="flex items-start gap-3">
+                          <span className="relative grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[#dce7f2] text-[#003478]">
+                            <span className="absolute inset-1 rounded-[10px] border-2 border-[#003478]/15 border-t-[#003478] animate-spin" />
+                            <ShieldCheck className="h-4 w-4" />
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-semibold text-slate-950">
+                              Checking Caprock records
+                            </p>
+                            <p className="mt-1 text-xs leading-5 text-slate-500">
+                              Matching{" "}
+                              {jointDraft.clientId.trim().toUpperCase() ||
+                                "this client ID"}{" "}
+                              against the investor register.
+                            </p>
+                          </div>
+                        </div>
+                        <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-slate-200">
+                          <div className="h-full w-2/5 rounded-full bg-[#003478] motion-safe:animate-pulse" />
+                        </div>
+                      </div>
+                    ) : lookupState === "found" ? (
                       <div
                         role="status"
                         className="mt-4 overflow-hidden rounded-2xl border border-[rgba(0,52,120,0.16)] bg-[rgba(0,52,120,0.035)]"
@@ -432,15 +474,15 @@ export function PersonalStep({ controller }: StepProps) {
                           </div>
                         </div>
                       </div>
-                    ) : lookupState === "error" ? (
-                      <p className="mt-2 text-xs font-medium text-red-600">
-                        Enter a valid client ID with at least five characters.
-                      </p>
                     ) : null}
                   </div>
                 ) : (
                   <div className="grid gap-4 sm:grid-cols-2">
-                    <Field label="Full name" htmlFor="jointFullName">
+                    <Field
+                      label="Full name"
+                      htmlFor="jointFullName"
+                      error={errors.jointFullName}
+                    >
                       <input
                         id="jointFullName"
                         value={jointDraft.firstName}
@@ -449,10 +491,14 @@ export function PersonalStep({ controller }: StepProps) {
                         }
                         autoComplete="name"
                         placeholder="Applicant’s full legal name"
-                        className={inputClass()}
+                        className={inputClass(Boolean(errors.jointFullName))}
                       />
                     </Field>
-                    <Field label="Email address" htmlFor="jointEmail">
+                    <Field
+                      label="Email address"
+                      htmlFor="jointEmail"
+                      error={errors.jointEmail}
+                    >
                       <input
                         id="jointEmail"
                         type="email"
@@ -462,7 +508,7 @@ export function PersonalStep({ controller }: StepProps) {
                         }
                         autoComplete="email"
                         placeholder="name@example.com"
-                        className={inputClass()}
+                        className={inputClass(Boolean(errors.jointEmail))}
                       />
                     </Field>
                     {sharedAddress ? (
@@ -475,6 +521,7 @@ export function PersonalStep({ controller }: StepProps) {
                         <Field
                           label="Residential address"
                           htmlFor="jointResidentialAddress"
+                          error={errors.jointResidentialAddress}
                         >
                           <textarea
                             id="jointResidentialAddress"
@@ -487,7 +534,9 @@ export function PersonalStep({ controller }: StepProps) {
                             }
                             autoComplete="street-address"
                             placeholder="Street, suburb or city, state or region, postcode and country"
-                            className={textareaClass()}
+                            className={textareaClass(
+                              Boolean(errors.jointResidentialAddress),
+                            )}
                           />
                         </Field>
                       </div>

@@ -1046,7 +1046,9 @@ export function useOnboardingController() {
     setForm(nextForm);
     setErrors({});
     setNotice("");
-    setSuccessNotice("");
+    setSuccessNotice(
+      "Application type changed. Later sections have been reset.",
+    );
     lookupRequestRef.current += 1;
     setShowJointComposer(false);
     setJointDraft(emptyJointDraft);
@@ -1066,7 +1068,21 @@ export function useOnboardingController() {
 
   const updateJointDraft = (key: keyof JointApplicantDraft, value: string) => {
     setJointDraft((current) => ({ ...current, [key]: value }));
-    setErrors((current) => ({ ...current, jointApplicants: "" }));
+    const fieldErrorKey =
+      key === "clientId"
+        ? "jointClientId"
+        : key === "firstName"
+          ? "jointFullName"
+          : key === "email"
+            ? "jointEmail"
+            : key === "residentialAddress"
+              ? "jointResidentialAddress"
+              : "";
+    setErrors((current) => ({
+      ...current,
+      jointApplicants: "",
+      ...(fieldErrorKey ? { [fieldErrorKey]: "" } : {}),
+    }));
     if (key === "clientId") {
       lookupRequestRef.current += 1;
       setLookupState("idle");
@@ -1087,8 +1103,13 @@ export function useOnboardingController() {
     if (jointDraft.clientId.trim().length < 5) {
       setLookupState("error");
       setLookupVerifiedAt("");
+      setErrors((current) => ({
+        ...current,
+        jointClientId: "Enter a valid client ID with at least five characters.",
+      }));
       return;
     }
+    setErrors((current) => ({ ...current, jointClientId: "" }));
     setLookupState("loading");
     setLookupVerifiedAt("");
     window.setTimeout(() => {
@@ -1124,14 +1145,23 @@ export function useOnboardingController() {
         );
 
     if (!valid) {
-      setErrors((current) => ({
-        ...current,
-        jointApplicants: isExisting
-          ? "Verify the Caprock client ID before adding this applicant."
-          : sharedAddress
-            ? "Enter the applicant’s full name and a valid email address."
-            : "Enter the applicant’s full name, a valid email address and residential address.",
-      }));
+      const nextErrors: Record<string, string> = {};
+      if (isExisting) {
+        if (!jointDraft.clientId.trim())
+          nextErrors.jointClientId = "Enter the Caprock client ID.";
+        else if (lookupState !== "found")
+          nextErrors.jointClientId =
+            "Verify the Caprock client ID before adding this applicant.";
+      } else {
+        if (!invitationName)
+          nextErrors.jointFullName = "Enter the applicant’s full legal name.";
+        if (!invitationEmail) nextErrors.jointEmail = "Enter an email address.";
+        else if (!isValidEmail(invitationEmail))
+          nextErrors.jointEmail = "Enter a valid email address.";
+        if (!sharedAddress && !separateAddress)
+          nextErrors.jointResidentialAddress = "Enter the residential address.";
+      }
+      setErrors((current) => ({ ...current, ...nextErrors }));
       return;
     }
 
@@ -1140,7 +1170,7 @@ export function useOnboardingController() {
       method: jointDraft.method,
       clientId: isExisting ? jointDraft.clientId.trim() : "",
       firstName: isExisting
-        ? `${jointDraft.clientId.trim().toUpperCase()}`
+        ? `Verified client · ${jointDraft.clientId.trim().toUpperCase()}`
         : invitationName,
       middleName: "",
       lastName: "",
