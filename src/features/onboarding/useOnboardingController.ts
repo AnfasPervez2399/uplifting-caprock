@@ -833,6 +833,16 @@ export function useOnboardingController() {
     );
   };
 
+  const updateTrustParty = (party: TrustParty) => {
+    setForm((current) => ({
+      ...current,
+      trustees: current.trustees.map((saved) =>
+        saved.id === party.id ? party : saved,
+      ),
+    }));
+    setErrors((current) => ({ ...current, trustees: "" }));
+  };
+
   const addTrustParty = (_kind: "trustees", party: TrustParty) => {
     setForm((current) => {
       const trustees = [...current.trustees, party];
@@ -1046,9 +1056,7 @@ export function useOnboardingController() {
     setForm(nextForm);
     setErrors({});
     setNotice("");
-    setSuccessNotice(
-      "Application type changed. Later sections have been reset.",
-    );
+    setSuccessNotice("");
     lookupRequestRef.current += 1;
     setShowJointComposer(false);
     setJointDraft(emptyJointDraft);
@@ -1691,7 +1699,7 @@ export function useOnboardingController() {
       if (!form.trust.defaultRecipientId)
         nextErrors.defaultTrustee = "Select a default communication recipient.";
       nextErrors.trustees =
-        "Add at least one complete trustee and select a default communication recipient.";
+        "Add at least one complete trustee. Corporate trustees must finish their nested company application (directors come from that application). Then select a default communication recipient.";
     }
     if (stepId === "beneficiaries" && !beneficiariesComplete) {
       if (!form.beneficiaries.length)
@@ -2051,6 +2059,7 @@ export function useOnboardingController() {
     removeBeneficiary,
     confirmAllBeneficiaries,
     addTrustParty,
+    updateTrustParty,
     removeTrustParty,
     updateEntityDocument,
     updateCashAccounts,

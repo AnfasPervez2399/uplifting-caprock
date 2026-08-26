@@ -362,17 +362,56 @@ export const isCompanyShareholdersComplete = (
         isShareholderApplicationComplete(shareholder)),
   );
 
-export const isCompleteTrustParty = (party: TrustParty) =>
+export const trusteeAsShareholder = (
+  party: TrustParty,
+): CompanyShareholder => ({
+  id: party.id,
+  type: party.type,
+  companyType: party.companyType,
+  trustType: "",
+  percentage: "100",
+  name: party.name,
+  email: party.email,
+  phone: party.phone,
+  application: party.application,
+});
+
+export const applyShareholderToTrustee = (
+  party: TrustParty,
+  next: CompanyShareholder,
+): TrustParty => ({
+  ...party,
+  type: next.type,
+  companyType: next.companyType,
+  name: next.name,
+  email: next.email,
+  phone: next.phone,
+  application: next.application,
+  directors: next.application.directors,
+});
+
+export const corporateTrusteeDirectors = (party: TrustParty) =>
+  party.application?.directors?.length
+    ? party.application.directors
+    : party.directors;
+
+export const isCompleteTrustPartyContact = (party: TrustParty) =>
   Boolean(
     party.type &&
-    (party.type !== "corporate" ||
-      (party.companyType &&
-        party.directors.length > 0 &&
-        party.directors.every(isCompleteDirector))) &&
+    (party.type !== "corporate" || party.companyType) &&
     present(party.name) &&
     isValidEmail(party.email) &&
     present(party.phone),
   );
+
+export const isCorporateTrusteeApplicationComplete = (party: TrustParty) =>
+  isShareholderApplicationComplete(trusteeAsShareholder(party));
+
+export const isCompleteTrustParty = (party: TrustParty) => {
+  if (!isCompleteTrustPartyContact(party)) return false;
+  if (party.type !== "corporate") return true;
+  return isCorporateTrusteeApplicationComplete(party);
+};
 
 export const isTrusteesComplete = (trust: TrustState, trustees: TrustParty[]) =>
   trustees.length > 0 &&

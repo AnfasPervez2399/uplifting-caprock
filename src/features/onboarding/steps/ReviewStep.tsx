@@ -410,11 +410,16 @@ export function ReviewStep({
             >
               <PartyRows
                 title={`${form.trustees.length} saved trustee${form.trustees.length === 1 ? "" : "s"}`}
-                rows={form.trustees.map((party) => ({
-                  id: party.id,
-                  name: party.name,
-                  detail: `${party.type}${party.type === "corporate" ? ` · ${party.directors.length} director${party.directors.length === 1 ? "" : "s"}` : ""} · ${party.email}${form.trust.defaultRecipientId === party.id ? " · Default recipient" : ""}`,
-                }))}
+                rows={form.trustees.map((party) => {
+                  const directorCount =
+                    party.application?.directors?.length ||
+                    party.directors.length;
+                  return {
+                    id: party.id,
+                    name: party.name,
+                    detail: `${party.type}${party.type === "corporate" ? ` · ${directorCount} director${directorCount === 1 ? "" : "s"} from company application` : ""} · ${party.email}${form.trust.defaultRecipientId === party.id ? " · Default recipient" : ""}`,
+                  };
+                })}
               />
             </ReviewSection>
             <ReviewSection

@@ -205,4 +205,5 @@ export const createEmptyTrustParty = (prefix = "party"): TrustParty => ({
   email: "",
   phone: "",
   directors: [],
+  application: createEmptyShareholderApplication(),
 });

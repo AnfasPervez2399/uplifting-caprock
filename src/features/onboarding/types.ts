@@ -305,6 +305,7 @@ export interface TrustParty {
   email: string;
   phone: string;
   directors: CompanyDirector[];
+  application: ShareholderApplication;
 }
 
 /** A direct trust beneficiary uses the same recursive application and ownership model as a shareholder. */
