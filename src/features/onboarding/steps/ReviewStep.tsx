@@ -195,7 +195,7 @@ export function ReviewStep({
               <SummaryItem label="Last name" value={form.personal.lastName} />
               <SummaryItem
                 label="Former names"
-                value={form.personal.formerNames}
+                value={form.personal.formerNames.join(", ")}
               />
               <SummaryItem
                 label="Date of birth"

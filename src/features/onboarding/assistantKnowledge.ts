@@ -268,7 +268,7 @@ export function getMissingItems(
     if (!form.personal.applicantCountry) missing.push("Applicant country");
     if (!form.personal.firstName.trim()) missing.push("First name");
     if (!form.personal.lastName.trim()) missing.push("Last name");
-    if (!form.personal.formerNames.trim())
+    if (!form.personal.formerNames.length)
       missing.push("Former names, or “None”");
     if (!form.personal.dateOfBirth) missing.push("Date of birth");
     else if (!isAtLeastAge(form.personal.dateOfBirth, 18))

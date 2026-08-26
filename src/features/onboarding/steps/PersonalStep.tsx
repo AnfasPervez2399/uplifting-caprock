@@ -2,13 +2,13 @@ import {
   BadgeCheck,
   CheckCircle2,
   CircleUserRound,
+  Loader2,
   Plus,
   ShieldCheck,
   Trash2,
   UserPlus,
   Users,
   X,
-  Loader2,
 } from "lucide-react";
 import { CustomSelect } from "../../../components/ui/CustomSelect";
 
@@ -18,6 +18,7 @@ import {
   INVESTMENT_AMOUNT_OPTIONS,
   INVESTMENT_CURRENCY_OPTIONS,
 } from "../config";
+import { FormerNamesField } from "../components/FormerNamesField";
 import {
   DocumentUpload,
   Field,
@@ -98,7 +99,7 @@ export function PersonalStep({ controller }: StepProps) {
                 className={`${inputClass()} cursor-not-allowed bg-slate-100/80 text-slate-500`}
               />
             </Field>
-            <Field
+            {/* <Field
               label="Adviser reference number"
               htmlFor="advisorReferenceNumber"
               required={false}
@@ -111,7 +112,7 @@ export function PersonalStep({ controller }: StepProps) {
                 placeholder="Provided by adviser"
                 className={`${inputClass()} cursor-not-allowed bg-slate-100/80 text-slate-500`}
               />
-            </Field>
+            </Field> */}
           </div>
         </section>
 
@@ -190,22 +191,7 @@ export function PersonalStep({ controller }: StepProps) {
                 className={inputClass(Boolean(errors.lastName))}
               />
             </Field>
-            <Field
-              label="Former name(s)"
-              htmlFor="formerNames"
-              error={errors.formerNames}
-              hint="Enter “None” if you have not used another legal name."
-            >
-              <input
-                id="formerNames"
-                value={form.personal.formerNames}
-                onChange={(event) =>
-                  updatePersonal("formerNames", event.target.value)
-                }
-                placeholder="Former legal names or None"
-                className={inputClass(Boolean(errors.formerNames))}
-              />
-            </Field>
+
             <div className="min-w-0 sm:col-span-2 lg:col-span-3">
               <Field label="Date of birth" htmlFor="dateOfBirth">
                 <DatePicker
@@ -220,6 +206,14 @@ export function PersonalStep({ controller }: StepProps) {
                 />
               </Field>
             </div>
+            <div className="min-w-0 sm:col-span-2 lg:col-span-3">
+              <FormerNamesField
+                values={form.personal.formerNames}
+                error={errors.formerNames}
+                onChange={(names) => updatePersonal("formerNames", names)}
+              />
+            </div>
+
             <div className="sm:col-span-2 lg:col-span-3">
               <Field
                 label="Residential address"

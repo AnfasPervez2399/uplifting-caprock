@@ -20,7 +20,7 @@ export const createEmptyForm = (): FormState => ({
     firstName: "",
     middleName: "",
     lastName: "",
-    formerNames: "",
+    formerNames: [],
     dateOfBirth: "",
     residentialAddress: "",
     investmentCurrency: "",

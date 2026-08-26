@@ -37,16 +37,40 @@ export type AssessmentNature = "australian" | "foreign" | "";
 export type YesNo = "yes" | "no" | "";
 export type JointMethod = "existing" | "new";
 export type PartyType = "individual" | "corporate" | "trust" | "";
-export type CompanyStructure = "proprietor" | "partnership" | "private" | "public" | "";
+export type CompanyStructure =
+  | "proprietor"
+  | "partnership"
+  | "private"
+  | "public"
+  | "";
 export type AustralianRegistrationType = "public" | "proprietary" | "";
-export type CompanyApplicationType = Exclude<Extract<ApplicationType,
-  "australian-company" | "asic-non-australian-company" | "non-australian-company"
->, "">;
-export type TrustApplicationType = Exclude<Extract<ApplicationType,
-  "regulated-trust" | "custodian-trust" | "non-custodian-trust"
->, "">;
-export type CorporateEntityType = "australian-company" | "asic-non-australian-company" | "non-australian-company" | "";
-export type ShareholderTrustType = "discretionary" | "unit" | "regulated" | "other" | "";
+export type CompanyApplicationType = Exclude<
+  Extract<
+    ApplicationType,
+    | "australian-company"
+    | "asic-non-australian-company"
+    | "non-australian-company"
+  >,
+  ""
+>;
+export type TrustApplicationType = Exclude<
+  Extract<
+    ApplicationType,
+    "regulated-trust" | "custodian-trust" | "non-custodian-trust"
+  >,
+  ""
+>;
+export type CorporateEntityType =
+  | "australian-company"
+  | "asic-non-australian-company"
+  | "non-australian-company"
+  | "";
+export type ShareholderTrustType =
+  | "discretionary"
+  | "unit"
+  | "regulated"
+  | "other"
+  | "";
 
 export interface ShareholderBusinessProfile {
   principalBusinessAddress: string;
@@ -101,7 +125,11 @@ export interface ShareholderOwner {
 }
 
 export type PhotoIdType = "passport" | "driving-licence" | "photo-id" | "";
-export type AddressDocumentType = "utility-bill" | "lease-agreement" | "tax-document" | "";
+export type AddressDocumentType =
+  | "utility-bill"
+  | "lease-agreement"
+  | "tax-document"
+  | "";
 export type ProofFileField =
   | "photoIdFront"
   | "photoIdBack"
@@ -151,7 +179,7 @@ export interface PersonalState {
   firstName: string;
   middleName: string;
   lastName: string;
-  formerNames: string;
+  formerNames: string[];
   dateOfBirth: string;
   residentialAddress: string;
   investmentCurrency: string;

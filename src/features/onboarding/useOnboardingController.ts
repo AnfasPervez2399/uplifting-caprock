@@ -208,7 +208,7 @@ export function useOnboardingController() {
       form.personal.applicantCountry &&
       form.personal.firstName.trim() &&
       form.personal.lastName.trim() &&
-      form.personal.formerNames.trim() &&
+      form.personal.formerNames.length > 0 &&
       isAtLeastAge(form.personal.dateOfBirth, 18) &&
       form.personal.residentialAddress.trim() &&
       form.personal.investmentCurrency &&
@@ -1501,9 +1501,9 @@ export function useOnboardingController() {
         nextErrors.firstName = "Enter the applicant’s first name.";
       if (!form.personal.lastName.trim())
         nextErrors.lastName = "Enter the applicant’s last name.";
-      if (!form.personal.formerNames.trim())
+      if (!form.personal.formerNames.length)
         nextErrors.formerNames =
-          "Enter former names, or “None” if not applicable.";
+          "Add each former name, or select “I have no former names”.";
       if (!form.personal.dateOfBirth) {
         nextErrors.dateOfBirth = "Enter the applicant’s date of birth.";
       } else if (!isAtLeastAge(form.personal.dateOfBirth, 18)) {
