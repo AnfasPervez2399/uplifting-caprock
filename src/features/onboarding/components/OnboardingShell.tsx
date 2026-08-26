@@ -32,7 +32,10 @@ interface OnboardingShellProps {
   children: ReactNode;
 }
 
-export function OnboardingShell({ controller, children }: OnboardingShellProps) {
+export function OnboardingShell({
+  controller,
+  children,
+}: OnboardingShellProps) {
   const {
     loggedUserEmail,
     loggedUserName,
@@ -118,29 +121,49 @@ export function OnboardingShell({ controller, children }: OnboardingShellProps) 
               aria-expanded={mobileNavOpen}
               className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-slate-200 text-slate-600 transition hover:bg-slate-50 lg:hidden"
             >
-              {mobileNavOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+              {mobileNavOpen ? (
+                <X className="h-4 w-4" />
+              ) : (
+                <Menu className="h-4 w-4" />
+              )}
             </button>
-            <a href="/" className="flex shrink-0 items-center" aria-label="Caprock home">
-              <img src="/company-logo.svg" alt="Caprock" className="h-8 w-auto sm:h-9" />
+            <a
+              href="/"
+              className="flex shrink-0 items-center"
+              aria-label="Caprock home"
+            >
+              <img
+                src="/company-logo.svg"
+                alt="Caprock"
+                className="h-8 w-auto sm:h-9"
+              />
             </a>
             <div className="hidden h-7 w-px bg-slate-200 sm:block" />
             <div className="hidden min-w-0 sm:block" aria-live="polite">
-              <p className="truncate text-sm font-semibold tracking-[-0.01em] text-[#0f172a]">{applicationHeaderTitle}</p>
+              <p className="truncate text-sm font-semibold tracking-[-0.01em] text-[#0f172a]">
+                {applicationHeaderTitle}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-1.5 sm:gap-2">
-            <div className="hidden items-center gap-2 pr-1 text-xs font-medium text-slate-500 2xl:flex">
-              <ShieldCheck className="h-4 w-4 text-[#003478]" />
-              Encrypted session
-            </div>
             <button
               type="button"
               onClick={openAdviserInvite}
-              aria-label={form.adviserAccess ? "Manage adviser access" : "Invite an adviser"}
+              aria-label={
+                form.adviserAccess
+                  ? "Manage adviser access"
+                  : "Invite an adviser"
+              }
               className="hidden h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:text-[#003478] lg:inline-flex"
             >
-              {form.adviserAccess ? <CheckCircle2 className="h-4 w-4 text-[#003478]" /> : <UserPlus className="h-4 w-4" />}
-              <span>{form.adviserAccess ? "Adviser invited" : "Invite adviser"}</span>
+              {form.adviserAccess ? (
+                <CheckCircle2 className="h-4 w-4 text-[#003478]" />
+              ) : (
+                <UserPlus className="h-4 w-4" />
+              )}
+              <span>
+                {form.adviserAccess ? "Adviser invited" : "Invite adviser"}
+              </span>
             </button>
             <button
               type="button"
@@ -160,11 +183,15 @@ export function OnboardingShell({ controller, children }: OnboardingShellProps) 
               {draftStatus === "saving" ? (
                 <Loader2 className="h-4 w-4 shrink-0 animate-spin motion-reduce:animate-none" />
               ) : draftStatus === "saved" || submitted ? (
-                <CheckCircle2 className={`h-4 w-4 shrink-0 ${draftStatus === "saved" ? "text-[#003478]" : "text-slate-400"}`} />
+                <CheckCircle2
+                  className={`h-4 w-4 shrink-0 ${draftStatus === "saved" ? "text-[#003478]" : "text-slate-400"}`}
+                />
               ) : (
                 <Save className="h-4 w-4 shrink-0" />
               )}
-              <span className="hidden md:inline">{submitted ? "Submitted" : draftButtonLabel}</span>
+              <span className="hidden md:inline">
+                {submitted ? "Submitted" : draftButtonLabel}
+              </span>
             </button>
 
             <div ref={notificationsRef} className="relative">
@@ -186,7 +213,10 @@ export function OnboardingShell({ controller, children }: OnboardingShellProps) 
               >
                 <Bell className="h-4 w-4" />
                 {!notificationsSeen ? (
-                  <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-[#003478] ring-2 ring-white" aria-label="Unread notifications" />
+                  <span
+                    className="absolute right-2 top-2 h-2 w-2 rounded-full bg-[#003478] ring-2 ring-white"
+                    aria-label="Unread notifications"
+                  />
                 ) : null}
               </button>
               {notificationsOpen ? (
@@ -197,24 +227,49 @@ export function OnboardingShell({ controller, children }: OnboardingShellProps) 
                 >
                   <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3.5">
                     <div>
-                      <p className="text-sm font-semibold text-slate-950">Notifications</p>
-                      <p className="mt-0.5 text-[10px] text-slate-400">Application activity and updates</p>
+                      <p className="text-sm font-semibold text-slate-950">
+                        Notifications
+                      </p>
+                      <p className="mt-0.5 text-[10px] text-slate-400">
+                        Application activity and updates
+                      </p>
                     </div>
-                    <span className="rounded-full bg-[#dce7f2] px-2.5 py-1 text-[10px] font-bold text-[#003478]">3 updates</span>
+                    <span className="rounded-full bg-[#dce7f2] px-2.5 py-1 text-[10px] font-bold text-[#003478]">
+                      3 updates
+                    </span>
                   </div>
                   <div className="divide-y divide-slate-100">
                     {[
-                      { title: "Document previews are ready", message: "Click any uploaded file to inspect it without leaving your application.", icon: Eye },
-                      { title: "Your session is protected", message: "Application details and uploads remain encrypted throughout onboarding.", icon: ShieldCheck },
-                      { title: "Draft saving is available", message: "Use Save draft at any time and continue when you are ready.", icon: Save },
+                      {
+                        title: "Document previews are ready",
+                        message:
+                          "Click any uploaded file to inspect it without leaving your application.",
+                        icon: Eye,
+                      },
+                      {
+                        title: "Your session is protected",
+                        message:
+                          "Application details and uploads remain encrypted throughout onboarding.",
+                        icon: ShieldCheck,
+                      },
+                      {
+                        title: "Draft saving is available",
+                        message:
+                          "Use Save draft at any time and continue when you are ready.",
+                        icon: Save,
+                      },
                     ].map(({ title, message, icon: Icon }) => (
                       <div key={title} className="flex gap-3 px-4 py-3.5">
                         <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#dce7f2] text-[#003478]">
                           <Icon className="h-4 w-4" />
                         </span>
                         <div>
-                          <p className="text-xs font-semibold text-slate-900">{title}</p>
-                          <p className="mt-1 text-[11px] leading-5 text-slate-500">{message}</p>
+                          <p className="text-xs font-semibold text-slate-900">
+                            {title}
+                          </p>
+                          <p className="mt-1 text-[11px] leading-5 text-slate-500">
+                            {message}
+                          </p>
                         </div>
                       </div>
                     ))}
@@ -222,15 +277,6 @@ export function OnboardingShell({ controller, children }: OnboardingShellProps) 
                 </div>
               ) : null}
             </div>
-
-            <button
-              type="button"
-              onClick={() => setAssistantOpen(true)}
-              aria-label="Open onboarding assistant"
-              className="hidden h-10 w-10 place-items-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:border-slate-300 hover:text-[#003478] sm:grid"
-            >
-              <HelpCircle className="h-4 w-4" />
-            </button>
 
             <div ref={userMenuRef} className="relative">
               <button
@@ -252,8 +298,12 @@ export function OnboardingShell({ controller, children }: OnboardingShellProps) 
                   {loggedUserInitials}
                 </span>
                 <span className="hidden min-w-0 text-left xl:block">
-                  <span className="block max-w-28 truncate text-[11px] font-semibold leading-4 text-slate-900">{loggedUserName}</span>
-                  <span className="block text-[9px] leading-3 text-slate-400">{loggedUserRole}</span>
+                  <span className="block max-w-28 truncate text-[11px] font-semibold leading-4 text-slate-900">
+                    {loggedUserName}
+                  </span>
+                  <span className="block text-[9px] leading-3 text-slate-400">
+                    {loggedUserRole}
+                  </span>
                 </span>
               </button>
               {userMenuOpen ? (
@@ -263,13 +313,21 @@ export function OnboardingShell({ controller, children }: OnboardingShellProps) 
                 >
                   <div className="rounded-xl bg-slate-50 p-3">
                     <div className="flex items-center gap-3">
-                      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#003478] text-xs font-bold text-white">{loggedUserInitials}</span>
+                      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#003478] text-xs font-bold text-white">
+                        {loggedUserInitials}
+                      </span>
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-slate-950">{loggedUserName}</p>
-                        <p className="mt-0.5 text-[10px] font-medium text-[#003478]">{loggedUserRole}</p>
+                        <p className="truncate text-sm font-semibold text-slate-950">
+                          {loggedUserName}
+                        </p>
+                        <p className="mt-0.5 text-[10px] font-medium text-[#003478]">
+                          {loggedUserRole}
+                        </p>
                       </div>
                     </div>
-                    <p className="mt-3 truncate text-[10px] text-slate-400">{loggedUserEmail}</p>
+                    <p className="mt-3 truncate text-[10px] text-slate-400">
+                      {loggedUserEmail}
+                    </p>
                   </div>
                   <div className="mt-2 border-t border-slate-100 pt-2">
                     <button
@@ -290,18 +348,26 @@ export function OnboardingShell({ controller, children }: OnboardingShellProps) 
           </div>
         </div>
         <div className="h-1 bg-slate-100">
-          <div className="h-full bg-[#003478] transition-[width] duration-500 ease-out" style={{ width: `${progressPercent}%` }} />
+          <div
+            className="h-full bg-[#003478] transition-[width] duration-500 ease-out"
+            style={{ width: `${progressPercent}%` }}
+          />
         </div>
       </header>
 
       {mobileNavOpen ? (
-        <div className="fixed inset-0 top-[68px] z-30 cursor-pointer bg-slate-950/20 backdrop-blur-[2px] lg:hidden" onClick={() => setMobileNavOpen(false)}>
+        <div
+          className="fixed inset-0 top-[68px] z-30 cursor-pointer bg-slate-950/20 backdrop-blur-[2px] lg:hidden"
+          onClick={() => setMobileNavOpen(false)}
+        >
           <nav
             className="h-full w-[min(88vw,360px)] cursor-default overflow-y-auto border-r border-slate-200 bg-white p-4 shadow-xl"
             onClick={(event) => event.stopPropagation()}
             aria-label="Application sections"
           >
-            <p className="px-3 pb-3 pt-1 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Application sections</p>
+            <p className="px-3 pb-3 pt-1 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">
+              Application sections
+            </p>
             <div className="space-y-1.5">
               {visibleSteps.map((step, index) => {
                 const Icon = step.icon;
@@ -322,31 +388,46 @@ export function OnboardingShell({ controller, children }: OnboardingShellProps) 
                           : "border-transparent text-slate-600 hover:bg-slate-50"
                     }`}
                   >
-                    <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl transition-all duration-300 ${
-                      done
-                        ? "bg-[#003478] text-white shadow-sm"
-                        : active
-                          ? "bg-white text-[#003478] shadow-sm"
-                          : "bg-slate-100 text-slate-500"
-                    }`}>
+                    <span
+                      className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl transition-all duration-300 ${
+                        done
+                          ? "bg-[#003478] text-white shadow-sm"
+                          : active
+                            ? "bg-white text-[#003478] shadow-sm"
+                            : "bg-slate-100 text-slate-500"
+                      }`}
+                    >
                       {done ? (
-                        <Check className="h-4 w-4 [animation:caprock-complete-in_.32s_cubic-bezier(.22,1,.36,1)_both] motion-reduce:animate-none" strokeWidth={2.7} />
+                        <Check
+                          className="h-4 w-4 [animation:caprock-complete-in_.32s_cubic-bezier(.22,1,.36,1)_both] motion-reduce:animate-none"
+                          strokeWidth={2.7}
+                        />
                       ) : (
                         <Icon className="h-4 w-4" />
                       )}
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block text-sm font-semibold">{step.label}</span>
-                      <span className={`mt-0.5 block truncate text-[11px] ${done ? "font-medium text-[#003478]" : "text-slate-500"}`}>
+                      <span className="block text-sm font-semibold">
+                        {step.label}
+                      </span>
+                      <span
+                        className={`mt-0.5 block truncate text-[11px] ${done ? "font-medium text-[#003478]" : "text-slate-500"}`}
+                      >
                         {done ? "Section completed" : step.description}
                       </span>
                     </span>
                     {done ? (
-                      <span className="rounded-full bg-[#dce7f2] px-2 py-1 text-[9px] font-bold uppercase tracking-[0.06em] text-[#0f172a]">Completed</span>
+                      <span className="rounded-full bg-[#dce7f2] px-2 py-1 text-[9px] font-bold uppercase tracking-[0.06em] text-[#0f172a]">
+                        Completed
+                      </span>
                     ) : active ? (
-                      <span className="rounded-full bg-white px-2 py-1 text-[9px] font-bold uppercase tracking-[0.06em] text-[#003478]">Current</span>
+                      <span className="rounded-full bg-white px-2 py-1 text-[9px] font-bold uppercase tracking-[0.06em] text-[#003478]">
+                        Current
+                      </span>
                     ) : (
-                      <span className="text-[10px] font-bold text-slate-400">{index + 1}</span>
+                      <span className="text-[10px] font-bold text-slate-400">
+                        {index + 1}
+                      </span>
                     )}
                   </button>
                 );
@@ -362,10 +443,16 @@ export function OnboardingShell({ controller, children }: OnboardingShellProps) 
             <div className="mb-6 px-3">
               <div className="flex items-end justify-between gap-4">
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Application progress</p>
-                  <p className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-slate-950">{completedSectionCount}/{applicationSectionCount}</p>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">
+                    Application progress
+                  </p>
+                  <p className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-slate-950">
+                    {completedSectionCount}/{applicationSectionCount}
+                  </p>
                 </div>
-                <p className="pb-1 text-xs font-medium text-slate-400">sections complete</p>
+                <p className="pb-1 text-xs font-medium text-slate-400">
+                  sections complete
+                </p>
               </div>
               <div
                 className="mt-4 h-1.5 overflow-hidden rounded-full bg-slate-200/80"
@@ -380,7 +467,9 @@ export function OnboardingShell({ controller, children }: OnboardingShellProps) 
                   style={{ width: `${progressPercent}%` }}
                 />
               </div>
-              <p className="mt-2 text-right text-[10px] font-semibold text-[#003478]">{progressPercent}% completed</p>
+              <p className="mt-2 text-right text-[10px] font-semibold text-[#003478]">
+                {progressPercent}% completed
+              </p>
             </div>
 
             <nav className="space-y-1.5" aria-label="Application sections">
@@ -413,23 +502,36 @@ export function OnboardingShell({ controller, children }: OnboardingShellProps) 
                       }`}
                     >
                       {done ? (
-                        <Check className="h-4 w-4 [animation:caprock-complete-in_.32s_cubic-bezier(.22,1,.36,1)_both] motion-reduce:animate-none" strokeWidth={2.7} />
+                        <Check
+                          className="h-4 w-4 [animation:caprock-complete-in_.32s_cubic-bezier(.22,1,.36,1)_both] motion-reduce:animate-none"
+                          strokeWidth={2.7}
+                        />
                       ) : (
                         <Icon className="h-4 w-4" />
                       )}
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block text-[13px] font-semibold">{step.label}</span>
-                      <span className={`mt-0.5 block truncate text-[10px] ${done ? "font-semibold text-[#003478]" : "text-slate-400"}`}>
+                      <span className="block text-[13px] font-semibold">
+                        {step.label}
+                      </span>
+                      <span
+                        className={`mt-0.5 block truncate text-[10px] ${done ? "font-semibold text-[#003478]" : "text-slate-400"}`}
+                      >
                         {done ? "Section completed" : step.description}
                       </span>
                     </span>
                     {done ? (
-                      <span className="rounded-full bg-[#dce7f2] px-2 py-1 text-[8px] font-bold uppercase tracking-[0.05em] text-[#0f172a]">Completed</span>
+                      <span className="rounded-full bg-[#dce7f2] px-2 py-1 text-[8px] font-bold uppercase tracking-[0.05em] text-[#0f172a]">
+                        Completed
+                      </span>
                     ) : active ? (
-                      <span className="rounded-full bg-white px-2 py-1 text-[8px] font-bold uppercase tracking-[0.05em] text-[#003478]">Current</span>
+                      <span className="rounded-full bg-white px-2 py-1 text-[8px] font-bold uppercase tracking-[0.05em] text-[#003478]">
+                        Current
+                      </span>
                     ) : (
-                      <span className="text-[10px] font-bold text-slate-300">{index + 1}</span>
+                      <span className="text-[10px] font-bold text-slate-300">
+                        {index + 1}
+                      </span>
                     )}
                   </button>
                 );
@@ -442,8 +544,12 @@ export function OnboardingShell({ controller, children }: OnboardingShellProps) 
                   <LockKeyhole className="h-4 w-4" />
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-slate-800">Secure application</p>
-                  <p className="mt-1 text-[10px] leading-4 text-slate-400">Your entries are protected throughout this session.</p>
+                  <p className="text-xs font-semibold text-slate-800">
+                    Secure application
+                  </p>
+                  <p className="mt-1 text-[10px] leading-4 text-slate-400">
+                    Your entries are protected throughout this session.
+                  </p>
                 </div>
               </div>
             </div>
@@ -454,8 +560,12 @@ export function OnboardingShell({ controller, children }: OnboardingShellProps) 
           <div className="mx-auto max-w-4xl">
             <div className="mb-5 flex items-center justify-between gap-4 lg:hidden">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">Step {activeStepIndex + 1} of {visibleSteps.length}</p>
-                <p className="mt-1 text-sm font-semibold text-slate-800">{visibleSteps[activeStepIndex].label}</p>
+                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
+                  Step {activeStepIndex + 1} of {visibleSteps.length}
+                </p>
+                <p className="mt-1 text-sm font-semibold text-slate-800">
+                  {visibleSteps[activeStepIndex].label}
+                </p>
               </div>
               <span className="rounded-full bg-[#dce7f2] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-800">
                 {completedSectionCount}/{applicationSectionCount} complete
@@ -464,13 +574,21 @@ export function OnboardingShell({ controller, children }: OnboardingShellProps) 
 
             <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_12px_45px_rgba(15,23,42,0.045)] sm:p-8 lg:p-10">
               {successNotice ? (
-                <div role="status" className="mb-6 flex items-start gap-3 rounded-2xl border border-[rgba(0,52,120,0.13)] bg-[rgba(0,52,120,0.035)] p-4 text-sm leading-6 text-slate-700">
+                <div
+                  role="status"
+                  className="mb-6 flex items-start gap-3 rounded-2xl border border-[rgba(0,52,120,0.13)] bg-[rgba(0,52,120,0.035)] p-4 text-sm leading-6 text-slate-700"
+                >
                   <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-[#003478]" />
                   {successNotice}
                 </div>
               ) : null}
               {notice ? (
-                <div id="application-error-summary" role="alert" tabIndex={-1} className="mb-6 flex items-start gap-3 rounded-2xl border border-red-100 bg-red-50 p-4 text-sm leading-6 text-red-800 outline-none focus-visible:ring-4 focus-visible:ring-red-100">
+                <div
+                  id="application-error-summary"
+                  role="alert"
+                  tabIndex={-1}
+                  className="mb-6 flex items-start gap-3 rounded-2xl border border-red-100 bg-red-50 p-4 text-sm leading-6 text-red-800 outline-none focus-visible:ring-4 focus-visible:ring-red-100"
+                >
                   <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
                   {notice}
                 </div>
@@ -507,7 +625,9 @@ export function OnboardingShell({ controller, children }: OnboardingShellProps) 
                   {draftStatus === "saving" ? (
                     <Loader2 className="h-4 w-4 shrink-0 animate-spin motion-reduce:animate-none" />
                   ) : draftStatus === "saved" || submitted ? (
-                    <CheckCircle2 className={`h-4 w-4 shrink-0 ${draftStatus === "saved" ? "text-[#003478]" : "text-slate-400"}`} />
+                    <CheckCircle2
+                      className={`h-4 w-4 shrink-0 ${draftStatus === "saved" ? "text-[#003478]" : "text-slate-400"}`}
+                    />
                   ) : (
                     <Save className="h-4 w-4 shrink-0" />
                   )}
@@ -516,7 +636,9 @@ export function OnboardingShell({ controller, children }: OnboardingShellProps) 
                 <button
                   type="button"
                   onClick={goNext}
-                  disabled={isSubmitting || (activeStepId === "review" && submitted)}
+                  disabled={
+                    isSubmitting || (activeStepId === "review" && submitted)
+                  }
                   aria-busy={isSubmitting}
                   aria-label={
                     activeStepId === "review"
@@ -567,9 +689,15 @@ export function OnboardingShell({ controller, children }: OnboardingShellProps) 
             </div>
 
             <div className="mt-5 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 pb-8 text-[10px] font-medium text-slate-400">
-              <span className="inline-flex items-center gap-1.5"><ShieldCheck className="h-3.5 w-3.5" /> Encrypted</span>
-              <span className="inline-flex items-center gap-1.5"><Banknote className="h-3.5 w-3.5" /> Bank verification</span>
-              <span className="inline-flex items-center gap-1.5"><Building2 className="h-3.5 w-3.5" /> Compliance review</span>
+              <span className="inline-flex items-center gap-1.5">
+                <ShieldCheck className="h-3.5 w-3.5" /> Encrypted
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <Banknote className="h-3.5 w-3.5" /> Bank verification
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <Building2 className="h-3.5 w-3.5" /> Compliance review
+              </span>
             </div>
           </div>
         </div>
@@ -595,8 +723,15 @@ export function OnboardingShell({ controller, children }: OnboardingShellProps) 
                   <FileText className="h-4 w-4" />
                 </span>
                 <div className="min-w-0">
-                  <p id="document-preview-title" className="text-sm font-semibold text-slate-950">{documentPreview.label}</p>
-                  <p className="mt-0.5 truncate text-[11px] text-slate-500">{documentPreview.document.name}</p>
+                  <p
+                    id="document-preview-title"
+                    className="text-sm font-semibold text-slate-950"
+                  >
+                    {documentPreview.label}
+                  </p>
+                  <p className="mt-0.5 truncate text-[11px] text-slate-500">
+                    {documentPreview.document.name}
+                  </p>
                 </div>
               </div>
               <div className="flex shrink-0 items-center gap-2">
@@ -629,7 +764,8 @@ export function OnboardingShell({ controller, children }: OnboardingShellProps) 
                     className="max-h-full max-w-full rounded-lg object-contain shadow-sm"
                   />
                 </div>
-              ) : documentPreview.document.type === "application/pdf" || documentPreview.document.name.toLowerCase().endsWith(".pdf") ? (
+              ) : documentPreview.document.type === "application/pdf" ||
+                documentPreview.document.name.toLowerCase().endsWith(".pdf") ? (
                 <iframe
                   src={documentPreview.document.previewUrl}
                   title={`Preview of ${documentPreview.document.name}`}
@@ -641,9 +777,13 @@ export function OnboardingShell({ controller, children }: OnboardingShellProps) 
                     <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-[#dce7f2] text-[#003478]">
                       <FileText className="h-7 w-7" />
                     </div>
-                    <h2 className="mt-5 text-lg font-semibold text-slate-950">Preview unavailable for this file type</h2>
+                    <h2 className="mt-5 text-lg font-semibold text-slate-950">
+                      Preview unavailable for this file type
+                    </h2>
                     <p className="mt-2 text-sm leading-6 text-slate-500">
-                      Word documents cannot be displayed securely in the browser viewer. Download the file to open it in a compatible application.
+                      Word documents cannot be displayed securely in the browser
+                      viewer. Download the file to open it in a compatible
+                      application.
                     </p>
                     <a
                       href={documentPreview.document.previewUrl}
@@ -659,8 +799,14 @@ export function OnboardingShell({ controller, children }: OnboardingShellProps) 
             </div>
 
             <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-200 bg-white px-4 py-3 text-[10px] text-slate-400 sm:px-5">
-              <span>{(documentPreview.document.size / 1024 / 1024).toFixed(2)} MB · {documentPreview.document.type || "Document"}</span>
-              <span className="inline-flex items-center gap-1.5"><ShieldCheck className="h-3.5 w-3.5 text-[#003478]" /> Secure document viewer</span>
+              <span>
+                {(documentPreview.document.size / 1024 / 1024).toFixed(2)} MB ·{" "}
+                {documentPreview.document.type || "Document"}
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <ShieldCheck className="h-3.5 w-3.5 text-[#003478]" /> Secure
+                document viewer
+              </span>
             </div>
           </div>
         </div>
@@ -670,7 +816,8 @@ export function OnboardingShell({ controller, children }: OnboardingShellProps) 
         <div
           className="fixed inset-0 z-[120] grid place-items-center bg-slate-950/35 px-4 py-8 backdrop-blur-[2px]"
           onMouseDown={(event) => {
-            if (event.target === event.currentTarget && !isInvitingAdviser) setShowAdviserInvite(false);
+            if (event.target === event.currentTarget && !isInvitingAdviser)
+              setShowAdviserInvite(false);
           }}
         >
           <div
@@ -687,9 +834,16 @@ export function OnboardingShell({ controller, children }: OnboardingShellProps) 
                   <UserPlus className="h-5 w-5" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#003478]">Application support</p>
-                  <h2 id="adviser-dialog-title" className="mt-1 text-lg font-semibold tracking-[-0.02em] text-slate-950">
-                    {form.adviserAccess ? "Manage adviser access" : "Invite an adviser"}
+                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#003478]">
+                    Application support
+                  </p>
+                  <h2
+                    id="adviser-dialog-title"
+                    className="mt-1 text-lg font-semibold tracking-[-0.02em] text-slate-950"
+                  >
+                    {form.adviserAccess
+                      ? "Manage adviser access"
+                      : "Invite an adviser"}
                   </h2>
                 </div>
               </div>
@@ -705,15 +859,22 @@ export function OnboardingShell({ controller, children }: OnboardingShellProps) 
             </div>
 
             <div className="space-y-5 px-5 py-6 sm:px-6">
-              <p id="adviser-dialog-description" className="text-sm leading-6 text-slate-600">
-                Invite a trusted adviser to complete or update any section of this application on your behalf. You remain responsible for reviewing and approving the information before submission.
+              <p
+                id="adviser-dialog-description"
+                className="text-sm leading-6 text-slate-600"
+              >
+                Invite a trusted adviser to complete or update any section of
+                this application on your behalf. You remain responsible for
+                reviewing and approving the information before submission.
               </p>
 
               {form.adviserAccess ? (
                 <div className="flex items-start gap-3 rounded-2xl border border-[rgba(0,52,120,0.14)] bg-[rgba(0,52,120,0.035)] p-4">
                   <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-[#003478]" />
                   <div>
-                    <p className="text-xs font-semibold text-slate-900">Access currently enabled</p>
+                    <p className="text-xs font-semibold text-slate-900">
+                      Access currently enabled
+                    </p>
                     <p className="mt-1 text-xs leading-5 text-slate-500">
                       {form.adviserAccess.name} · {form.adviserAccess.email}
                     </p>
@@ -728,12 +889,17 @@ export function OnboardingShell({ controller, children }: OnboardingShellProps) 
                     id="adviserName"
                     value={adviserDraft.name}
                     onChange={(event) => {
-                      setAdviserDraft((current) => ({ ...current, name: event.target.value }));
+                      setAdviserDraft((current) => ({
+                        ...current,
+                        name: event.target.value,
+                      }));
                       setAdviserError("");
                     }}
                     placeholder="Full name"
                     autoComplete="name"
-                    className={inputClass(Boolean(adviserError && !adviserDraft.name.trim()))}
+                    className={inputClass(
+                      Boolean(adviserError && !adviserDraft.name.trim()),
+                    )}
                   />
                 </Field>
                 <Field label="Adviser’s email" htmlFor="adviserEmail">
@@ -742,20 +908,30 @@ export function OnboardingShell({ controller, children }: OnboardingShellProps) 
                     type="email"
                     value={adviserDraft.email}
                     onChange={(event) => {
-                      setAdviserDraft((current) => ({ ...current, email: event.target.value }));
+                      setAdviserDraft((current) => ({
+                        ...current,
+                        email: event.target.value,
+                      }));
                       setAdviserError("");
                     }}
                     placeholder="adviser@example.com"
                     autoComplete="email"
-                    className={inputClass(Boolean(adviserError && adviserDraft.name.trim()))}
+                    className={inputClass(
+                      Boolean(adviserError && adviserDraft.name.trim()),
+                    )}
                   />
                 </Field>
               </div>
-              {adviserError ? <p role="alert" className="text-xs font-medium text-red-600">{adviserError}</p> : null}
+              {adviserError ? (
+                <p role="alert" className="text-xs font-medium text-red-600">
+                  {adviserError}
+                </p>
+              ) : null}
 
               <div className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-xs leading-5 text-slate-600">
                 <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#003478]" />
-                Adviser access applies to the full application, is recorded for audit purposes and can be revoked here at any time.
+                Adviser access applies to the full application, is recorded for
+                audit purposes and can be revoked here at any time.
               </div>
             </div>
 
@@ -787,7 +963,11 @@ export function OnboardingShell({ controller, children }: OnboardingShellProps) 
                   disabled={isInvitingAdviser}
                   className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-[#003478] px-4 text-xs font-semibold text-white transition hover:bg-[#002b63] disabled:cursor-wait disabled:opacity-70"
                 >
-                  {isInvitingAdviser ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                  {isInvitingAdviser ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
                   {form.adviserAccess ? "Update invitation" : "Send invitation"}
                 </button>
               </div>

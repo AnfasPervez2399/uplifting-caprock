@@ -904,28 +904,59 @@ export function SignUp() {
           reducedMotion={reducedMotion}
         />
 
-        <button
+        <motion.button
           type="submit"
           disabled={status !== "idle"}
-          className="group flex h-14 w-full items-center justify-between rounded-xl bg-[#003478] pl-5 pr-2 text-white shadow-[0_8px_20px_-14px_rgba(0,52,120,0.75)] transition hover:-translate-y-0.5 hover:bg-[#002b63] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003478]/25 focus-visible:ring-offset-2 disabled:cursor-wait disabled:translate-y-0 disabled:opacity-90"
+          whileHover={
+            !reducedMotion && status === "idle" ? { y: -2 } : undefined
+          }
+          whileTap={
+            !reducedMotion && status === "idle" ? { scale: 0.985 } : undefined
+          }
+          transition={{ duration: 0.18, ease: EASE }}
+          className="group relative h-14 w-full overflow-hidden rounded-xl bg-[#003478] text-white shadow-[0_6px_16px_-10px_rgba(0,52,120,0.75)] transition-shadow duration-200 hover:shadow-[0_12px_24px_-12px_rgba(0,52,120,0.65)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003478]/25 focus-visible:ring-offset-2 disabled:cursor-wait disabled:bg-[#003478] disabled:opacity-90"
         >
-          <span className="text-[15px] font-semibold">
-            {status === "loading"
-              ? "Creating secure account"
-              : status === "success"
-                ? "Account created"
-                : "Create account"}
-          </span>
-          <span className="grid h-10 w-10 place-items-center rounded-[10px] bg-white/10">
-            {status === "loading" ? (
-              <Loader2 className="h-[18px] w-[18px] animate-spin" />
-            ) : status === "success" ? (
-              <CheckCircle2 className="h-[18px] w-[18px]" />
-            ) : (
-              <UserPlus className="h-[18px] w-[18px]" />
-            )}
-          </span>
-        </button>
+          <AnimatePresence initial={false}>
+            <motion.span
+              key={status}
+              initial={reducedMotion ? false : { opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.14 }}
+              className="absolute inset-0 flex items-center justify-between gap-4 pl-5 pr-2"
+              aria-live="polite"
+            >
+              <span className="text-[15px] font-semibold tracking-[-0.015em]">
+                {status === "loading"
+                  ? "Creating secure account"
+                  : status === "success"
+                    ? "Account created"
+                    : "Create account"}
+              </span>
+              <span
+                aria-hidden="true"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-white/10 text-white transition-[width,background-color,color,transform] duration-300 ease-out group-hover:w-12 group-hover:bg-white group-hover:text-[#003478] group-disabled:!w-10 group-disabled:!bg-white/10 group-disabled:!text-white"
+              >
+                {status === "loading" ? (
+                  <Loader2 className="h-[18px] w-[18px] animate-spin" />
+                ) : status === "success" ? (
+                  <motion.span
+                    initial={reducedMotion ? false : { scale: 0.75 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", stiffness: 420, damping: 24 }}
+                  >
+                    <Check className="h-[18px] w-[18px]" strokeWidth={2.4} />
+                  </motion.span>
+                ) : (
+                  <UserPlus
+                    className="h-[18px] w-[18px] transition-transform duration-300 ease-out group-hover:translate-x-0.5"
+                    strokeWidth={2.2}
+                  />
+                )}
+              </span>
+            </motion.span>
+          </AnimatePresence>
+        </motion.button>
       </form>
 
       <p className="mt-7 border-t border-slate-200 pt-5 text-center text-sm text-slate-500">

@@ -98,7 +98,7 @@ export function PersonalStep({ controller }: StepProps) {
                 className={`${inputClass()} cursor-not-allowed bg-slate-100/80 text-slate-500`}
               />
             </Field>
-            <Field
+            {/* <Field
               label="Adviser reference number"
               htmlFor="advisorReferenceNumber"
               required={false}
@@ -111,7 +111,7 @@ export function PersonalStep({ controller }: StepProps) {
                 placeholder="Provided by adviser"
                 className={`${inputClass()} cursor-not-allowed bg-slate-100/80 text-slate-500`}
               />
-            </Field>
+            </Field> */}
           </div>
         </section>
 
@@ -277,7 +277,7 @@ export function PersonalStep({ controller }: StepProps) {
                       <p className="mt-0.5 text-xs text-slate-500">
                         Applicant {index + 1} ·{" "}
                         {applicant.method === "existing"
-                          ? `Existing Caprock client · ${applicant.applicantCountry}`
+                          ? `Existing Caprock client`
                           : applicant.email}
                       </p>
                     </div>

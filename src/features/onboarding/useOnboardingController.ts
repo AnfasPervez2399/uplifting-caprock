@@ -1046,9 +1046,7 @@ export function useOnboardingController() {
     setForm(nextForm);
     setErrors({});
     setNotice("");
-    setSuccessNotice(
-      "Application type changed. Later sections have been reset.",
-    );
+    setSuccessNotice("");
     lookupRequestRef.current += 1;
     setShowJointComposer(false);
     setJointDraft(emptyJointDraft);
@@ -1142,7 +1140,7 @@ export function useOnboardingController() {
       method: jointDraft.method,
       clientId: isExisting ? jointDraft.clientId.trim() : "",
       firstName: isExisting
-        ? `Verified client · ${jointDraft.clientId.trim().toUpperCase()}`
+        ? `${jointDraft.clientId.trim().toUpperCase()}`
         : invitationName,
       middleName: "",
       lastName: "",
