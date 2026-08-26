@@ -2,14 +2,13 @@ import {
   BadgeCheck,
   CheckCircle2,
   CircleUserRound,
-  Loader2,
   Plus,
-  Send,
   ShieldCheck,
   Trash2,
   UserPlus,
   Users,
   X,
+  Loader2,
 } from "lucide-react";
 import { CustomSelect } from "../../../components/ui/CustomSelect";
 
@@ -396,11 +395,7 @@ export function PersonalStep({ controller }: StepProps) {
                           ) : (
                             <BadgeCheck className="h-4 w-4" />
                           )}
-                          {lookupState === "loading"
-                            ? "Verifying…"
-                            : lookupState === "found"
-                              ? "Verified"
-                              : "Verify ID"}
+                          {lookupState === "found" ? "Verified" : "Verify ID"}
                         </button>
                       </div>
                     </Field>

@@ -1098,7 +1098,7 @@ export function useOnboardingController() {
     setShowJointComposer(true);
   };
 
-  const handleLookupClient = () => {
+  const handleLookupClient = async () => {
     const requestId = ++lookupRequestRef.current;
     if (jointDraft.clientId.trim().length < 5) {
       setLookupState("error");
@@ -1112,23 +1112,40 @@ export function useOnboardingController() {
     setErrors((current) => ({ ...current, jointClientId: "" }));
     setLookupState("loading");
     setLookupVerifiedAt("");
-    window.setTimeout(() => {
-      if (lookupRequestRef.current !== requestId) return;
-      setJointDraft((current) => ({
-        ...current,
-        applicantCountry:
-          current.applicantCountry ||
-          form.personal.applicantCountry ||
-          "Australia",
-      }));
-      setLookupState("found");
-      setLookupVerifiedAt(
-        new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
+    try {
+      await withLoader(
+        async () => {
+          await new Promise<void>((resolve) => window.setTimeout(resolve, 900));
+          if (lookupRequestRef.current !== requestId) return;
+          setJointDraft((current) => ({
+            ...current,
+            applicantCountry:
+              current.applicantCountry ||
+              form.personal.applicantCountry ||
+              "Australia",
+          }));
+          setLookupState("found");
+          setLookupVerifiedAt(
+            new Date().toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+          );
+        },
+        {
+          message: "Verifying client ID",
+          detail: "Matching this Caprock client against the investor register.",
+          minimumDuration: 750,
+        },
       );
-    }, 700);
+    } catch {
+      if (lookupRequestRef.current !== requestId) return;
+      setLookupState("error");
+      setErrors((current) => ({
+        ...current,
+        jointClientId: "We could not verify this client ID. Please try again.",
+      }));
+    }
   };
 
   const saveJointApplicant = () => {
