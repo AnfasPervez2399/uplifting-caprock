@@ -44,7 +44,7 @@ export function BusinessStep({ controller }: StepProps) {
         icon={BriefcaseBusiness}
       />
 
-      <div className="space-y-8">
+      <div className="space-y-6">
         <section>
           <SubsectionHeading
             title="Sole Trader assessment"
@@ -86,15 +86,17 @@ export function BusinessStep({ controller }: StepProps) {
             description="Enter the legal business details used by the Sole Trader."
           />
           <div className="grid gap-5 sm:grid-cols-2">
-            <Field label="Business name" htmlFor="businessName" error={errors.businessName}>
-              <input
-                id="businessName"
-                value={form.business.businessName}
-                onChange={(event) => updateBusiness("businessName", event.target.value)}
-                placeholder="Name under which the business is carried out"
-                className={inputClass(Boolean(errors.businessName))}
-              />
-            </Field>
+            <div className={form.business.assessmentNature === "australian" ? "" : "sm:col-span-2"}>
+              <Field label="Business name" htmlFor="businessName" error={errors.businessName}>
+                <input
+                  id="businessName"
+                  value={form.business.businessName}
+                  onChange={(event) => updateBusiness("businessName", event.target.value)}
+                  placeholder="Name under which the business is carried out"
+                  className={inputClass(Boolean(errors.businessName))}
+                />
+              </Field>
+            </div>
             {form.business.assessmentNature === "australian" ? (
               <Field label="Australian Business Number (ABN)" htmlFor="abn" error={errors.abn}>
                 <input
@@ -220,26 +222,30 @@ export function BusinessStep({ controller }: StepProps) {
                   />
                 </Field>
                 {form.business.usCitizen === "yes" ? (
-                  <Field label="Social Security Number" htmlFor="socialSecurityNumber" error={errors.socialSecurityNumber}>
-                    <input
-                      id="socialSecurityNumber"
-                      value={form.business.socialSecurityNumber}
-                      onChange={(event) => updateBusiness("socialSecurityNumber", event.target.value)}
-                      placeholder="Enter Social Security Number"
-                      className={inputClass(Boolean(errors.socialSecurityNumber))}
-                    />
-                  </Field>
+                  <div className={form.business.usTaxResident === "yes" ? "" : "sm:col-span-2"}>
+                    <Field label="Social Security Number" htmlFor="socialSecurityNumber" error={errors.socialSecurityNumber}>
+                      <input
+                        id="socialSecurityNumber"
+                        value={form.business.socialSecurityNumber}
+                        onChange={(event) => updateBusiness("socialSecurityNumber", event.target.value)}
+                        placeholder="Enter Social Security Number"
+                        className={inputClass(Boolean(errors.socialSecurityNumber))}
+                      />
+                    </Field>
+                  </div>
                 ) : null}
                 {form.business.usTaxResident === "yes" ? (
-                  <Field label="U.S. tax identification number" htmlFor="taxIdentificationNumber" error={errors.taxIdentificationNumber}>
-                    <input
-                      id="taxIdentificationNumber"
-                      value={form.business.taxIdentificationNumber}
-                      onChange={(event) => updateBusiness("taxIdentificationNumber", event.target.value)}
-                      placeholder="Enter tax identification number"
-                      className={inputClass(Boolean(errors.taxIdentificationNumber))}
-                    />
-                  </Field>
+                  <div className={form.business.usCitizen === "yes" ? "" : "sm:col-span-2"}>
+                    <Field label="U.S. tax identification number" htmlFor="taxIdentificationNumber" error={errors.taxIdentificationNumber}>
+                      <input
+                        id="taxIdentificationNumber"
+                        value={form.business.taxIdentificationNumber}
+                        onChange={(event) => updateBusiness("taxIdentificationNumber", event.target.value)}
+                        placeholder="Enter tax identification number"
+                        className={inputClass(Boolean(errors.taxIdentificationNumber))}
+                      />
+                    </Field>
+                  </div>
                 ) : null}
               </div>
               </section>

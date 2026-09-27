@@ -72,7 +72,7 @@ export function DocumentsStep({ controller }: StepProps) {
               <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-[#dce7f2] text-[11px] font-bold text-[#003478]">{number}</span>
               <div>
                 <p className="text-xs font-semibold text-slate-900">{title}</p>
-                <p className="mt-1 text-[11px] leading-5 text-slate-500">{description}</p>
+                <p className="mt-1 text-[11px] leading-5 text-slate-600">{description}</p>
               </div>
             </div>
           </div>
@@ -113,7 +113,7 @@ export function DocumentsStep({ controller }: StepProps) {
             if (!type) return null;
             const selectedLabel = PHOTO_ID_OPTIONS.find((option) => option.value === type)?.label || "Photo ID";
             return (
-              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <DocumentUpload
                   id={`${applicant.key}-${idPrefix}Front`}
                   title={
@@ -155,14 +155,14 @@ export function DocumentsStep({ controller }: StepProps) {
                   </div>
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold text-slate-950">{applicant.name}</p>
-                    <p className="mt-0.5 text-xs text-slate-500">
+                    <p className="mt-0.5 text-xs text-slate-600">
                       {applicant.label} · {applicant.country || "Country not selected"} · {needsTwoPhotoIds ? "2 photo IDs required" : "1 photo ID required"}
                     </p>
                   </div>
                 </div>
                 <span
                   className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] ${
-                    complete ? "bg-[#dce7f2] text-slate-800" : "bg-slate-100 text-slate-500"
+                    complete ? "bg-[#dce7f2] text-slate-800" : "bg-slate-100 text-slate-600"
                   }`}
                 >
                   {complete ? "Complete" : "Required"}
@@ -173,7 +173,7 @@ export function DocumentsStep({ controller }: StepProps) {
                 <div>
                   <div className="mb-4">
                     <h3 className="text-sm font-semibold text-slate-950">1. Photo identification<RequiredIndicator /></h3>
-                    <p className="mt-1 text-xs leading-5 text-slate-500">
+                    <p className="mt-1 text-xs leading-5 text-slate-600">
                       {needsTwoPhotoIds
                         ? "Because this applicant is outside Australia, select two different photo ID types and upload a different document for each."
                         : "Select and upload one current, government-issued photo ID."}
@@ -206,7 +206,7 @@ export function DocumentsStep({ controller }: StepProps) {
                         <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[#dce7f2] text-xs font-bold text-[#003478]">2</div>
                         <div>
                           <p className="text-xs font-semibold text-slate-900">Second, different photo ID</p>
-                          <p className="mt-1 text-[11px] leading-5 text-slate-500">The same ID type and the same uploaded file cannot be used twice.</p>
+                          <p className="mt-1 text-[11px] leading-5 text-slate-600">The same ID type and the same uploaded file cannot be used twice.</p>
                         </div>
                       </div>
                       <Field label="Second photo ID type" htmlFor={`${applicant.key}-secondaryPhotoIdType`}>
@@ -220,7 +220,7 @@ export function DocumentsStep({ controller }: StepProps) {
                         />
                       </Field>
                       {!documents.photoIdType ? (
-                        <p className="mt-2 text-[11px] text-slate-500">Select the first photo ID before choosing the second.</p>
+                        <p className="mt-2 text-[11px] text-slate-600">Select the first photo ID before choosing the second.</p>
                       ) : null}
                       {renderPhotoIdFiles(
                         documents.secondaryPhotoIdType,
@@ -243,7 +243,7 @@ export function DocumentsStep({ controller }: StepProps) {
                 <div className="border-t border-slate-100 pt-7">
                   <div className="mb-4">
                     <h3 className="text-sm font-semibold text-slate-950">2. Residential address evidence<RequiredIndicator /></h3>
-                    <p className="mt-1 text-xs leading-5 text-slate-500">
+                    <p className="mt-1 text-xs leading-5 text-slate-600">
                       A driving licence satisfies this requirement. If neither photo ID is a driving licence, upload one non-photo address document.
                     </p>
                   </div>
@@ -253,7 +253,7 @@ export function DocumentsStep({ controller }: StepProps) {
                       <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-[#003478]" />
                       <div>
                         <p className="text-xs font-semibold text-slate-900">No additional address document required</p>
-                        <p className="mt-1 text-xs leading-5 text-slate-500">The uploaded driving licence will be used for residential address verification.</p>
+                        <p className="mt-1 text-xs leading-5 text-slate-600">The uploaded driving licence will be used for residential address verification.</p>
                       </div>
                     </div>
                   ) : (
@@ -284,7 +284,7 @@ export function DocumentsStep({ controller }: StepProps) {
                 <div className="border-t border-slate-100 pt-7">
                   <div className="mb-4">
                     <h3 className="text-sm font-semibold text-slate-950">3. Personal details evidence<RequiredIndicator /></h3>
-                    <p className="mt-1 text-xs leading-5 text-slate-500">Complete either option: upload a current CV or provide a valid website URL.</p>
+                    <p className="mt-1 text-xs leading-5 text-slate-600">Complete either option: upload a current CV or provide a valid website URL.</p>
                   </div>
                   <div className="grid gap-4 lg:grid-cols-2">
                     <DocumentUpload

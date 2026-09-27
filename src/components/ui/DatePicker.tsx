@@ -178,7 +178,7 @@ export function DatePicker({
     <div>
       <div className="grid min-w-0 grid-cols-1 gap-2.5 min-[420px]:grid-cols-[minmax(0,0.75fr)_minmax(0,1.45fr)_minmax(0,1fr)]">
         <div className="min-w-0">
-          <span className="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400">
+          <span className="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500">
             {fieldLabels.day}
           </span>
           <CustomSelect
@@ -192,7 +192,7 @@ export function DatePicker({
           />
         </div>
         <div className="min-w-0">
-          <span className="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400">
+          <span className="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500">
             {fieldLabels.month}
           </span>
           <CustomSelect
@@ -206,7 +206,7 @@ export function DatePicker({
           />
         </div>
         <div className="min-w-0">
-          <span className="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400">
+          <span className="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500">
             {fieldLabels.year}
           </span>
           <CustomSelect
@@ -227,7 +227,7 @@ export function DatePicker({
           {displayedError}
         </p>
       ) : helperText ? (
-        <p className="mt-2 text-[11px] leading-5 text-slate-400">
+        <p className="mt-2 text-[11px] leading-5 text-slate-500">
           {helperText}
         </p>
       ) : null}

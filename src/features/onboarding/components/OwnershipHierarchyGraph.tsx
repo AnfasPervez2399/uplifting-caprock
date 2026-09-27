@@ -116,18 +116,18 @@ function OwnershipNode({
           </span>
           <span className="min-w-0 flex-1 pt-0.5">
             <span className="block truncate text-[12px] font-bold tracking-[-0.01em] text-slate-950">{subject.name || "Unnamed owner"}</span>
-            <span className="mt-1 block text-[10px] font-semibold tabular-nums text-slate-500">{subject.percentage || "0"}% ownership</span>
+            <span className="mt-1 block text-[10px] font-semibold tabular-nums text-slate-600">{subject.percentage || "0"}% ownership</span>
           </span>
           <ChevronRight className="absolute right-2.5 top-[46px] h-3.5 w-3.5 text-slate-300 transition duration-300 group-hover:translate-x-0.5 group-hover:text-[#003478]" />
         </span>
 
         <span className="mt-3 flex items-center justify-between border-t border-black/[0.055] pl-1 pt-2.5">
           <span className={`rounded-full px-2 py-0.5 text-[7px] font-black uppercase tracking-[0.08em] ${tone.badge}`}>{labelFor(subject.type)}</span>
-          <span className={`inline-flex items-center gap-1 text-[8px] font-black uppercase tracking-[0.055em] ${complete ? "text-emerald-700" : required ? "text-amber-700" : "text-slate-500"}`}>
+          <span className={`inline-flex items-center gap-1 text-[8px] font-black uppercase tracking-[0.055em] ${complete ? "text-emerald-700" : required ? "text-amber-700" : "text-slate-600"}`}>
             {complete ? <CheckCircle2 className="h-3 w-3" /> : <Info className="h-3 w-3" />}
             {statusLabel}
           </span>
-          <span className="text-[7px] font-black uppercase tracking-[0.08em] text-slate-400">L{depth}</span>
+          <span className="text-[7px] font-black uppercase tracking-[0.08em] text-slate-500">L{depth}</span>
         </span>
       </button>
 
@@ -208,7 +208,7 @@ function GraphCanvas({
           <span className="mx-auto mb-1.5 grid h-7 w-7 place-items-center rounded-lg bg-[#dce7f2] text-[#003478]"><Network className="h-3.5 w-3.5" /></span>
           <p className="truncate text-[12px] font-bold tracking-[-0.01em] text-slate-950">{parentName}</p>
           <p className="mt-0.5 text-[8px] font-black uppercase tracking-[0.09em] text-[#003478]">{parentLabel}</p>
-          {parentMeta ? <p className="mt-0.5 text-[8px] text-slate-500">{parentMeta}</p> : null}
+          {parentMeta ? <p className="mt-0.5 text-[8px] text-slate-600">{parentMeta}</p> : null}
         </div>
 
         {subjects.length ? (
@@ -233,9 +233,9 @@ function GraphCanvas({
           </>
         ) : (
           <div className="mt-4 w-[280px] rounded-2xl border border-dashed border-slate-300 bg-white/90 p-6 text-center">
-            <GitBranch className="mx-auto h-5 w-5 text-slate-400" />
+            <GitBranch className="mx-auto h-5 w-5 text-slate-500" />
             <p className="mt-2 text-sm font-semibold text-slate-600">No ownership connections yet</p>
-            <p className="mt-1 text-xs leading-5 text-slate-400">Add owners to create this hierarchy.</p>
+            <p className="mt-1 text-xs leading-5 text-slate-500">Add owners to create this hierarchy.</p>
           </div>
         )}
       </div>
@@ -266,7 +266,7 @@ export function OwnershipHierarchyGraph({
             <div>
               <p className="text-[9px] font-black uppercase tracking-[0.12em] text-[#003478]">Ownership map</p>
               <h3 className="mt-0.5 text-base font-bold tracking-[-0.02em] text-slate-950">Interactive {context === "beneficiaries" ? "beneficiary" : "shareholder"} hierarchy</h3>
-              <p className="mt-1 max-w-2xl text-xs leading-5 text-slate-500">The complete {context === "beneficiaries" ? "beneficial-interest" : "ownership"} structure is shown across every disclosed layer. Open any card to continue its application.</p>
+              <p className="mt-1 max-w-2xl text-xs leading-5 text-slate-600">The complete {context === "beneficiaries" ? "beneficial-interest" : "ownership"} structure is shown across every disclosed layer. Open any card to continue its application.</p>
             </div>
           </div>
           <span className={`inline-flex w-fit items-center gap-2 rounded-full border px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.06em] ${complete ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-amber-200 bg-amber-50 text-amber-700"}`}><span className={`h-1.5 w-1.5 rounded-full ${complete ? "bg-emerald-500" : "bg-amber-500"}`} />Direct {context === "beneficiaries" ? "beneficial interests" : "ownership"} {total}%</span>
@@ -278,7 +278,7 @@ export function OwnershipHierarchyGraph({
           <span className="mx-1 hidden h-3 w-px bg-slate-200 sm:block" />
           <span className="inline-flex items-center gap-1 text-emerald-700"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Ready</span>
           <span className="inline-flex items-center gap-1 text-amber-700"><span className="h-1.5 w-1.5 rounded-full bg-amber-400" /> Required</span>
-          <span className="ml-auto hidden normal-case tracking-normal text-slate-400 sm:inline">Horizontal scroll supports wide layers</span>
+          <span className="ml-auto hidden normal-case tracking-normal text-slate-500 sm:inline">Horizontal scroll supports wide layers</span>
         </div>
       </div>
       <div className="p-2.5 sm:p-4">
@@ -301,7 +301,7 @@ export function NestedOwnershipGraph({
   return (
     <section className="overflow-hidden rounded-[20px] border border-slate-200 bg-[#f7f9fb]">
       <div className="flex flex-col gap-2 border-b border-slate-200 bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-2.5"><span className="grid h-8 w-8 place-items-center rounded-lg bg-[#dce7f2] text-[#003478]"><Network className="h-3.5 w-3.5" /></span><div><p className="text-xs font-bold text-slate-950">Nested ownership map</p><p className="mt-0.5 text-[10px] text-slate-500">The complete disclosed ownership path is shown below.</p></div></div>
+        <div className="flex items-center gap-2.5"><span className="grid h-8 w-8 place-items-center rounded-lg bg-[#dce7f2] text-[#003478]"><Network className="h-3.5 w-3.5" /></span><div><p className="text-xs font-bold text-slate-950">Nested ownership map</p><p className="mt-0.5 text-[10px] text-slate-600">The complete disclosed ownership path is shown below.</p></div></div>
         <LayerBadge subjects={owners} label="This layer" />
       </div>
       <div className="p-2.5 sm:p-3">

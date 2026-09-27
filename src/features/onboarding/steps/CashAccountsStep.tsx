@@ -56,7 +56,7 @@ export function CashAccountsStep({ controller }: StepProps) {
                 {form.cashAccounts.length} selected
               </span>
             </div>
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {form.cashAccounts.map((currency) => {
                 const currencyLabel =
                   BANK_CURRENCY_OPTIONS.find((option) => option.value === currency)?.label || currency;
@@ -66,14 +66,14 @@ export function CashAccountsStep({ controller }: StepProps) {
                       <Banknote className="h-4 w-4" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold text-slate-900">{currencyLabel}</p>
-                      <p className="mt-0.5 text-[11px] text-slate-500">One {currency} cash account</p>
+                      <p className="text-sm font-semibold leading-snug text-slate-900">{currencyLabel}</p>
+                      <p className="mt-0.5 text-[11px] text-slate-600">One {currency} cash account</p>
                     </div>
                     <button
                       type="button"
                       onClick={() => updateCashAccounts(form.cashAccounts.filter((value) => value !== currency))}
                       aria-label={`Remove ${currency} cash account`}
-                      className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-slate-400 transition hover:bg-white hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003478]/20"
+                      className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-slate-500 transition hover:bg-white hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003478]/20"
                     >
                       <X className="h-4 w-4" />
                     </button>
@@ -86,7 +86,7 @@ export function CashAccountsStep({ controller }: StepProps) {
           <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 px-5 py-7 text-center">
             <Banknote className="mx-auto h-6 w-6 text-slate-300" />
             <p className="mt-3 text-sm font-semibold text-slate-700">No currencies selected</p>
-            <p className="mt-1 text-xs text-slate-500">Use the multi-selector above to add cash-account currencies.</p>
+            <p className="mt-1 text-xs text-slate-600">Use the multi-selector above to add cash-account currencies.</p>
           </div>
         )}
 

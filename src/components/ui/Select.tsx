@@ -63,12 +63,12 @@ export function Select({
         )}
       >
         <div className="flex items-center gap-3">
-          {icon && <div className="text-slate-400">{icon}</div>}
+          {icon && <div className="text-slate-500">{icon}</div>}
 
           <span
             className={cn(
               "text-sm",
-              selected ? "font-medium text-ink" : "text-slate-400",
+              selected ? "font-medium text-ink" : "text-slate-500",
             )}
           >
             {selected?.label || placeholder}
@@ -77,7 +77,7 @@ export function Select({
 
         <ChevronDown
           className={cn(
-            "h-4 w-4 text-slate-400 transition-transform duration-300",
+            "h-4 w-4 text-slate-500 transition-transform duration-300",
             open && "rotate-180",
           )}
         />

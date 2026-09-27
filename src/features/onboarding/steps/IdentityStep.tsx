@@ -62,7 +62,7 @@ export function IdentityStep({ controller }: StepProps) {
               </div>
               <div>
                 <h2 className="text-sm font-semibold text-slate-950">Selfie guidance</h2>
-                <p className="mt-0.5 text-xs text-slate-500">For a faster identity check</p>
+                <p className="mt-0.5 text-xs text-slate-600">For a faster identity check</p>
               </div>
             </div>
             <ul className="mt-5 space-y-3.5">

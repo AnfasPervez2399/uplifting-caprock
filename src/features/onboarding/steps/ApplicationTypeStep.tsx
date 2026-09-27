@@ -3,7 +3,7 @@ import {
   Check,
   CircleUserRound,
   ShieldCheck,
-  Sparkles,
+  Layers,
 } from "lucide-react";
 import { APPLICATION_OPTIONS } from "../config";
 import { SectionIntro } from "../components/FormPrimitives";
@@ -51,10 +51,10 @@ export function ApplicationTypeStep({
         eyebrow={sectionEyebrow("application")}
         title="Choose your application type"
         description="Select the legal structure that is applying. Every section, required field, evidence request and review item will adapt to this choice."
-        icon={Sparkles}
+        icon={Layers}
       />
 
-      <div className="space-y-8">
+      <div className="space-y-6">
         {groups.map((group) => {
           const Icon = group.icon;
           const options = APPLICATION_OPTIONS.filter(
@@ -76,7 +76,7 @@ export function ApplicationTypeStep({
                   >
                     {group.title}
                   </h2>
-                  <p className="mt-0.5 text-sm text-slate-500">
+                  <p className="mt-0.5 text-sm text-slate-600">
                     {group.description}
                   </p>
                 </div>
@@ -97,7 +97,7 @@ export function ApplicationTypeStep({
                       }`}
                     >
                       <span
-                        className={`grid h-8 w-8 place-items-center rounded-full transition ${isSelected ? "bg-[#003478] text-white" : "bg-slate-100 text-slate-400 group-hover:text-[#003478]"}`}
+                        className={`grid h-8 w-8 place-items-center rounded-full transition ${isSelected ? "bg-[#003478] text-white" : "bg-slate-100 text-slate-500 group-hover:text-[#003478]"}`}
                       >
                         {isSelected ? (
                           <Check className="h-4 w-4" strokeWidth={2.7} />
@@ -109,7 +109,7 @@ export function ApplicationTypeStep({
                         {option.label}
                       </span>
                       <span
-                        className={`mt-1.5 block text-xs leading-5 ${isSelected ? "text-slate-600" : "text-slate-500"}`}
+                        className={`mt-1.5 block text-xs leading-5 ${isSelected ? "text-slate-600" : "text-slate-600"}`}
                       >
                         {option.description}
                       </span>

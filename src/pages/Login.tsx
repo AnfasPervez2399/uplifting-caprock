@@ -272,7 +272,7 @@ export function Login() {
         <h1 className="text-3xl font-semibold tracking-[-0.035em] text-slate-950 sm:text-[34px]">
           Welcome back
         </h1>
-        <p className="mt-2.5 text-[15px] leading-6 text-slate-500">
+        <p className="mt-2.5 text-[15px] leading-6 text-slate-600">
           Sign in to continue to your account.
         </p>
       </motion.header>
@@ -302,7 +302,7 @@ export function Login() {
             required
             aria-invalid={Boolean(errors.email)}
             aria-describedby={errors.email ? "email-error" : undefined}
-            className={`h-12 w-full rounded-lg border bg-white px-3.5 text-[15px] text-slate-950 outline-none transition-colors placeholder:text-slate-400 focus:ring-2 ${
+            className={`h-12 w-full rounded-lg border bg-white px-3.5 text-[15px] text-slate-950 outline-none transition-colors placeholder:text-slate-500 focus:ring-2 ${
               errors.email
                 ? "border-red-500 focus:border-red-500 focus:ring-red-500/10"
                 : "border-slate-300 hover:border-slate-400 focus:border-[#003478] focus:ring-[#003478]/10"
@@ -353,7 +353,7 @@ export function Login() {
               required
               aria-invalid={Boolean(errors.password)}
               aria-describedby={errors.password ? "password-error" : undefined}
-              className={`h-12 w-full rounded-lg border bg-white px-3.5 pr-12 text-[15px] text-slate-950 outline-none transition-colors placeholder:text-slate-400 focus:ring-2 ${
+              className={`h-12 w-full rounded-lg border bg-white px-3.5 pr-12 text-[15px] text-slate-950 outline-none transition-colors placeholder:text-slate-500 focus:ring-2 ${
                 errors.password
                   ? "border-red-500 focus:border-red-500 focus:ring-red-500/10"
                   : "border-slate-300 hover:border-slate-400 focus:border-[#003478] focus:ring-[#003478]/10"
@@ -364,7 +364,7 @@ export function Login() {
               onClick={() => setShowPassword((current) => !current)}
               aria-label={showPassword ? "Hide password" : "Show password"}
               aria-pressed={showPassword}
-              className="absolute inset-y-1 right-1 grid w-10 place-items-center rounded-md text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003478]/20"
+              className="absolute inset-y-1 right-1 grid w-10 place-items-center rounded-md text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003478]/20"
             >
               <AnimatePresence mode="wait" initial={false}>
                 <motion.span
@@ -473,7 +473,7 @@ export function Login() {
 
       <motion.p
         variants={item}
-        className="mt-8 border-t border-slate-200 pt-6 text-center text-sm text-slate-500"
+        className="mt-8 border-t border-slate-200 pt-6 text-center text-sm text-slate-600"
       >
         Don&apos;t have an account?{" "}
         <Link

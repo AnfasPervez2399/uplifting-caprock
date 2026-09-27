@@ -142,7 +142,7 @@ export function ReviewStep({
           icon={ShieldCheck}
           onEdit={() => goToStep("application")}
         >
-          <dl className="grid gap-x-6 gap-y-5 sm:grid-cols-2">
+          <dl className="grid gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
             <SummaryItem
               label="Application type"
               value={selectedApplicationType}
@@ -155,13 +155,13 @@ export function ReviewStep({
           {form.adviserAccess ? (
             <div className="mt-5 flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.09em] text-slate-400">
+                <p className="text-[10px] font-bold uppercase tracking-[0.09em] text-slate-500">
                   Application adviser
                 </p>
                 <p className="mt-1 text-sm font-semibold text-slate-800">
                   {form.adviserAccess.name}
                 </p>
-                <p className="mt-0.5 text-xs text-slate-500">
+                <p className="mt-0.5 text-xs text-slate-600">
                   {form.adviserAccess.email} · full application access
                 </p>
               </div>
@@ -205,7 +205,7 @@ export function ReviewStep({
                 label="Investment profile"
                 value={`${form.personal.investmentCurrency || "—"} · ${form.personal.expectedInvestment || "—"}`}
               />
-              <div className="sm:col-span-2">
+              <div className="sm:col-span-2 lg:col-span-3">
                 <SummaryItem
                   label="Residential address"
                   value={form.personal.residentialAddress}
@@ -330,7 +330,7 @@ export function ReviewStep({
                 icon={UsersRound}
                 onEdit={() => goToStep("shareholders")}
               >
-                <dl className="mb-5 grid gap-x-6 gap-y-5 sm:grid-cols-2">
+                <dl className="mb-5 grid gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
                   <SummaryItem
                     label="Direct ownership total"
                     value={`${percentageTotal(form.shareholders).toFixed(2).replace(/\.00$/, "")}%`}
@@ -395,7 +395,7 @@ export function ReviewStep({
                   label="AFSL number"
                   value={form.trust.afsLicenseNumber || "Not required"}
                 />
-                <div className="sm:col-span-2">
+                <div className="sm:col-span-2 lg:col-span-3">
                   <SummaryItem
                     label="Trust address"
                     value={form.trust.address}
@@ -427,7 +427,7 @@ export function ReviewStep({
               icon={UsersRound}
               onEdit={() => goToStep("beneficiaries")}
             >
-              <dl className="mb-5 grid gap-x-6 gap-y-5 sm:grid-cols-2">
+              <dl className="mb-5 grid gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
                 <SummaryItem
                   label="Direct beneficial-interest total"
                   value={`${percentageTotal(form.beneficiaries).toFixed(2).replace(/\.00$/, "")}%`}
@@ -494,7 +494,7 @@ export function ReviewStep({
             icon={ScanFace}
             onEdit={() => goToStep("identity")}
           >
-            <dl className="grid gap-x-6 gap-y-5 sm:grid-cols-2">
+            <dl className="grid gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
               <SummaryItem
                 label="Selfie image"
                 value={form.identity.selfie?.name || "Not provided"}
@@ -527,7 +527,7 @@ export function ReviewStep({
                     <p className="text-sm font-semibold text-slate-900">
                       {index + 1}. {account.bankName}
                     </p>
-                    <p className="mt-1 text-xs text-slate-500">
+                    <p className="mt-1 text-xs text-slate-600">
                       {account.currency} · SWIFT {account.swiftCode} · ••••{" "}
                       {account.accountNumber.slice(-4)}
                     </p>
@@ -549,7 +549,7 @@ export function ReviewStep({
                 </div>
               ))
             ) : (
-              <p className="text-sm text-slate-500">No bank account saved.</p>
+              <p className="text-sm text-slate-600">No bank account saved.</p>
             )}
           </div>
         </ReviewSection>
@@ -571,7 +571,7 @@ export function ReviewStep({
                 </span>
               ))
             ) : (
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-slate-600">
                 No cash-account currencies selected.
               </p>
             )}
@@ -583,7 +583,7 @@ export function ReviewStep({
           icon={FileCheck2}
           onEdit={() => goToStep("documents")}
         >
-          <div className="mb-4 grid gap-3 sm:grid-cols-2">
+          <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <CheckRow
               checked={
                 (isIndividual ? individualProofCount : entityProofCount) > 0
@@ -618,11 +618,11 @@ export function ReviewStep({
                       <span className="block text-xs font-semibold text-slate-800">
                         {requirement.title}
                       </span>
-                      <span className="mt-0.5 block truncate text-[11px] text-slate-500">
+                      <span className="mt-0.5 block truncate text-[11px] text-slate-600">
                         {file?.name || "Not uploaded"}
                       </span>
                     </span>
-                    {file ? <Eye className="h-4 w-4 text-slate-400" /> : null}
+                    {file ? <Eye className="h-4 w-4 text-slate-500" /> : null}
                   </button>
                 );
               })}
@@ -651,7 +651,7 @@ export function ReviewStep({
         <h2 className="text-base font-semibold text-slate-950">
           {submitted ? "Declarations recorded" : "Final declarations"}
         </h2>
-        <p className="mt-1 text-sm leading-6 text-slate-500">
+        <p className="mt-1 text-sm leading-6 text-slate-600">
           {submitted
             ? "These confirmations were captured with your secure submission."
             : "Both confirmations are required before secure submission."}
@@ -703,7 +703,7 @@ function PartyRows({
 }) {
   return (
     <div>
-      <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.09em] text-slate-400">
+      <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.09em] text-slate-500">
         {title}
       </p>
       <div className="space-y-2.5">
@@ -716,11 +716,11 @@ function PartyRows({
               <span className="text-sm font-semibold text-slate-800">
                 {index + 1}. {row.name}
               </span>
-              <span className="text-xs text-slate-500">{row.detail}</span>
+              <span className="text-xs text-slate-600">{row.detail}</span>
             </div>
           ))
         ) : (
-          <p className="text-sm text-slate-500">No records saved.</p>
+          <p className="text-sm text-slate-600">No records saved.</p>
         )}
       </div>
     </div>

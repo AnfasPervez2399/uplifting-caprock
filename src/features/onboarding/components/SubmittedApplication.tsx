@@ -9,7 +9,7 @@ interface SubmittedApplicationProps {
 function SubmissionDetail({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
-      <dt className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400">{label}</dt>
+      <dt className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-500">{label}</dt>
       <dd className="mt-1.5 truncate text-sm font-semibold text-slate-800">{value}</dd>
     </div>
   );
@@ -103,7 +103,7 @@ export function SubmittedApplication({ controller }: SubmittedApplicationProps) 
           type="button"
           aria-label="Close submission confirmation"
           onClick={closeConfirmation}
-          className="absolute right-4 top-4 z-20 grid h-10 w-10 place-items-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-[#003478]/25 hover:bg-[#f3f7fb] hover:text-[#003478] focus:outline-none focus:ring-2 focus:ring-[#003478]/30 focus:ring-offset-2 sm:right-5 sm:top-5"
+          className="absolute right-4 top-4 z-20 grid h-10 w-10 place-items-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-[#003478]/25 hover:bg-[#f3f7fb] hover:text-[#003478] focus:outline-none focus:ring-2 focus:ring-[#003478]/30 focus:ring-offset-2 sm:right-5 sm:top-5"
         >
           <X className="h-4 w-4" />
         </button>
@@ -122,7 +122,7 @@ export function SubmittedApplication({ controller }: SubmittedApplicationProps) 
             </h1>
             <p
               id="submission-confirmation-description"
-              className="mx-auto mt-3 max-w-xl text-sm leading-7 text-slate-500"
+              className="mx-auto mt-3 max-w-xl text-sm leading-7 text-slate-600"
             >
               Your application was securely received. A confirmation and any future updates will be sent to {form.signature.email}.
             </p>
@@ -161,7 +161,7 @@ export function SubmittedApplication({ controller }: SubmittedApplicationProps) 
             Continue to review
           </button>
 
-          <div className="mt-5 flex flex-col items-center justify-center gap-2 text-center text-xs text-slate-400 sm:flex-row sm:gap-4">
+          <div className="mt-5 flex flex-col items-center justify-center gap-2 text-center text-xs text-slate-500 sm:flex-row sm:gap-4">
             <span className="inline-flex items-center gap-2">
               <LockKeyhole className="h-4 w-4 text-[#003478]" />
               Encrypted and time-stamped

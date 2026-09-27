@@ -9,7 +9,7 @@ import {
   Landmark,
   ScanFace,
   ShieldCheck,
-  Sparkles,
+  Layers,
   UsersRound,
 } from "lucide-react";
 import type { SelectOption } from "../../components/ui/CustomSelect";
@@ -23,7 +23,7 @@ import type {
 } from "./types";
 
 export const allSteps: StepDefinition[] = [
-  { id: "application", shortLabel: "Type", label: "Application Type", description: "Choose who is applying", icon: Sparkles },
+  { id: "application", shortLabel: "Type", label: "Application Type", description: "Choose who is applying", icon: Layers },
   { id: "personal", shortLabel: "Personal", label: "Personal Information", description: "Applicant and investment details", icon: CircleUserRound },
   { id: "entity", shortLabel: "Company", label: "Company Profile", description: "Registration and investment details", icon: Building2 },
   { id: "trust", shortLabel: "Trust", label: "Trust Profile", description: "Trust and trustee details", icon: ShieldCheck },

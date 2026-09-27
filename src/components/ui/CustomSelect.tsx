@@ -257,15 +257,15 @@ export function CustomSelect({
             : open
               ? "border-[#003478] ring-4 ring-[#003478]/[0.07]"
               : "border-slate-200 hover:border-slate-300 focus:border-[#003478] focus:ring-4 focus:ring-[#003478]/[0.07]"
-        } disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400`}
+        } disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500`}
       >
         <span
-          className={`min-w-0 flex-1 truncate ${selected ? "text-slate-950" : "text-slate-400"}`}
+          className={`min-w-0 flex-1 truncate ${selected ? "text-slate-950" : "text-slate-500"}`}
         >
           {selected?.label ?? placeholder}
         </span>
         <ChevronDown
-          className={`h-4 w-4 shrink-0 text-slate-400 transition-transform duration-200 ${open ? "rotate-180 text-[#003478]" : ""}`}
+          className={`h-4 w-4 shrink-0 text-slate-500 transition-transform duration-200 ${open ? "rotate-180 text-[#003478]" : ""}`}
         />
       </button>
 
@@ -279,7 +279,7 @@ export function CustomSelect({
               {searchable ? (
                 <div className="shrink-0 border-b border-slate-100 p-1.5 pb-2">
                   <div className="relative">
-                    <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+                    <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-500" />
                     <input
                       ref={searchInputRef}
                       type="search"
@@ -294,7 +294,7 @@ export function CustomSelect({
                           ? `${menuId}-option-${activeIndex}`
                           : undefined
                       }
-                      className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 text-xs text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#003478] focus:bg-white focus:ring-3 focus:ring-[#003478]/[0.07]"
+                      className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 text-xs text-slate-900 outline-none transition placeholder:text-slate-500 focus:border-[#003478] focus:bg-white focus:ring-3 focus:ring-[#003478]/[0.07]"
                     />
                   </div>
                 </div>
@@ -340,7 +340,7 @@ export function CustomSelect({
                             {option.label}
                           </span>
                           {option.description ? (
-                            <span className="mt-0.5 block truncate text-[10px] text-slate-400">
+                            <span className="mt-0.5 block truncate text-[10px] text-slate-500">
                               {option.description}
                             </span>
                           ) : null}
@@ -358,7 +358,7 @@ export function CustomSelect({
                     <p className="text-xs font-semibold text-slate-600">
                       No matching options
                     </p>
-                    <p className="mt-1 text-[10px] text-slate-400">
+                    <p className="mt-1 text-[10px] text-slate-500">
                       Try another search term.
                     </p>
                   </div>

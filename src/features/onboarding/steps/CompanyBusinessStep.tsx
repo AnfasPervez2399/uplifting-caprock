@@ -24,7 +24,7 @@ export function CompanyBusinessStep({ controller }: { controller: OnboardingCont
         description={domestic ? "Provide the company’s Australian registration and compliance information." : "Provide formation, Australian presence and tax-registration details for the company."}
         icon={BriefcaseBusiness}
       />
-      <div className="space-y-8">
+      <div className="space-y-6">
         {domestic ? (
           <section>
             <SubsectionHeading title="Australian registration" description="Enter the company’s registered-office and ASIC details." />
@@ -51,25 +51,27 @@ export function CompanyBusinessStep({ controller }: { controller: OnboardingCont
           <>
             <section>
               <SubsectionHeading title="Formation and registration" description="Use details from the relevant company registration body." />
-              <div className="grid gap-5 sm:grid-cols-2">
-                <Field label="Type of company" htmlFor="foreignCompanyType" error={errors.companyType}>
+              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                <Field label="Type of company" htmlFor="foreignCompanyType" error={errors.companyType} bottomAlign>
                   <CustomSelect id="foreignCompanyType" value={form.company.companyType} onChange={(value) => updateCompany("companyType", value as typeof form.company.companyType)} options={companyTypeOptions} placeholder="Select company type" error={Boolean(errors.companyType)} />
                 </Field>
-                <Field label="Date of incorporation" htmlFor="companyIncorporationDate" error={errors.companyIncorporationDate}>
+                <Field label="Date of incorporation" htmlFor="companyIncorporationDate" error={errors.companyIncorporationDate} bottomAlign>
                   <input id="companyIncorporationDate" type="date" value={form.company.incorporationDate} max={new Date().toISOString().slice(0, 10)} onChange={(event) => updateCompany("incorporationDate", event.target.value)} className={inputClass(Boolean(errors.companyIncorporationDate))} />
                 </Field>
                 {!asicForeign ? (
-                  <Field label="Identification number issued by the registration body" htmlFor="companyIdentificationNumber" error={errors.companyIdentificationNumber}>
+                  <Field label="Identification number issued by the registration body" htmlFor="companyIdentificationNumber" error={errors.companyIdentificationNumber} bottomAlign>
                     <input id="companyIdentificationNumber" value={form.company.identificationNumber} onChange={(event) => updateCompany("identificationNumber", event.target.value)} placeholder="Identification number" className={inputClass(Boolean(errors.companyIdentificationNumber))} />
                   </Field>
                 ) : null}
-                <Field label="Country of formation, incorporation or registration" htmlFor="companyCountry" error={errors.companyCountry}>
+                <Field label="Country of formation, incorporation or registration" htmlFor="companyCountry" error={errors.companyCountry} bottomAlign>
                   <CustomSelect id="companyCountry" value={form.company.country} onChange={(value) => updateCompany("country", value)} options={COUNTRY_OPTIONS} placeholder="Select country" searchable searchPlaceholder="Search countries" error={Boolean(errors.companyCountry)} />
                 </Field>
                 {!asicForeign ? (
-                  <Field label="Applicant domicile country" htmlFor="companyDomicileCountry" error={errors.companyDomicileCountry}>
-                    <CustomSelect id="companyDomicileCountry" value={form.company.domicileCountry} onChange={(value) => updateCompany("domicileCountry", value)} options={COUNTRY_OPTIONS} placeholder="Select domicile country" searchable searchPlaceholder="Search countries" error={Boolean(errors.companyDomicileCountry)} />
-                  </Field>
+                  <div className="lg:col-span-2">
+                    <Field label="Applicant domicile country" htmlFor="companyDomicileCountry" error={errors.companyDomicileCountry} bottomAlign>
+                      <CustomSelect id="companyDomicileCountry" value={form.company.domicileCountry} onChange={(value) => updateCompany("domicileCountry", value)} options={COUNTRY_OPTIONS} placeholder="Select domicile country" searchable searchPlaceholder="Search countries" error={Boolean(errors.companyDomicileCountry)} />
+                    </Field>
+                  </div>
                 ) : null}
               </div>
             </section>
@@ -90,17 +92,21 @@ export function CompanyBusinessStep({ controller }: { controller: OnboardingCont
               <SubsectionHeading title="Registration and U.S. tax status" description="Confirm registration with the relevant body and whether U.S. tax details are required." />
               <div className="grid gap-6 sm:grid-cols-2">
                 {asicForeign ? (
-                  <Field label="Registered by the relevant non-Australian registration body?" htmlFor="registeredByRelevantBody" error={errors.companyRegisteredByRelevantBody}>
+                  <Field label="Registered by the relevant non-Australian registration body?" htmlFor="registeredByRelevantBody" error={errors.companyRegisteredByRelevantBody} bottomAlign>
                     <BinaryChoice value={form.company.registeredByRelevantBody} onChange={(value) => updateCompany("registeredByRelevantBody", value)} ariaLabel="Relevant registration body status" />
                   </Field>
                 ) : null}
-                <Field label="Is the company U.S.-registered?" htmlFor="companyUsRegistered" error={errors.companyUsRegistered}>
-                  <BinaryChoice value={form.company.usRegistered} onChange={handleCompanyUsRegisteredChange} ariaLabel="U.S. company registration status" />
-                </Field>
-                {form.company.usRegistered === "yes" ? (
-                  <Field label="U.S. Tax ID number" htmlFor="companyUsTaxId" error={errors.companyUsTaxId}>
-                    <input id="companyUsTaxId" value={form.company.usTaxId} onChange={(event) => updateCompany("usTaxId", event.target.value)} placeholder="Tax ID number" className={inputClass(Boolean(errors.companyUsTaxId))} />
+                <div className={!asicForeign && form.company.usRegistered !== "yes" ? "sm:col-span-2" : ""}>
+                  <Field label="Is the company U.S.-registered?" htmlFor="companyUsRegistered" error={errors.companyUsRegistered} bottomAlign>
+                    <BinaryChoice value={form.company.usRegistered} onChange={handleCompanyUsRegisteredChange} ariaLabel="U.S. company registration status" />
                   </Field>
+                </div>
+                {form.company.usRegistered === "yes" ? (
+                  <div className={asicForeign ? "sm:col-span-2" : ""}>
+                    <Field label="U.S. Tax ID number" htmlFor="companyUsTaxId" error={errors.companyUsTaxId} bottomAlign>
+                      <input id="companyUsTaxId" value={form.company.usTaxId} onChange={(event) => updateCompany("usTaxId", event.target.value)} placeholder="Tax ID number" className={inputClass(Boolean(errors.companyUsTaxId))} />
+                    </Field>
+                  </div>
                 ) : null}
               </div>
             </section>

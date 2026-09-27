@@ -729,7 +729,7 @@ export function OnboardingAssistant({
                       Caprock AI assistant
                     </h2>
                   </div>
-                  <p className="mt-1 truncate text-[11px] text-slate-500">
+                  <p className="mt-1 truncate text-[11px] text-slate-600">
                     Live help with {activeStepName}
                   </p>
                 </div>
@@ -737,7 +737,7 @@ export function OnboardingAssistant({
                   type="button"
                   onClick={resetConversation}
                   aria-label="Clear assistant conversation"
-                  className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                  className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
                 >
                   <RefreshCcw className="h-4 w-4" />
                 </button>
@@ -745,12 +745,12 @@ export function OnboardingAssistant({
                   type="button"
                   onClick={() => setAssistantOpen(false)}
                   aria-label="Close onboarding assistant"
-                  className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                  className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
                 >
                   <X className="h-4 w-4" />
                 </button>
               </div>
-              <div className="mt-3 flex items-center gap-2 rounded-xl bg-[#f6f8fb] px-3 py-2 text-[10px] text-slate-500">
+              <div className="mt-3 flex items-center gap-2 rounded-xl bg-[#f6f8fb] px-3 py-2 text-[10px] text-slate-600">
                 <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-[#003478]" />
                 <span className="truncate">
                   {selectedApplicationType} · {activeStepName}
@@ -770,18 +770,18 @@ export function OnboardingAssistant({
                 className="mt-2 flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-left transition hover:border-[#b8cadc] hover:bg-[#f8fafc]"
               >
                 <span className="min-w-0 flex-1">
-                  <span className="block text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400">
+                  <span className="block text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500">
                     Jump to a section
                   </span>
                   <span className="mt-0.5 block truncate text-xs font-semibold text-slate-800">
                     {activeStepName}
                   </span>
                 </span>
-                <span className="text-[10px] font-semibold text-slate-400">
+                <span className="text-[10px] font-semibold text-slate-500">
                   {visibleSteps.length} sections
                 </span>
                 <ChevronDown
-                  className={`h-4 w-4 text-slate-400 transition ${sectionsOpen ? "rotate-180" : ""}`}
+                  className={`h-4 w-4 text-slate-500 transition ${sectionsOpen ? "rotate-180" : ""}`}
                 />
               </button>
 
@@ -806,7 +806,7 @@ export function OnboardingAssistant({
                           className={`flex min-h-10 items-center gap-2 rounded-lg px-2.5 py-2 text-left text-[11px] font-semibold transition ${active ? "bg-[#dce7f2] text-[#0f172a]" : "bg-white text-slate-600 hover:bg-[#edf3f8] hover:text-[#003478]"}`}
                         >
                           <span
-                            className={`grid h-5 w-5 shrink-0 place-items-center rounded-md ${complete ? "bg-[#003478] text-white" : "bg-slate-100 text-slate-400"}`}
+                            className={`grid h-5 w-5 shrink-0 place-items-center rounded-md ${complete ? "bg-[#003478] text-white" : "bg-slate-100 text-slate-500"}`}
                           >
                             {complete ? (
                               <CheckCircle2 className="h-3 w-3" />
@@ -850,7 +850,7 @@ export function OnboardingAssistant({
                         {message.text}
                       </div>
                       {message.role === "assistant" && message.source ? (
-                        <div className="mt-1.5 flex items-center gap-1 px-1 text-[9px] font-medium text-slate-400">
+                        <div className="mt-1.5 flex items-center gap-1 px-1 text-[9px] font-medium text-slate-500">
                           {message.source === "ai" ? (
                             <Wifi className="h-2.5 w-2.5" />
                           ) : (
@@ -932,18 +932,18 @@ export function OnboardingAssistant({
                   onKeyDown={handleComposerKeyDown}
                   placeholder="Ask anything about your application…"
                   aria-label="Message the onboarding assistant"
-                  className="min-h-10 max-h-24 min-w-0 flex-1 resize-none overflow-y-auto border-0 bg-transparent px-2.5 py-2.5 text-xs leading-5 text-slate-800 outline-none placeholder:text-slate-400"
+                  className="min-h-10 max-h-24 min-w-0 flex-1 resize-none overflow-y-auto border-0 bg-transparent px-2.5 py-2.5 text-xs leading-5 text-slate-800 outline-none placeholder:text-slate-500"
                 />
                 <button
                   type="submit"
                   disabled={!draft.trim() || isTyping}
                   aria-label="Send message"
-                  className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#003478] text-white transition hover:bg-[#002b63] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
+                  className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#003478] text-white transition hover:bg-[#002b63] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500"
                 >
                   <Send className="h-4 w-4" />
                 </button>
               </form>
-              <p className="mt-2.5 flex items-center justify-center gap-1.5 text-center text-[9px] leading-4 text-slate-400">
+              <p className="mt-2.5 flex items-center justify-center gap-1.5 text-center text-[9px] leading-4 text-slate-500">
                 <LifeBuoy className="h-3 w-3 shrink-0" />
                 Application guidance only. Don’t enter passwords, security codes
                 or full ID numbers.

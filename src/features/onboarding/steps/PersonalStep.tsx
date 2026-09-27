@@ -78,44 +78,7 @@ export function PersonalStep({ controller }: StepProps) {
         icon={CircleUserRound}
       />
 
-      <div className="space-y-8">
-        <section className="rounded-2xl border border-slate-200 bg-slate-50/55 p-5 sm:p-6">
-          <SubsectionHeading
-            title="Application references"
-            description="These references are supplied by Caprock or your adviser and cannot be changed here."
-          />
-          <div className="grid gap-5 sm:grid-cols-2">
-            <Field
-              label="Caprock reference number"
-              htmlFor="referenceNumber"
-              required={false}
-              hint="Assigned automatically when available."
-            >
-              <input
-                id="referenceNumber"
-                value={form.personal.referenceNumber}
-                readOnly
-                placeholder="Assigned by Caprock"
-                className={`${inputClass()} cursor-not-allowed bg-slate-100/80 text-slate-500`}
-              />
-            </Field>
-            {/* <Field
-              label="Adviser reference number"
-              htmlFor="advisorReferenceNumber"
-              required={false}
-              hint="Supplied by your adviser when applicable."
-            >
-              <input
-                id="advisorReferenceNumber"
-                value={form.personal.advisorReferenceNumber}
-                readOnly
-                placeholder="Provided by adviser"
-                className={`${inputClass()} cursor-not-allowed bg-slate-100/80 text-slate-500`}
-              />
-            </Field> */}
-          </div>
-        </section>
-
+      <div className="space-y-6">
         <section>
           <SubsectionHeading
             title="Main applicant"
@@ -133,24 +96,27 @@ export function PersonalStep({ controller }: StepProps) {
                 }
                 onPreview={openDocumentPreview}
                 required={false}
+                compact
               />
             </div>
-            <Field
-              label="Applicant country"
-              htmlFor="applicantCountry"
-              error={errors.applicantCountry}
-            >
-              <CustomSelect
-                id="applicantCountry"
-                value={form.personal.applicantCountry}
-                onChange={(value) => updatePersonal("applicantCountry", value)}
-                options={COUNTRY_OPTIONS}
-                placeholder="Select applicant country"
-                searchable
-                searchPlaceholder="Search countries"
-                error={Boolean(errors.applicantCountry)}
-              />
-            </Field>
+            <div className="sm:col-span-2 lg:col-span-3">
+              <Field
+                label="Applicant country"
+                htmlFor="applicantCountry"
+                error={errors.applicantCountry}
+              >
+                <CustomSelect
+                  id="applicantCountry"
+                  value={form.personal.applicantCountry}
+                  onChange={(value) => updatePersonal("applicantCountry", value)}
+                  options={COUNTRY_OPTIONS}
+                  placeholder="Select applicant country"
+                  searchable
+                  searchPlaceholder="Search countries"
+                  error={Boolean(errors.applicantCountry)}
+                />
+              </Field>
+            </div>
             <Field
               label="First name"
               htmlFor="firstName"
@@ -179,18 +145,20 @@ export function PersonalStep({ controller }: StepProps) {
                 className={inputClass()}
               />
             </Field>
-            <Field label="Last name" htmlFor="lastName" error={errors.lastName}>
-              <input
-                id="lastName"
-                value={form.personal.lastName}
-                onChange={(event) =>
-                  updatePersonal("lastName", event.target.value)
-                }
-                autoComplete="family-name"
-                placeholder="Legal last name"
-                className={inputClass(Boolean(errors.lastName))}
-              />
-            </Field>
+            <div className="sm:col-span-2 lg:col-span-1">
+              <Field label="Last name" htmlFor="lastName" error={errors.lastName}>
+                <input
+                  id="lastName"
+                  value={form.personal.lastName}
+                  onChange={(event) =>
+                    updatePersonal("lastName", event.target.value)
+                  }
+                  autoComplete="family-name"
+                  placeholder="Legal last name"
+                  className={inputClass(Boolean(errors.lastName))}
+                />
+              </Field>
+            </div>
 
             <div className="min-w-0 sm:col-span-2 lg:col-span-3">
               <Field label="Date of birth" htmlFor="dateOfBirth">
@@ -268,7 +236,7 @@ export function PersonalStep({ controller }: StepProps) {
                       <p className="truncate text-sm font-semibold text-slate-900">
                         {formatApplicantName(applicant)}
                       </p>
-                      <p className="mt-0.5 text-xs text-slate-500">
+                      <p className="mt-0.5 text-xs text-slate-600">
                         Applicant {index + 1} ·{" "}
                         {applicant.method === "existing"
                           ? `Existing Caprock client · ${applicant.applicantCountry}`
@@ -282,7 +250,7 @@ export function PersonalStep({ controller }: StepProps) {
                       type="button"
                       onClick={() => removeJointApplicant(applicant.id)}
                       aria-label={`Remove ${formatApplicantName(applicant)}`}
-                      className="grid h-9 w-9 place-items-center rounded-xl text-slate-400 transition hover:bg-red-50 hover:text-red-600"
+                      className="grid h-9 w-9 place-items-center rounded-xl text-slate-500 transition hover:bg-red-50 hover:text-red-600"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -298,7 +266,7 @@ export function PersonalStep({ controller }: StepProps) {
                     <p className="text-sm font-semibold text-slate-950">
                       Add a joint applicant
                     </p>
-                    <p className="mt-1 text-xs text-slate-500">
+                    <p className="mt-1 text-xs text-slate-600">
                       Choose how this person will join the application.
                     </p>
                   </div>
@@ -309,7 +277,7 @@ export function PersonalStep({ controller }: StepProps) {
                       setShowJointComposer(false);
                     }}
                     aria-label="Close applicant form"
-                    className="grid h-9 w-9 place-items-center rounded-xl text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                    className="grid h-9 w-9 place-items-center rounded-xl text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -337,7 +305,7 @@ export function PersonalStep({ controller }: StepProps) {
                       className={`rounded-lg px-3 py-2.5 text-xs font-semibold transition ${
                         jointDraft.method === method
                           ? "bg-white text-slate-950 shadow-sm ring-1 ring-slate-200"
-                          : "text-slate-500 hover:text-slate-800"
+                          : "text-slate-600 hover:text-slate-800"
                       }`}
                     >
                       {method === "existing"
@@ -408,7 +376,7 @@ export function PersonalStep({ controller }: StepProps) {
                             <p className="text-sm font-semibold text-slate-950">
                               Checking Caprock records
                             </p>
-                            <p className="mt-1 text-xs leading-5 text-slate-500">
+                            <p className="mt-1 text-xs leading-5 text-slate-600">
                               Matching{" "}
                               {jointDraft.clientId.trim().toUpperCase() ||
                                 "this client ID"}{" "}
@@ -566,7 +534,7 @@ export function PersonalStep({ controller }: StepProps) {
             title="Investment profile"
             description="Provide the investment currency and expected investment range."
           />
-          <div className="grid gap-5 sm:grid-cols-2">
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             <Field
               label="Investment currency"
               htmlFor="investmentCurrency"

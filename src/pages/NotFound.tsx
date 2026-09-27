@@ -58,7 +58,7 @@ export function FullScreenLoader({
           alt="Caprock"
           className="h-8 w-auto sm:h-9"
         />
-        <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500 shadow-sm">
+        <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-600 shadow-sm">
           <ShieldCheck className="h-3.5 w-3.5 text-[#003478]" />
           Protected session
         </span>
@@ -81,7 +81,7 @@ export function FullScreenLoader({
           <h1 className="mt-2 text-2xl font-semibold tracking-[-0.035em] text-slate-950 sm:text-[30px]">
             {message}
           </h1>
-          <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-slate-500">
+          <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-slate-600">
             {detail}
           </p>
 
@@ -116,7 +116,7 @@ export function FullScreenLoader({
         </div>
       </div>
 
-      <footer className="relative flex h-14 shrink-0 items-center justify-center border-t border-slate-200/70 bg-white/55 px-5 text-[10px] font-medium text-slate-400 backdrop-blur-sm">
+      <footer className="relative flex h-14 shrink-0 items-center justify-center border-t border-slate-200/70 bg-white/55 px-5 text-[10px] font-medium text-slate-500 backdrop-blur-sm">
         Please keep this window open while your workspace loads
       </footer>
     </div>

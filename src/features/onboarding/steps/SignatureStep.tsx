@@ -71,7 +71,7 @@ export function SignatureStep({ controller }: StepProps) {
               Use main applicant details
             </button>
           </div>
-          <div className="grid gap-5 sm:grid-cols-2">
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             <Field label="Full name" htmlFor="signatureName" error={errors.signatureName}>
               <input
                 id="signatureName"
@@ -84,7 +84,7 @@ export function SignatureStep({ controller }: StepProps) {
             </Field>
             <Field label="Email address" htmlFor="signatureEmail" error={errors.signatureEmail}>
               <div className="relative">
-                <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
                 <input
                   id="signatureEmail"
                   type="email"
@@ -98,7 +98,7 @@ export function SignatureStep({ controller }: StepProps) {
             </Field>
             <Field label="Phone number" htmlFor="signaturePhone" error={errors.signaturePhone}>
               <div className="relative">
-                <Phone className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <Phone className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
                 <input
                   id="signaturePhone"
                   type="tel"
@@ -110,18 +110,20 @@ export function SignatureStep({ controller }: StepProps) {
                 />
               </div>
             </Field>
-            <Field label="Date of birth" htmlFor="signatureDateOfBirth">
-              <DatePicker
-                id="signatureDateOfBirth"
-                value={form.signature.dateOfBirth}
-                onChange={(value) => updateSignature("dateOfBirth", value)}
-                errorMessage={errors.signatureDateOfBirth}
-                helperText={DOB_HELPER_TEXT}
-                conditions={ADULT_DATE_CONDITIONS}
-                minYear={DOB_MIN_YEAR}
-                maxYear={DOB_MAX_YEAR}
-              />
-            </Field>
+            <div className="sm:col-span-2 lg:col-span-3">
+              <Field label="Date of birth" htmlFor="signatureDateOfBirth">
+                <DatePicker
+                  id="signatureDateOfBirth"
+                  value={form.signature.dateOfBirth}
+                  onChange={(value) => updateSignature("dateOfBirth", value)}
+                  errorMessage={errors.signatureDateOfBirth}
+                  helperText={DOB_HELPER_TEXT}
+                  conditions={ADULT_DATE_CONDITIONS}
+                  minYear={DOB_MIN_YEAR}
+                  maxYear={DOB_MAX_YEAR}
+                />
+              </Field>
+            </div>
           </div>
         </section>
 

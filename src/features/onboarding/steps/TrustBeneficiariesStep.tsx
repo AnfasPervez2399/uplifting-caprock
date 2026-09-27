@@ -134,7 +134,7 @@ export function TrustBeneficiariesStep({
         description="Record each individual, corporate entity or trust beneficiary and its direct beneficial-interest percentage."
         icon={UsersRound}
       />
-      <div className="space-y-8">
+      <div className="space-y-6">
         <section className="overflow-hidden rounded-2xl border border-[rgba(0,52,120,0.17)] bg-[#f3f7fb]">
           <div className="flex items-start gap-4 p-5 sm:p-6">
             <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[#dce7f2] text-[#003478]">
@@ -295,20 +295,22 @@ export function TrustBeneficiariesStep({
                 className={inputClass(Boolean(draftErrors.email))}
               />
             </Field>
-            <Field
-              label="Phone number"
-              htmlFor="beneficiaryPhone"
-              error={draftErrors.phone}
-            >
-              <input
-                id="beneficiaryPhone"
-                type="tel"
-                value={draft.phone}
-                onChange={(event) => updateDraft({ phone: event.target.value })}
-                placeholder="Phone number"
-                className={inputClass(Boolean(draftErrors.phone))}
-              />
-            </Field>
+            <div className={(draft.type === "corporate" || draft.type === "trust") ? "" : "sm:col-span-2 lg:col-span-2"}>
+              <Field
+                label="Phone number"
+                htmlFor="beneficiaryPhone"
+                error={draftErrors.phone}
+              >
+                <input
+                  id="beneficiaryPhone"
+                  type="tel"
+                  value={draft.phone}
+                  onChange={(event) => updateDraft({ phone: event.target.value })}
+                  placeholder="Phone number"
+                  className={inputClass(Boolean(draftErrors.phone))}
+                />
+              </Field>
+            </div>
           </div>
           <div className="mt-5 flex flex-wrap items-center gap-2">
             <button
@@ -366,7 +368,7 @@ export function TrustBeneficiariesStep({
                     className={`rounded-2xl border bg-white p-4 transition ${structureSaved && required && !complete ? "border-amber-200" : "border-slate-200"}`}
                   >
                     <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
-                      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-slate-100 text-slate-500">
+                      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-slate-100 text-slate-600">
                         {beneficiary.type === "corporate" ? (
                           <Building2 className="h-4 w-4" />
                         ) : beneficiary.type === "trust" ? (
@@ -379,7 +381,7 @@ export function TrustBeneficiariesStep({
                         <p className="text-sm font-semibold text-slate-950">
                           {index + 1}. {beneficiary.name}
                         </p>
-                        <p className="mt-1 text-xs text-slate-500">
+                        <p className="mt-1 text-xs text-slate-600">
                           {typeLabel} · {beneficiary.percentage}% ·{" "}
                           {beneficiary.email}
                         </p>
@@ -400,7 +402,7 @@ export function TrustBeneficiariesStep({
                               : "Application available"}
                         </span>
                       ) : (
-                        <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.06em] text-slate-500">
+                        <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.06em] text-slate-600">
                           <Info className="h-3 w-3" />
                           Awaiting 100% save
                         </span>
@@ -427,7 +429,7 @@ export function TrustBeneficiariesStep({
                           type="button"
                           onClick={() => beginEdit(beneficiary)}
                           aria-label={`Edit ${beneficiary.name}`}
-                          className="grid h-10 w-10 place-items-center rounded-xl text-slate-400 transition hover:bg-[#f3f7fb] hover:text-[#003478]"
+                          className="grid h-10 w-10 place-items-center rounded-xl text-slate-500 transition hover:bg-[#f3f7fb] hover:text-[#003478]"
                         >
                           <Pencil className="h-4 w-4" />
                         </button>
@@ -438,7 +440,7 @@ export function TrustBeneficiariesStep({
                             removeBeneficiary(beneficiary.id);
                           }}
                           aria-label={`Remove ${beneficiary.name}`}
-                          className="grid h-10 w-10 place-items-center rounded-xl text-slate-400 transition hover:bg-red-50 hover:text-red-600"
+                          className="grid h-10 w-10 place-items-center rounded-xl text-slate-500 transition hover:bg-red-50 hover:text-red-600"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
@@ -456,7 +458,7 @@ export function TrustBeneficiariesStep({
                 );
               })
             ) : (
-              <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500">
+              <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-600">
                 No beneficiaries added yet.
               </div>
             )}
@@ -503,7 +505,7 @@ export function TrustBeneficiariesStep({
                   aria-readonly="true"
                   className={`${inputClass(Boolean(errors.beneficiaryTotal))} cursor-not-allowed bg-slate-100/80 pr-10 text-slate-700`}
                 />
-                <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-slate-500">
+                <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-slate-600">
                   %
                 </span>
               </div>

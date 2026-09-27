@@ -429,7 +429,7 @@ function ApplicationFlow<T extends ApplicationSubject>({
             type="button"
             onClick={onExit}
             aria-label={`Close ${role} application`}
-            className="grid h-10 w-10 place-items-center rounded-xl text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+            className="grid h-10 w-10 place-items-center rounded-xl text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
           >
             <X className="h-5 w-5" />
           </button>
@@ -437,7 +437,7 @@ function ApplicationFlow<T extends ApplicationSubject>({
       </header>
 
       <div className="mx-auto max-w-[1440px] px-4 py-5 sm:px-6 sm:py-8 lg:px-8">
-        <div className="mb-5 flex flex-wrap items-center gap-1.5 text-xs text-slate-400">
+        <div className="mb-5 flex flex-wrap items-center gap-1.5 text-xs text-slate-500">
           {ancestry.map((item) => (
             <span key={item} className="inline-flex items-center gap-1.5">
               <span>{item}</span>
@@ -491,7 +491,7 @@ function ApplicationFlow<T extends ApplicationSubject>({
               <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#003478]">
                 Left-to-right application flow
               </p>
-              <p className="mt-0.5 text-xs text-slate-500">
+              <p className="mt-0.5 text-xs text-slate-600">
                 Select a section or use Previous and Continue below.
               </p>
             </div>
@@ -519,7 +519,7 @@ function ApplicationFlow<T extends ApplicationSubject>({
                       className="group flex w-[132px] flex-col items-center text-center sm:w-[154px]"
                     >
                       <span
-                        className={`relative grid h-11 w-11 place-items-center rounded-2xl border transition-all duration-300 ${active ? "border-[#003478] bg-[#dce7f2] text-[#0f172a] shadow-[0_8px_20px_rgba(0,52,120,0.12)]" : complete ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-slate-200 bg-white text-slate-400 group-hover:border-[#003478]/25 group-hover:text-[#003478]"}`}
+                        className={`relative grid h-11 w-11 place-items-center rounded-2xl border transition-all duration-300 ${active ? "border-[#003478] bg-[#dce7f2] text-[#0f172a] shadow-[0_8px_20px_rgba(0,52,120,0.12)]" : complete ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-slate-200 bg-white text-slate-500 group-hover:border-[#003478]/25 group-hover:text-[#003478]"}`}
                       >
                         {complete ? (
                           <Check className="h-4 w-4" strokeWidth={2.5} />
@@ -531,11 +531,11 @@ function ApplicationFlow<T extends ApplicationSubject>({
                         ) : null}
                       </span>
                       <span
-                        className={`mt-2.5 text-xs font-semibold transition ${active ? "text-[#0f172a]" : "text-slate-500 group-hover:text-slate-800"}`}
+                        className={`mt-2.5 text-xs font-semibold transition ${active ? "text-[#0f172a]" : "text-slate-600 group-hover:text-slate-800"}`}
                       >
                         {item.label}
                       </span>
-                      <span className="mt-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-slate-400">
+                      <span className="mt-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-slate-500">
                         {complete ? "Complete" : `Step ${index + 1}`}
                       </span>
                     </button>
@@ -643,7 +643,7 @@ function ApplicationFlow<T extends ApplicationSubject>({
                   : "Back to parent owner"
                 : `Previous · ${steps[currentIndex - 1]?.label}`}
             </button>
-            <p className="hidden text-center text-[10px] leading-5 text-slate-400 md:block">
+            <p className="hidden text-center text-[10px] leading-5 text-slate-500 md:block">
               Cash Accounts and Link External Account remain in the main
               application.
             </p>
@@ -690,7 +690,7 @@ function ScreenHeading({
       <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950">
         {title}
       </h2>
-      <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">
+      <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
         {description}
       </p>
     </div>
@@ -719,7 +719,7 @@ function ProfileScreen({
         }
         description="Provide current details that can be verified against identity or registration records."
       />
-      <div className="mt-7 grid gap-5 sm:grid-cols-2">
+      <div className={subject.type === "individual" ? "mt-7 grid gap-5 sm:grid-cols-2" : "mt-7 grid gap-5 sm:grid-cols-2 lg:grid-cols-3"}>
         <Field
           label={
             subject.type === "individual"
@@ -816,7 +816,7 @@ function ProfileScreen({
           </Field>
         ) : null}
         {subject.type === "individual" ? (
-          <div className="sm:col-span-2">
+          <div className="sm:col-span-2 lg:col-span-2">
             <Field label="Date of birth" htmlFor={`owner-dob-${subject.id}`}>
               <DatePicker
                 id={`owner-dob-${subject.id}`}
@@ -849,7 +849,7 @@ function ProfileScreen({
             />
           </Field>
         )}
-        <div className="sm:col-span-2">
+        <div className="sm:col-span-2 lg:col-span-3">
           <Field
             label={
               subject.type === "individual"
@@ -891,8 +891,8 @@ function BusinessScreen({
         title="Business and compliance information"
         description={`Describe how ${subject.name || "this entity"} operates, where it operates and how the investment will be funded.`}
       />
-      <div className="mt-7 grid gap-5 sm:grid-cols-2">
-        <div className="sm:col-span-2">
+      <div className="mt-7 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="sm:col-span-2 lg:col-span-1">
           <Field
             label="Principal business address"
             htmlFor={`business-address-${subject.id}`}
@@ -908,7 +908,7 @@ function BusinessScreen({
             />
           </Field>
         </div>
-        <div className="sm:col-span-2">
+        <div className="sm:col-span-2 lg:col-span-1">
           <Field
             label="Business activity"
             htmlFor={`business-activity-${subject.id}`}
@@ -924,7 +924,7 @@ function BusinessScreen({
             />
           </Field>
         </div>
-        <div className="sm:col-span-2">
+        <div className="sm:col-span-2 lg:col-span-1">
           <Field
             label="Source and origin of funds"
             htmlFor={`business-funds-${subject.id}`}
@@ -940,7 +940,7 @@ function BusinessScreen({
             />
           </Field>
         </div>
-        <div className="sm:col-span-2">
+        <div className="sm:col-span-2 lg:col-span-3">
           <Field
             label="Intended transaction behaviour"
             htmlFor={`business-transactions-${subject.id}`}
@@ -1168,20 +1168,22 @@ function TrustPartiesScreen({
               placeholder="name@example.com"
             />
           </Field>
-          <Field label="Phone number" htmlFor={`${kind}-phone-${subject.id}`}>
-            <input
-              id={`${kind}-phone-${subject.id}`}
-              value={draft.phone}
-              onChange={(event) =>
-                setDraft((current) => ({
-                  ...current,
-                  phone: event.target.value,
-                }))
-              }
-              className={inputClass()}
-              placeholder="Phone number"
-            />
-          </Field>
+          <div className={draft.type === "corporate" ? "sm:col-span-2 lg:col-span-2" : "lg:col-span-3"}>
+            <Field label="Phone number" htmlFor={`${kind}-phone-${subject.id}`}>
+              <input
+                id={`${kind}-phone-${subject.id}`}
+                value={draft.phone}
+                onChange={(event) =>
+                  setDraft((current) => ({
+                    ...current,
+                    phone: event.target.value,
+                  }))
+                }
+                className={inputClass()}
+                placeholder="Phone number"
+              />
+            </Field>
+          </div>
         </div>
         {error ? (
           <p className="mt-3 text-xs font-medium text-red-600">{error}</p>
@@ -1224,14 +1226,14 @@ function SavedPartyList({
             key={party.id}
             className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4"
           >
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-slate-100 text-slate-500">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-slate-100 text-slate-600">
               <CircleUserRound className="h-4 w-4" />
             </span>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold text-slate-950">
                 {index + 1}. {party.name}
               </p>
-              <p className="mt-1 truncate text-xs text-slate-500">
+              <p className="mt-1 truncate text-xs text-slate-600">
                 {party.email} · {party.phone}
               </p>
             </div>
@@ -1239,14 +1241,14 @@ function SavedPartyList({
               type="button"
               onClick={() => onRemove(party.id)}
               aria-label={`Remove ${party.name}`}
-              className="grid h-9 w-9 place-items-center rounded-xl text-slate-400 hover:bg-red-50 hover:text-red-600"
+              className="grid h-9 w-9 place-items-center rounded-xl text-slate-500 hover:bg-red-50 hover:text-red-600"
             >
               <Trash2 className="h-4 w-4" />
             </button>
           </div>
         ))
       ) : (
-        <div className="rounded-2xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500">
+        <div className="rounded-2xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-600">
           {empty}
         </div>
       )}
@@ -1333,7 +1335,7 @@ function OwnershipScreen({
             <h3 className="text-base font-semibold text-slate-950">
               Add an owner
             </h3>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-slate-600">
               This ownership layer must total exactly 100% and cannot exceed it.
             </p>
           </div>
@@ -1459,20 +1461,22 @@ function OwnershipScreen({
               className={inputClass()}
             />
           </Field>
-          <Field label="Phone number" htmlFor={`nested-phone-${subject.id}`}>
-            <input
-              id={`nested-phone-${subject.id}`}
-              value={draft.phone}
-              onChange={(event) =>
-                setDraft((current) => ({
-                  ...current,
-                  phone: event.target.value,
-                }))
-              }
-              placeholder="Phone number"
-              className={inputClass()}
-            />
-          </Field>
+          <div className={(draft.type === "corporate" || draft.type === "trust") ? "" : "sm:col-span-2 lg:col-span-2"}>
+            <Field label="Phone number" htmlFor={`nested-phone-${subject.id}`}>
+              <input
+                id={`nested-phone-${subject.id}`}
+                value={draft.phone}
+                onChange={(event) =>
+                  setDraft((current) => ({
+                    ...current,
+                    phone: event.target.value,
+                  }))
+                }
+                placeholder="Phone number"
+                className={inputClass()}
+              />
+            </Field>
+          </div>
         </div>
         {draftError ? (
           <p className="mt-3 text-xs font-medium text-red-600">{draftError}</p>
@@ -1517,7 +1521,7 @@ function OwnershipScreen({
                 className="rounded-2xl border border-slate-200 bg-white p-4"
               >
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
-                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-slate-100 text-slate-500">
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-slate-100 text-slate-600">
                     {owner.type === "individual" ? (
                       <CircleUserRound className="h-4 w-4" />
                     ) : (
@@ -1528,7 +1532,7 @@ function OwnershipScreen({
                     <p className="text-sm font-semibold text-slate-950">
                       {index + 1}. {owner.name}
                     </p>
-                    <p className="mt-1 text-xs text-slate-500">
+                    <p className="mt-1 text-xs text-slate-600">
                       {getTypeLabel(owner)} · {owner.percentage}% ·{" "}
                       {owner.email}
                     </p>
@@ -1549,7 +1553,7 @@ function OwnershipScreen({
                           : "Below 25% · no cascade"}
                     </span>
                   ) : (
-                    <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.06em] text-slate-500">
+                    <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.06em] text-slate-600">
                       <Info className="h-3 w-3" />
                       Awaiting 100% layer
                     </span>
@@ -1577,7 +1581,7 @@ function OwnershipScreen({
                         })
                       }
                       aria-label={`Remove ${owner.name}`}
-                      className="grid h-9 w-9 place-items-center rounded-xl text-slate-400 hover:bg-red-50 hover:text-red-600"
+                      className="grid h-9 w-9 place-items-center rounded-xl text-slate-500 hover:bg-red-50 hover:text-red-600"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -1587,7 +1591,7 @@ function OwnershipScreen({
             );
           })
         ) : (
-          <div className="rounded-2xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500">
+          <div className="rounded-2xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-600">
             No owners have been added at this layer.
           </div>
         )}
@@ -1743,7 +1747,7 @@ function SignatureScreen({
         title="E-Signature"
         description="Provide the authorised signatory’s details. The signatory must be at least 18 years old."
       />
-      <div className="mt-7 grid gap-5 sm:grid-cols-2">
+      <div className="mt-7 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         <Field
           label="Authorised signatory name"
           htmlFor={`signature-name-${subject.id}`}
@@ -1775,17 +1779,19 @@ function SignatureScreen({
             placeholder="Phone number"
           />
         </Field>
-        <Field label="Date of birth" htmlFor={`signature-dob-${subject.id}`}>
-          <DatePicker
-            id={`signature-dob-${subject.id}`}
-            value={signature.dateOfBirth}
-            onChange={(dateOfBirth) => updateSignature({ dateOfBirth })}
-            minYear={new Date().getFullYear() - 110}
-            maxYear={new Date().getFullYear()}
-            conditions={[minimumAgeCondition(18)]}
-            helperText="The authorised signatory must be at least 18."
-          />
-        </Field>
+        <div className="lg:col-span-3">
+          <Field label="Date of birth" htmlFor={`signature-dob-${subject.id}`}>
+            <DatePicker
+              id={`signature-dob-${subject.id}`}
+              value={signature.dateOfBirth}
+              onChange={(dateOfBirth) => updateSignature({ dateOfBirth })}
+              minYear={new Date().getFullYear() - 110}
+              maxYear={new Date().getFullYear()}
+              conditions={[minimumAgeCondition(18)]}
+              helperText="The authorised signatory must be at least 18."
+            />
+          </Field>
+        </div>
       </div>
     </div>
   );

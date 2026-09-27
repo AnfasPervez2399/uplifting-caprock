@@ -163,8 +163,9 @@ type ShareholderApplicationSubject = CompanyShareholder | ShareholderOwner;
 export const requiresShareholderApplication = (
   shareholder: ShareholderApplicationSubject,
 ) =>
-  (shareholder.type === "corporate" || shareholder.type === "trust") &&
-  Number(shareholder.percentage) >= 25;
+  shareholder.type === "individual" ||
+  ((shareholder.type === "corporate" || shareholder.type === "trust") &&
+    Number(shareholder.percentage) >= 25);
 
 export const isCompleteShareholder = (shareholder: CompanyShareholder) => {
   const percentage = Number(shareholder.percentage);

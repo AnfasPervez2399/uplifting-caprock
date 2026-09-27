@@ -79,7 +79,7 @@ export function BankStep({ controller }: StepProps) {
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold text-slate-950">{account.bankName}</p>
-                    <p className="mt-1 text-xs text-slate-500">
+                    <p className="mt-1 text-xs text-slate-600">
                       {account.currency} · •••• {account.accountNumber.slice(-4)} · SWIFT {account.swiftCode}
                     </p>
                   </div>
@@ -97,7 +97,7 @@ export function BankStep({ controller }: StepProps) {
                       type="button"
                       onClick={() => editBankAccount(account)}
                       aria-label={`Edit bank account ${index + 1}`}
-                      className="grid h-9 w-9 place-items-center rounded-xl text-slate-400 transition hover:bg-slate-100 hover:text-[#003478]"
+                      className="grid h-9 w-9 place-items-center rounded-xl text-slate-500 transition hover:bg-slate-100 hover:text-[#003478]"
                     >
                       <PencilLine className="h-4 w-4" />
                     </button>
@@ -105,7 +105,7 @@ export function BankStep({ controller }: StepProps) {
                       type="button"
                       onClick={() => removeBankAccount(account.id)}
                       aria-label={`Remove bank account ${index + 1}`}
-                      className="grid h-9 w-9 place-items-center rounded-xl text-slate-400 transition hover:bg-red-50 hover:text-red-600"
+                      className="grid h-9 w-9 place-items-center rounded-xl text-slate-500 transition hover:bg-red-50 hover:text-red-600"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -131,23 +131,25 @@ export function BankStep({ controller }: StepProps) {
                     setEditingBankId(null);
                   }}
                   aria-label="Close bank account form"
-                  className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-slate-400 transition hover:bg-white hover:text-slate-700"
+                  className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-slate-500 transition hover:bg-white hover:text-slate-700"
                 >
                   <X className="h-4 w-4" />
                 </button>
               ) : null}
             </div>
 
-            <div className="grid gap-5 sm:grid-cols-2">
-              <Field label="Bank name" htmlFor="bankName">
-                <input
-                  id="bankName"
-                  value={bankDraft.bankName}
-                  onChange={(event) => updateBankDraft("bankName", event.target.value)}
-                  placeholder="Financial institution name"
-                  className={inputClass()}
-                />
-              </Field>
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="lg:col-span-2">
+                <Field label="Bank name" htmlFor="bankName">
+                  <input
+                    id="bankName"
+                    value={bankDraft.bankName}
+                    onChange={(event) => updateBankDraft("bankName", event.target.value)}
+                    placeholder="Financial institution name"
+                    className={inputClass()}
+                  />
+                </Field>
+              </div>
               <Field label="SWIFT / BIC code" htmlFor="swiftCode">
                 <input
                   id="swiftCode"
@@ -157,7 +159,7 @@ export function BankStep({ controller }: StepProps) {
                   className={inputClass()}
                 />
               </Field>
-              <div className="sm:col-span-2">
+              <div className="sm:col-span-2 lg:col-span-3">
                 <Field label="Bank address" htmlFor="bankAddress">
                   <textarea
                     id="bankAddress"
@@ -187,7 +189,7 @@ export function BankStep({ controller }: StepProps) {
                   className={inputClass()}
                 />
               </Field>
-              <div className="sm:col-span-2">
+              <div>
                 <Field label="Account currency" htmlFor="bankCurrency">
                   <CustomSelect
                     id="bankCurrency"
@@ -198,7 +200,7 @@ export function BankStep({ controller }: StepProps) {
                   />
                 </Field>
               </div>
-              <div className="sm:col-span-2">
+              <div className="sm:col-span-2 lg:col-span-3">
                 <DocumentUpload
                   id={`bankVerification-${bankDraft.id}`}
                   title="Bank verification document"
@@ -232,7 +234,7 @@ export function BankStep({ controller }: StepProps) {
 
         {errors.bank ? <p className="text-xs font-medium text-red-600">{errors.bank}</p> : null}
 
-        <div className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-xs leading-5 text-slate-500">
+        <div className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-xs leading-5 text-slate-600">
           <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-[#003478]" />
           Bank details and supporting evidence are encrypted in transit. Accounts are used only for approved application transfers and settlement.
         </div>

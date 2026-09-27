@@ -184,22 +184,8 @@ export function useOnboardingController() {
         name: mainApplicantFullName || "Main applicant",
         country: form.personal.applicantCountry,
       },
-      ...(isJoint
-        ? form.jointApplicants.map((applicant, index) => ({
-            key: applicant.id,
-            label: `Joint applicant ${index + 1}`,
-            name: applicant.firstName || `Joint applicant ${index + 1}`,
-            country:
-              applicant.applicantCountry || form.personal.applicantCountry,
-          }))
-        : []),
     ],
-    [
-      form.jointApplicants,
-      form.personal.applicantCountry,
-      isJoint,
-      mainApplicantFullName,
-    ],
+    [form.personal.applicantCountry, mainApplicantFullName],
   );
 
   const personalComplete = useMemo(() => {

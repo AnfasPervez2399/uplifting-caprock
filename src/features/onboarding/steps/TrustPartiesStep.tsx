@@ -110,7 +110,7 @@ export function TrustPartiesStep({
         description="Invite as many trustees as required — there is no ownership percentage on this list. A corporate trustee then completes a full company application (directors, shareholders and nested owners). Those directors are not added separately here."
         icon={UsersRound}
       />
-      <div className="space-y-8">
+      <div className="space-y-6">
         <section className="rounded-2xl border border-slate-200 bg-slate-50/55 p-5 sm:p-6">
           <SubsectionHeading
             title="Add a trustee"
@@ -188,20 +188,22 @@ export function TrustPartiesStep({
                 className={inputClass(Boolean(draftErrors.email))}
               />
             </Field>
-            <Field
-              label="Phone number"
-              htmlFor="trusteesPhone"
-              error={draftErrors.phone}
-            >
-              <input
-                id="trusteesPhone"
-                type="tel"
-                value={draft.phone}
-                onChange={(event) => updateDraft({ phone: event.target.value })}
-                placeholder="Phone number"
-                className={inputClass(Boolean(draftErrors.phone))}
-              />
-            </Field>
+            <div className={draft.type === "corporate" ? "sm:col-span-2 lg:col-span-2" : "lg:col-span-3"}>
+              <Field
+                label="Phone number"
+                htmlFor="trusteesPhone"
+                error={draftErrors.phone}
+              >
+                <input
+                  id="trusteesPhone"
+                  type="tel"
+                  value={draft.phone}
+                  onChange={(event) => updateDraft({ phone: event.target.value })}
+                  placeholder="Phone number"
+                  className={inputClass(Boolean(draftErrors.phone))}
+                />
+              </Field>
+            </div>
           </div>
           {draft.type === "corporate" ? (
             <p className="mt-4 rounded-xl border border-[rgba(0,52,120,0.14)] bg-white px-4 py-3 text-xs leading-5 text-slate-600">
@@ -237,7 +239,7 @@ export function TrustPartiesStep({
                     className={`rounded-2xl border bg-white p-4 ${party.type === "corporate" && !corporateComplete ? "border-amber-200" : "border-slate-200"}`}
                   >
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-slate-100 text-slate-500">
+                      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-slate-100 text-slate-600">
                         {party.type === "corporate" ? (
                           <Building2 className="h-4 w-4" />
                         ) : (
@@ -248,7 +250,7 @@ export function TrustPartiesStep({
                         <p className="text-sm font-semibold text-slate-950">
                           {index + 1}. {party.name}
                         </p>
-                        <p className="mt-1 text-xs text-slate-500">
+                        <p className="mt-1 text-xs text-slate-600">
                           {party.type === "corporate"
                             ? `Corporate · ${directors.length} director${directors.length === 1 ? "" : "s"} from nested application`
                             : "Individual"}{" "}
@@ -281,14 +283,14 @@ export function TrustPartiesStep({
                         type="button"
                         onClick={() => removeTrustParty("trustees", party.id)}
                         aria-label={`Remove ${party.name}`}
-                        className="grid h-9 w-9 place-items-center rounded-xl text-slate-400 transition hover:bg-red-50 hover:text-red-600"
+                        className="grid h-9 w-9 place-items-center rounded-xl text-slate-500 transition hover:bg-red-50 hover:text-red-600"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
                     {party.type === "corporate" ? (
                       <div className="mt-3 rounded-xl bg-slate-50 px-3 py-3">
-                        <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400">
+                        <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500">
                           Directors from company application
                         </p>
                         {directors.length ? (
@@ -315,7 +317,7 @@ export function TrustPartiesStep({
                 );
               })
             ) : (
-              <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500">
+              <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-600">
                 No trustees added yet.
               </div>
             )}

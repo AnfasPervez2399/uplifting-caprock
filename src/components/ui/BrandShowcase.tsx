@@ -43,7 +43,7 @@ const experiences = [
     accent: "#003478",
     accentBright: "#003478",
     soft: "rgba(0, 52, 120, 0.075)",
-    panel: "linear-gradient(145deg, #f7f9fb 0%, #eef2f6 52%, #e9eef4 100%)",
+    panel: "linear-gradient(145deg, #f4f7fc 0%, #e9eff7 52%, #e2e9f2 100%)",
     metric: "20+",
     metricLabel: "years of experience",
     value: "Global reach",
@@ -59,7 +59,7 @@ const experiences = [
     accent: "#003478",
     accentBright: "#003478",
     soft: "rgba(0, 52, 120, 0.075)",
-    panel: "linear-gradient(145deg, #f7f9fb 0%, #eef2f6 52%, #e9eef4 100%)",
+    panel: "linear-gradient(145deg, #f4f7fc 0%, #e9eff7 52%, #e2e9f2 100%)",
     metric: "100+",
     metricLabel: "years of collective expertise",
     value: "Protected by design",
@@ -75,7 +75,7 @@ const experiences = [
     accent: "#003478",
     accentBright: "#003478",
     soft: "rgba(0, 52, 120, 0.075)",
-    panel: "linear-gradient(145deg, #f7f9fb 0%, #eef2f6 52%, #e9eef4 100%)",
+    panel: "linear-gradient(145deg, #f4f7fc 0%, #e9eff7 52%, #e2e9f2 100%)",
     metric: "3",
     metricLabel: "connected global regions",
     value: "One ecosystem",
@@ -107,7 +107,7 @@ function GlobalInvestmentPreview({ reduceMotion }: PreviewProps) {
             <Globe2 className="h-[18px] w-[18px]" />
           </div>
           <div className="min-w-0">
-            <p className="text-[8px] font-bold uppercase tracking-[0.18em] text-slate-400">
+            <p className="text-[8px] font-bold uppercase tracking-[0.18em] text-slate-500">
               Global opportunity access
             </p>
             <p className="mt-1 truncate text-xs font-semibold text-slate-950 xl:text-sm">
@@ -126,11 +126,11 @@ function GlobalInvestmentPreview({ reduceMotion }: PreviewProps) {
             <p className="text-[9px] font-bold text-slate-900">
               Mandate routes
             </p>
-            <p className="mt-0.5 text-[8px] text-slate-400">
+            <p className="mt-0.5 text-[8px] text-slate-500">
               Qualified market access
             </p>
           </div>
-          <span className="text-[8px] font-semibold text-slate-500">
+          <span className="text-[8px] font-semibold text-slate-600">
             6 regions
           </span>
         </div>
@@ -245,7 +245,7 @@ function GlobalInvestmentPreview({ reduceMotion }: PreviewProps) {
             <p className="truncate text-[9px] font-bold text-slate-900">
               {market.region}
             </p>
-            <p className="mt-1 line-clamp-2 text-[7.5px] leading-[1.35] text-slate-400">
+            <p className="mt-1 line-clamp-2 text-[7.5px] leading-[1.35] text-slate-500">
               {market.strategy}
             </p>
           </motion.div>
@@ -282,7 +282,7 @@ function GovernancePreview({ reduceMotion }: PreviewProps) {
             <ShieldCheck className="h-[18px] w-[18px]" />
           </div>
           <div className="min-w-0">
-            <p className="text-[8px] font-bold uppercase tracking-[0.18em] text-slate-400">
+            <p className="text-[8px] font-bold uppercase tracking-[0.18em] text-slate-500">
               Governance control centre
             </p>
             <p className="mt-1 truncate text-xs font-semibold text-slate-950 xl:text-sm">
@@ -332,7 +332,7 @@ function GovernancePreview({ reduceMotion }: PreviewProps) {
                 <p className="text-base font-semibold tracking-[-0.04em] text-slate-950 xl:text-lg">
                   96%
                 </p>
-                <p className="text-[6px] font-bold uppercase tracking-wider text-slate-400">
+                <p className="text-[6px] font-bold uppercase tracking-wider text-slate-500">
                   complete
                 </p>
               </div>
@@ -364,7 +364,7 @@ function GovernancePreview({ reduceMotion }: PreviewProps) {
                   <p className="truncate text-[8.5px] font-bold text-slate-900">
                     {control.label}
                   </p>
-                  <p className="mt-0.5 truncate text-[7.5px] text-slate-400">
+                  <p className="mt-0.5 truncate text-[7.5px] text-slate-500">
                     {control.detail}
                   </p>
                 </div>
@@ -385,7 +385,7 @@ function GovernancePreview({ reduceMotion }: PreviewProps) {
               Approval sequence
             </p>
           </div>
-          <span className="text-[7.5px] font-semibold text-slate-400">
+          <span className="text-[7.5px] font-semibold text-slate-500">
             Auditable
           </span>
         </div>
@@ -432,7 +432,7 @@ function InfrastructurePreview({ reduceMotion }: PreviewProps) {
             <Network className="h-[18px] w-[18px]" />
           </div>
           <div className="min-w-0">
-            <p className="text-[8px] font-bold uppercase tracking-[0.18em] text-slate-400">
+            <p className="text-[8px] font-bold uppercase tracking-[0.18em] text-slate-500">
               Institutional infrastructure
             </p>
             <p className="mt-1 truncate text-xs font-semibold text-slate-950 xl:text-sm">
@@ -451,7 +451,7 @@ function InfrastructurePreview({ reduceMotion }: PreviewProps) {
             <p className="text-[9px] font-bold text-slate-900">
               Allocation rail
             </p>
-            <p className="mt-0.5 text-[8px] text-slate-400">
+            <p className="mt-0.5 text-[8px] text-slate-500">
               Cash to investment workflow
             </p>
           </div>
@@ -521,8 +521,8 @@ function InfrastructurePreview({ reduceMotion }: PreviewProps) {
                 transition={{ delay: reduceMotion ? 0 : 0.46 + index * 0.08 }}
                 className="min-w-0 text-center"
               >
-                <Icon className="mx-auto h-3.5 w-3.5 text-slate-400" />
-                <p className="mt-1.5 truncate text-[7px] font-semibold text-slate-500">
+                <Icon className="mx-auto h-3.5 w-3.5 text-slate-500" />
+                <p className="mt-1.5 truncate text-[7px] font-semibold text-slate-600">
                   {service.label}
                 </p>
               </motion.div>
@@ -539,7 +539,7 @@ function InfrastructurePreview({ reduceMotion }: PreviewProps) {
       >
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-[8px] font-semibold text-slate-400">
+            <p className="text-[8px] font-semibold text-slate-500">
               Fund allocation
             </p>
             <p className="mt-1 text-sm font-semibold tracking-[-0.03em] text-slate-950">
@@ -548,7 +548,7 @@ function InfrastructurePreview({ reduceMotion }: PreviewProps) {
           </div>
           <ArrowRight className="h-4 w-4 shrink-0 text-slate-300" />
           <div className="shrink-0 text-right">
-            <p className="text-[8px] font-semibold text-slate-400">
+            <p className="text-[8px] font-semibold text-slate-500">
               Settlement
             </p>
             <div className="mt-1 inline-flex items-center gap-1.5 text-[8px] font-bold text-[#003478]">
@@ -660,7 +660,7 @@ export function BrandShowcase() {
     <section
       onPointerMove={handlePointerMove}
       onPointerLeave={resetPointer}
-      className="relative hidden h-full shrink-0 overflow-hidden border-r border-black/[0.065] bg-[#edf1f6] lg:flex lg:w-[52%] xl:w-[55%]"
+      className="relative hidden h-full shrink-0 overflow-hidden border-r border-black/[0.065] bg-[#e9eff7] lg:flex lg:w-[52%] xl:w-[55%]"
     >
       <div
         aria-hidden="true"
@@ -787,12 +787,12 @@ export function BrandShowcase() {
                       <span className="relative z-10 min-w-0 flex-1">
                         <span
                           className={`block truncate text-[9px] font-bold tracking-[0.025em] xl:text-[10px] ${
-                            isActive ? "text-slate-900" : "text-slate-500"
+                            isActive ? "text-slate-900" : "text-slate-600"
                           }`}
                         >
                           {item.eyebrow}
                         </span>
-                        <span className="mt-0.5 block truncate text-[8.5px] text-slate-500 xl:text-[9px]">
+                        <span className="mt-0.5 block truncate text-[8.5px] text-slate-600 xl:text-[9px]">
                           {item.metric} {item.metricLabel}
                         </span>
                       </span>
@@ -814,7 +814,7 @@ export function BrandShowcase() {
                   type="button"
                   onClick={previous}
                   aria-label="Previous capability"
-                  className="grid h-8 w-8 place-items-center rounded-full border border-slate-200/90 bg-white/90 text-slate-500 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(0,52,120,0.24)] xl:h-9 xl:w-9"
+                  className="grid h-8 w-8 place-items-center rounded-full border border-slate-200/90 bg-white/90 text-slate-600 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(0,52,120,0.24)] xl:h-9 xl:w-9"
                 >
                   <ChevronLeft className="h-3.5 w-3.5" />
                 </button>
@@ -822,7 +822,7 @@ export function BrandShowcase() {
                   type="button"
                   onClick={next}
                   aria-label="Next capability"
-                  className="grid h-8 w-8 place-items-center rounded-full border border-slate-200/90 bg-white/90 text-slate-500 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(0,52,120,0.24)] xl:h-9 xl:w-9"
+                  className="grid h-8 w-8 place-items-center rounded-full border border-slate-200/90 bg-white/90 text-slate-600 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(0,52,120,0.24)] xl:h-9 xl:w-9"
                 >
                   <ChevronRight className="h-3.5 w-3.5" />
                 </button>
@@ -905,19 +905,19 @@ export function BrandShowcase() {
                 (TrustIcon, index) => (
                   <div
                     key={index}
-                    className="grid h-7 w-7 place-items-center rounded-full border-2 border-[#f7f7f6] bg-white text-slate-500 shadow-sm"
+                    className="grid h-7 w-7 place-items-center rounded-full border-2 border-[#f7f7f6] bg-white text-slate-600 shadow-sm"
                   >
                     <TrustIcon className="h-3 w-3" />
                   </div>
                 ),
               )}
             </div>
-            <p className="text-[9px] font-medium text-slate-500 xl:text-[10px]">
+            <p className="text-[9px] font-medium text-slate-600 xl:text-[10px]">
               Built for sophisticated investors
             </p>
           </div>
 
-          <div className="hidden items-center gap-4 text-[9px] font-semibold text-slate-400 xl:flex xl:text-[10px]">
+          <div className="hidden items-center gap-4 text-[9px] font-semibold text-slate-500 xl:flex xl:text-[10px]">
             <span className="inline-flex items-center gap-1.5">
               <LockKeyhole className="h-3 w-3 text-[#003478]" />
               Institutional controls

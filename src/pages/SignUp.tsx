@@ -232,7 +232,7 @@ function TextField({
         required
         aria-invalid={Boolean(error)}
         aria-describedby={error ? errorId : undefined}
-        className={`h-12 w-full rounded-lg border bg-white px-3.5 text-[15px] text-slate-950 outline-none transition placeholder:text-slate-400 focus:ring-2 ${error ? "border-red-500 focus:border-red-500 focus:ring-red-500/10" : "border-slate-300 hover:border-slate-400 focus:border-[#003478] focus:ring-[#003478]/10"}`}
+        className={`h-12 w-full rounded-lg border bg-white px-3.5 text-[15px] text-slate-950 outline-none transition placeholder:text-slate-500 focus:ring-2 ${error ? "border-red-500 focus:border-red-500 focus:ring-red-500/10" : "border-slate-300 hover:border-slate-400 focus:border-[#003478] focus:ring-[#003478]/10"}`}
       />
       <ErrorText id={errorId} reducedMotion={reducedMotion}>
         {error}
@@ -300,11 +300,11 @@ function MobileField({
             aria-describedby={[hintId, error ? errorId : ""]
               .filter(Boolean)
               .join(" ")}
-            className={`h-12 w-full rounded-xl border bg-white px-3.5 text-[15px] text-slate-950 outline-none transition placeholder:text-slate-400 focus:ring-2 ${error ? "border-red-500 focus:border-red-500 focus:ring-red-500/10" : "border-slate-300 hover:border-slate-400 focus:border-[#003478] focus:ring-[#003478]/10"}`}
+            className={`h-12 w-full rounded-xl border bg-white px-3.5 text-[15px] text-slate-950 outline-none transition placeholder:text-slate-500 focus:ring-2 ${error ? "border-red-500 focus:border-red-500 focus:ring-red-500/10" : "border-slate-300 hover:border-slate-400 focus:border-[#003478] focus:ring-[#003478]/10"}`}
           />
         </div>
       </div>
-      <p id={hintId} className="mt-1.5 text-[11px] leading-4 text-slate-500">
+      <p id={hintId} className="mt-1.5 text-[11px] leading-4 text-slate-600">
         Select the country code, then enter the mobile number without it.
       </p>
       <ErrorText id={errorId} reducedMotion={reducedMotion}>
@@ -364,7 +364,7 @@ function PasswordField({
               .filter(Boolean)
               .join(" ") || undefined
           }
-          className={`h-12 w-full rounded-lg border bg-white px-3.5 pr-12 text-[15px] text-slate-950 outline-none transition placeholder:text-slate-400 focus:ring-2 ${error ? "border-red-500 focus:border-red-500 focus:ring-red-500/10" : "border-slate-300 hover:border-slate-400 focus:border-[#003478] focus:ring-[#003478]/10"}`}
+          className={`h-12 w-full rounded-lg border bg-white px-3.5 pr-12 text-[15px] text-slate-950 outline-none transition placeholder:text-slate-500 focus:ring-2 ${error ? "border-red-500 focus:border-red-500 focus:ring-red-500/10" : "border-slate-300 hover:border-slate-400 focus:border-[#003478] focus:ring-[#003478]/10"}`}
         />
         <button
           type="button"
@@ -375,7 +375,7 @@ function PasswordField({
               : `Show ${label.toLowerCase()}`
           }
           aria-pressed={visible}
-          className="absolute inset-y-1 right-1 grid w-10 place-items-center rounded-md text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003478]/20"
+          className="absolute inset-y-1 right-1 grid w-10 place-items-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003478]/20"
         >
           <AnimatePresence mode="wait" initial={false}>
             <motion.span
@@ -484,7 +484,7 @@ function PasswordStrengthPanel({
           </motion.span>
 
           <div className="min-w-0">
-            <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-500">
+            <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-600">
               Password security
             </p>
             <div className="mt-1 flex flex-wrap items-center gap-2">
@@ -503,7 +503,7 @@ function PasswordStrengthPanel({
                 </motion.span>
               </AnimatePresence>
               {password ? (
-                <span className="rounded-full bg-white/75 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.07em] text-slate-500 ring-1 ring-black/5">
+                <span className="rounded-full bg-white/75 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.07em] text-slate-600 ring-1 ring-black/5">
                   Live score
                 </span>
               ) : null}
@@ -576,7 +576,7 @@ function PasswordStrengthPanel({
               {strength}
             </motion.span>
           </AnimatePresence>
-          <span className="absolute bottom-0.5 right-0 text-[8px] font-bold text-slate-400">
+          <span className="absolute bottom-0.5 right-0 text-[8px] font-bold text-slate-500">
             /5
           </span>
         </div>
@@ -622,7 +622,7 @@ function PasswordStrengthPanel({
             transition={
               reducedMotion ? { duration: 0 } : { duration: 0.24, ease: EASE }
             }
-            className={`flex min-h-9 items-center gap-2 rounded-lg border px-2.5 py-2 text-[11px] font-medium ${check.met ? "text-emerald-800" : "text-slate-500"}`}
+            className={`flex min-h-9 items-center gap-2 rounded-lg border px-2.5 py-2 text-[11px] font-medium ${check.met ? "text-emerald-800" : "text-slate-600"}`}
           >
             <motion.span
               initial={false}
@@ -809,7 +809,7 @@ export function SignUp() {
         <h1 className="mt-2 text-3xl font-semibold tracking-[-0.035em] text-slate-950 sm:text-[34px]">
           Create your account
         </h1>
-        <p className="mt-2.5 text-[15px] leading-6 text-slate-500">
+        <p className="mt-2.5 text-[15px] leading-6 text-slate-600">
           Set up secure access, then continue directly to your onboarding
           application.
         </p>
@@ -959,7 +959,7 @@ export function SignUp() {
         </motion.button>
       </form>
 
-      <p className="mt-7 border-t border-slate-200 pt-5 text-center text-sm text-slate-500">
+      <p className="mt-7 border-t border-slate-200 pt-5 text-center text-sm text-slate-600">
         Already have an account?{" "}
         <Link
           to="/login"

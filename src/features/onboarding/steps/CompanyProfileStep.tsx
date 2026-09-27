@@ -35,39 +35,14 @@ export function CompanyProfileStep({
         description="Enter the entity’s registered name, identifier and investment profile exactly as they appear in official records."
         icon={Building2}
       />
-      <div className="space-y-8">
-        <section className="rounded-2xl border border-slate-200 bg-slate-50/55 p-5 sm:p-6">
-          <SubsectionHeading
-            title="Application references"
-            description="Caprock and adviser references are assigned outside this application."
-          />
-          <div className="grid gap-5 sm:grid-cols-2">
-            <Field
-              label="Caprock reference number"
-              htmlFor="companyReference"
-              required={false}
-            >
-              <input
-                id="companyReference"
-                value={form.personal.referenceNumber}
-                readOnly
-                placeholder="Assigned by Caprock"
-                className={`${inputClass()} cursor-not-allowed bg-slate-100/80 text-slate-500`}
-              />
-            </Field>
-            {/* <Field label="Adviser reference number" htmlFor="companyAdviserReference" required={false}>
-              <input id="companyAdviserReference" value={form.personal.advisorReferenceNumber} readOnly placeholder="Provided by adviser" className={`${inputClass()} cursor-not-allowed bg-slate-100/80 text-slate-500`} />
-            </Field> */}
-          </div>
-        </section>
-
+      <div className="space-y-6">
         <section>
           <SubsectionHeading
             title="Registered company details"
             description="Use the company’s current legal registration details."
           />
-          <div className="grid gap-5 sm:grid-cols-2">
-            <div className="sm:col-span-2">
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="sm:col-span-2 lg:col-span-3">
               <DocumentUpload
                 id="companyLogo"
                 title="Company logo"
@@ -79,6 +54,7 @@ export function CompanyProfileStep({
                 onPreview={openDocumentPreview}
                 required={false}
                 accept="image/*"
+                compact
               />
             </div>
             <Field
@@ -88,6 +64,7 @@ export function CompanyProfileStep({
                   : "Company name"
               }
               htmlFor="companyName"
+              bottomAlign
               error={errors.companyName}
             >
               <input
@@ -101,6 +78,7 @@ export function CompanyProfileStep({
             <Field
               label="Company website"
               htmlFor="companyWebsite"
+              bottomAlign
               error={errors.companyWebsite}
               required={false}
             >
@@ -118,6 +96,7 @@ export function CompanyProfileStep({
               <Field
                 label="Australian Registered Body Number (ARBN)"
                 htmlFor="companyArbn"
+                bottomAlign
                 error={errors.companyArbn}
               >
                 <input
@@ -134,6 +113,7 @@ export function CompanyProfileStep({
               <Field
                 label="Company registration number"
                 htmlFor="companyRegistrationNumber"
+                bottomAlign
                 error={errors.companyRegistrationNumber}
               >
                 <input
@@ -154,6 +134,7 @@ export function CompanyProfileStep({
                 <Field
                   label="State or territory of formation or registration"
                   htmlFor="companyState"
+                  bottomAlign
                   error={errors.companyState}
                 >
                   <CustomSelect
@@ -170,6 +151,7 @@ export function CompanyProfileStep({
                 <Field
                   label="Type of company"
                   htmlFor="companyType"
+                  bottomAlign
                   error={errors.companyType}
                 >
                   <CustomSelect
@@ -189,6 +171,7 @@ export function CompanyProfileStep({
                 <Field
                   label="Date of incorporation"
                   htmlFor="companyIncorporationDate"
+                  bottomAlign
                   error={errors.companyIncorporationDate}
                 >
                   <input

@@ -89,7 +89,7 @@ export function FormerNamesField({
                     onChange(values.filter((saved) => saved !== name))
                   }
                   aria-label={`Remove ${name}`}
-                  className="grid h-6 w-6 shrink-0 place-items-center rounded-md text-slate-500 transition hover:bg-white hover:text-red-600"
+                  className="grid h-6 w-6 shrink-0 place-items-center rounded-md text-slate-600 transition hover:bg-white hover:text-red-600"
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
@@ -108,12 +108,12 @@ export function FormerNamesField({
             }}
             onKeyDown={handleKeyDown}
             placeholder="Former legal name or None"
-            className={`${inputClass()} h-11`}
+            className={inputClass()}
           />
           <button
             type="button"
             onClick={() => addName(draft)}
-            className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#003478] px-4 text-xs font-semibold text-white transition hover:bg-[#002b63]"
+            className="inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#003478] px-4 text-xs font-semibold text-white transition hover:bg-[#002b63]"
           >
             <Plus className="h-4 w-4" />
             Add name
