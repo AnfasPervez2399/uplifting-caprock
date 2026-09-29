@@ -84,30 +84,30 @@ const strengthStates = [
   {
     label: "Very weak",
     detail: "A few more ingredients will make this safer.",
-    color: "#be123c",
-    soft: "#fff1f2",
-    border: "#fecdd3",
+    color: "#dc2626",
+    soft: "#fef2f2",
+    border: "#fecaca",
   },
   {
     label: "Weak",
     detail: "Keep going — length and variety both matter.",
-    color: "#c2410c",
-    soft: "#fff7ed",
-    border: "#fed7aa",
+    color: "#dc2626",
+    soft: "#fef2f2",
+    border: "#fecaca",
   },
   {
     label: "Fair",
     detail: "Good progress. Complete the remaining checks.",
-    color: "#a16207",
-    soft: "#fefce8",
+    color: "#d97706",
+    soft: "#fffbeb",
     border: "#fde68a",
   },
   {
     label: "Strong",
     detail: "Nearly there. One final security check remains.",
-    color: "#003478",
-    soft: "#eff6ff",
-    border: "#bfdbfe",
+    color: "#d97706",
+    soft: "#fffbeb",
+    border: "#fde68a",
   },
   {
     label: "Excellent",
@@ -118,13 +118,7 @@ const strengthStates = [
   },
 ] as const;
 
-const strengthSegmentColors = [
-  "#e11d48",
-  "#f97316",
-  "#eab308",
-  "#2563eb",
-  "#059669",
-] as const;
+const strengthSegmentCount = 5;
 
 const regionNames = new Intl.DisplayNames(["en-AU"], { type: "region" });
 const countryName = (country: CountryCode) =>
@@ -583,14 +577,14 @@ function PasswordStrengthPanel({
       </div>
 
       <div className="my-4 grid grid-cols-5 gap-1.5" aria-hidden="true">
-        {strengthSegmentColors.map((color, index) => {
+        {Array.from({ length: strengthSegmentCount }).map((_, index) => {
           const active = index < strength;
           return (
             <motion.span
-              key={color}
+              key={index}
               initial={false}
               animate={{
-                backgroundColor: active ? color : "#e2e8f0",
+                backgroundColor: active ? state.color : "#e2e8f0",
                 opacity: active ? 1 : 0.7,
                 scaleY: active ? 1 : 0.58,
               }}
