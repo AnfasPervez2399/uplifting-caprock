@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import { Sparkles, ArrowRight } from "lucide-react";
 import { DashboardLayout } from "../components/layout/DashboardLayout";
 import { BalanceCard, QuickActions } from "../components/dashboard/BalanceCard";
@@ -29,12 +30,20 @@ export default function Dashboard() {
               </p>
             </div>
           </div>
-          <motion.button
-            whileHover={{ x: 4 }}
-            className="flex items-center gap-1.5 text-sm font-semibold text-white/90 hover:text-white self-start sm:self-center"
-          >
-            View insights <ArrowRight className="h-4 w-4" />
-          </motion.button>
+          <div className="flex flex-wrap items-center gap-2 self-start sm:self-center">
+            <motion.button
+              whileHover={{ x: 4 }}
+              className="flex items-center gap-1.5 text-sm font-semibold text-white/90 hover:text-white"
+            >
+              View insights <ArrowRight className="h-4 w-4" />
+            </motion.button>
+            <Link
+              to="/portal"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-white px-4 py-2 text-sm font-extrabold text-[#003478] shadow transition hover:bg-blue-50"
+            >
+              Open client portal <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
         </motion.div>
 
         <div className="grid gap-6 lg:grid-cols-5">
