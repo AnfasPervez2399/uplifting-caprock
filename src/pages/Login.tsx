@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Check, Eye, EyeOff, Loader2, LogIn } from "lucide-react";
 import { useLoader } from "../components/ui/LoaderProvider";
+import { getAccount } from "../features/onboarding/accountStore";
 
 type Status = "idle" | "loading" | "success";
 type Errors = Partial<Record<"email" | "password", string>>;
@@ -231,6 +232,15 @@ export function Login() {
           await wait(1000);
           setStatus("success");
           sessionStorage.setItem("caprockUserEmail", normalizedEmail);
+          const account = getAccount(normalizedEmail);
+          if (account?.applicationType) {
+            sessionStorage.setItem(
+              "caprockApplicationType",
+              account.applicationType,
+            );
+          } else {
+            sessionStorage.removeItem("caprockApplicationType");
+          }
           await wait(450);
           navigate("/onboarding");
         },

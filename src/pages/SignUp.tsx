@@ -1,7 +1,6 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   Check,
-  CheckCircle2,
   Eye,
   EyeOff,
   Loader2,
@@ -24,11 +23,14 @@ import {
   type CountryCode,
 } from "libphonenumber-js/max";
 import { CustomSelect, type SelectOption } from "../components/ui/CustomSelect";
+import { APPLICATION_OPTIONS } from "../features/onboarding/config";
 import { useLoader } from "../components/ui/LoaderProvider";
 
 type FieldName =
+  | "applicationType"
   | "firstName"
   | "lastName"
+  | "fullName"
   | "mobile"
   | "email"
   | "password"
@@ -39,8 +41,10 @@ type Status = "idle" | "loading" | "success";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 const initialValues: FormValues = {
+  applicationType: "",
   firstName: "",
   lastName: "",
+  fullName: "",
   mobile: "",
   email: "",
   password: "",
@@ -681,20 +685,37 @@ export function SignUp() {
       }));
     };
 
+  const selectedApplicationCategory = APPLICATION_OPTIONS.find(
+    (option) => option.value === values.applicationType,
+  )?.category;
+  const isEntityApplication =
+    selectedApplicationCategory === "company" ||
+    selectedApplicationCategory === "trust";
+
   const validate = () => {
     const nextErrors: FormErrors = {};
+    if (!values.applicationType)
+      nextErrors.applicationType = "Select an application type.";
     const firstName = values.firstName.trim();
     const lastName = values.lastName.trim();
+    const fullName = values.fullName.trim();
     const email = values.email.trim().toLowerCase();
 
-    if (!firstName) nextErrors.firstName = "First name is required.";
-    else if (firstName.length < 2 || !namePattern.test(firstName))
-      nextErrors.firstName =
-        "Enter a valid first name using letters, spaces, apostrophes or hyphens.";
-    if (!lastName) nextErrors.lastName = "Last name is required.";
-    else if (lastName.length < 2 || !namePattern.test(lastName))
-      nextErrors.lastName =
-        "Enter a valid last name using letters, spaces, apostrophes or hyphens.";
+    if (isEntityApplication) {
+      if (!fullName) nextErrors.fullName = "Full name is required.";
+      else if (fullName.length < 2 || !namePattern.test(fullName))
+        nextErrors.fullName =
+          "Enter a valid full name using letters, spaces, apostrophes or hyphens.";
+    } else {
+      if (!firstName) nextErrors.firstName = "First name is required.";
+      else if (firstName.length < 2 || !namePattern.test(firstName))
+        nextErrors.firstName =
+          "Enter a valid first name using letters, spaces, apostrophes or hyphens.";
+      if (!lastName) nextErrors.lastName = "Last name is required.";
+      else if (lastName.length < 2 || !namePattern.test(lastName))
+        nextErrors.lastName =
+          "Enter a valid last name using letters, spaces, apostrophes or hyphens.";
+    }
     if (!values.mobile.trim()) nextErrors.mobile = "Mobile number is required.";
     else if (!isValidMobile(values.mobile, mobileCountry))
       nextErrors.mobile = `Enter a valid mobile number for ${countryName(mobileCountry)}.`;
@@ -707,7 +728,7 @@ export function SignUp() {
       nextErrors.password =
         "Your password must satisfy every security requirement below.";
     else {
-      const personalTerms = [firstName, lastName, email.split("@")[0]]
+      const personalTerms = [firstName, lastName, fullName, email.split("@")[0]]
         .filter((term) => term.length >= 3)
         .map((term) => term.toLowerCase());
       if (
@@ -746,11 +767,15 @@ export function SignUp() {
           // Replace this short delay with the account-creation API request.
           await wait(900);
           const email = values.email.trim().toLowerCase();
-          sessionStorage.setItem("caprockUserEmail", email);
           sessionStorage.setItem(
-            "caprockUserName",
-            `${values.firstName.trim()} ${values.lastName.trim()}`,
+            "caprockApplicationType",
+            values.applicationType,
           );
+          sessionStorage.setItem("caprockUserEmail", email);
+          const displayName = isEntityApplication
+            ? values.fullName.trim()
+            : `${values.firstName.trim()} ${values.lastName.trim()}`;
+          sessionStorage.setItem("caprockUserName", displayName);
           const mobile = parseMobileNumber(values.mobile, mobileCountry);
           sessionStorage.setItem(
             "caprockUserMobile",
@@ -819,28 +844,75 @@ export function SignUp() {
       ) : null}
 
       <form onSubmit={handleSubmit} noValidate className="space-y-5">
-        <div className="grid gap-5 sm:grid-cols-2">
-          <TextField
-            id="firstName"
-            label="First name"
-            value={values.firstName}
-            error={errors.firstName}
-            autoComplete="given-name"
-            placeholder="First name"
-            onChange={updateField("firstName")}
-            reducedMotion={reducedMotion}
+        <div>
+          <label
+            htmlFor="applicationType"
+            className="mb-2 block text-sm font-medium text-slate-800"
+          >
+            Application type
+          </label>
+          <CustomSelect
+            id="applicationType"
+            value={values.applicationType}
+            options={APPLICATION_OPTIONS}
+            onChange={(next) => {
+              setValues((current) => ({
+                ...current,
+                applicationType: next,
+              }));
+              setErrors((current) => ({
+                ...current,
+                applicationType: undefined,
+                firstName: undefined,
+                lastName: undefined,
+                fullName: undefined,
+                form: undefined,
+              }));
+            }}
+            placeholder="Select application type"
+            error={Boolean(errors.applicationType)}
+            searchable
+            searchPlaceholder="Search application types"
           />
-          <TextField
-            id="lastName"
-            label="Last name"
-            value={values.lastName}
-            error={errors.lastName}
-            autoComplete="family-name"
-            placeholder="Last name"
-            onChange={updateField("lastName")}
-            reducedMotion={reducedMotion}
-          />
+          <ErrorText id="applicationType-error" reducedMotion={reducedMotion}>
+            {errors.applicationType}
+          </ErrorText>
         </div>
+        {isEntityApplication ? (
+          <TextField
+            id="fullName"
+            label="Full name"
+            value={values.fullName}
+            error={errors.fullName}
+            autoComplete="name"
+            placeholder="Full name"
+            onChange={updateField("fullName")}
+            reducedMotion={reducedMotion}
+          />
+        ) : (
+          <div className="grid gap-5 sm:grid-cols-2">
+            <TextField
+              id="firstName"
+              label="First name"
+              value={values.firstName}
+              error={errors.firstName}
+              autoComplete="given-name"
+              placeholder="First name"
+              onChange={updateField("firstName")}
+              reducedMotion={reducedMotion}
+            />
+            <TextField
+              id="lastName"
+              label="Last name"
+              value={values.lastName}
+              error={errors.lastName}
+              autoComplete="family-name"
+              placeholder="Last name"
+              onChange={updateField("lastName")}
+              reducedMotion={reducedMotion}
+            />
+          </div>
+        )}
         <MobileField
           value={values.mobile}
           country={mobileCountry}

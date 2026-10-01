@@ -61,14 +61,29 @@ import {
   isCompleteBeneficiary,
   isCompleteShareholder,
   isIndividualApplication,
-  isShareholderApplicationComplete,
   isTrustApplication,
   isTrustBusinessComplete,
   isTrustProfileComplete,
   isTrusteesComplete,
   percentageTotal,
-  requiresShareholderApplication,
 } from "./applicationLogic";
+
+const STORED_APPLICATION_TYPE_KEY = "caprockApplicationType";
+
+const resolveStoredApplicationType = (): Exclude<ApplicationType, ""> => {
+  try {
+    const stored = sessionStorage.getItem(STORED_APPLICATION_TYPE_KEY);
+    if (
+      stored &&
+      APPLICATION_OPTIONS.some((option) => option.value === stored)
+    ) {
+      return stored as Exclude<ApplicationType, "">;
+    }
+  } catch {
+    /* sessionStorage unavailable — fall through to the default. */
+  }
+  return "individual";
+};
 
 export function useOnboardingController() {
   const navigate = useNavigate();
@@ -89,10 +104,21 @@ export function useOnboardingController() {
     .map((part) => part.charAt(0))
     .join("")
     .toUpperCase();
-  const [form, setForm] = useState<FormState>(initialFormState);
-  const [activeStepId, setActiveStepId] = useState<StepId>("application");
+  const [form, setForm] = useState<FormState>(() => ({
+    ...initialFormState,
+    personal: {
+      ...initialFormState.personal,
+      applicationType: resolveStoredApplicationType(),
+    },
+  }));
+  const [activeStepId, setActiveStepId] = useState<StepId>(() => {
+    const steps = getStepsForApplication(resolveStoredApplicationType()).filter(
+      (step) => step.id !== "application",
+    );
+    return steps[0]?.id ?? "personal";
+  });
   const [applicationTypeConfirmed, setApplicationTypeConfirmed] =
-    useState(false);
+    useState(true);
   const [jointDraft, setJointDraft] =
     useState<JointApplicantDraft>(emptyJointDraft);
   const [showJointComposer, setShowJointComposer] = useState(false);
@@ -156,7 +182,9 @@ export function useOnboardingController() {
   const applicationSteps = useMemo(
     () =>
       getStepsForApplication(applicationType).filter(
-        (step) => step.id !== "shareholders" || isPrivateCompany,
+        (step) =>
+          step.id !== "application" &&
+          (step.id !== "shareholders" || isPrivateCompany),
       ),
     [applicationType, isPrivateCompany],
   );
@@ -465,7 +493,7 @@ export function useOnboardingController() {
 
   useEffect(() => {
     if (visibleSteps.some((step) => step.id === activeStepId)) return;
-    setActiveStepId(visibleSteps[0]?.id || "application");
+    setActiveStepId(visibleSteps[0]?.id || "personal");
   }, [activeStepId, visibleSteps]);
 
   useEffect(() => {
