@@ -10,9 +10,13 @@ import {
   ChevronLeft,
   ChevronRight,
   Download,
+  FileDown,
+  FileSpreadsheet,
+  FileText,
   Gem,
   Info,
   Lock,
+  ListFilter,
   PiggyBank,
   Plus,
   Search,
@@ -281,12 +285,12 @@ function PortfolioCarousel({
   };
   return (
     <div
-      className="group relative z-10 -mb-4 mt-4"
+      className="group relative z-10 -mb-1 mt-4"
       style={{ overflowX: "visible", overflowY: "clip" }}
     >
       <div
         ref={track}
-        className="no-scrollbar -mb-5 flex snap-x snap-mandatory gap-4 overflow-x-auto px-1 pb-[52px] pt-4"
+        className="no-scrollbar -mb-2 flex snap-x snap-mandatory gap-4 overflow-x-auto px-1 pb-[52px] pt-4"
         style={{
           scrollbarColor: "transparent transparent",
           msOverflowStyle: "none",
@@ -321,7 +325,7 @@ function PortfolioCarousel({
               whileHover={{
                 y: isActive ? -8 : -7,
                 scale: 1.02,
-                borderColor: isActive ? "#002855" : meta.cardEdge,
+                borderColor: meta.cardEdge,
                 boxShadow: `0 28px 48px -20px ${meta.glow}`,
               }}
               whileTap={{ scale: 0.98 }}
@@ -342,12 +346,11 @@ function PortfolioCarousel({
               style={
                 isActive
                   ? {
-                      borderColor: "#002855",
+                      borderColor: meta.accent,
                       borderWidth: 2,
-                      background: "#003478",
+                      background: meta.soft,
                       zIndex: 2,
-                      boxShadow:
-                        "0 24px 48px -20px rgba(0,40,90,.55),inset 0 1px 0 rgba(255,255,255,.18)",
+                      boxShadow: `0 22px 44px -22px ${meta.glow},0 2px 8px -2px ${meta.glow},inset 0 1px 0 rgba(255,255,255,.7)`,
                     }
                   : {
                       borderColor: meta.whisperEdge,
@@ -363,7 +366,7 @@ function PortfolioCarousel({
                 className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit]"
               >
                 {isActive && !kpi.locked && (
-                  <span className="prism-sheen absolute inset-y-[-20%] left-0 w-[22%] bg-white/20 blur-md" />
+                  <span className="prism-sheen absolute inset-y-[-20%] left-0 w-[30%] bg-white/50 blur-md" />
                 )}
               </span>
               {kpi.locked && (
@@ -399,14 +402,14 @@ function PortfolioCarousel({
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.25 }}
                     className="absolute -top-[3px] left-1/2 h-2 w-[30px] -translate-x-1/2 rounded-full"
-                    style={{ background: "#003478" }}
+                    style={{ background: meta.accent }}
                   />
                   <motion.span
                     initial={{ scaleY: 0, opacity: 0 }}
                     animate={{ scaleY: 1, opacity: 0.7 }}
                     transition={{ delay: 0.1, duration: 0.3, ease: "easeOut" }}
-                    style={{ background: "#003478", transformOrigin: "top" }}
-                    className="absolute left-1/2 top-[5px] h-[15px] w-[3px] -translate-x-1/2 rounded-full"
+                    style={{ background: meta.accent, transformOrigin: "top" }}
+                    className="absolute left-1/2 top-[5px] h-[38px] w-[3px] -translate-x-1/2 rounded-full"
                   />
                   <motion.span
                     initial={{ opacity: 0, scale: 0.5 }}
@@ -417,11 +420,10 @@ function PortfolioCarousel({
                       stiffness: 500,
                       damping: 20,
                     }}
-                    className="absolute left-1/2 top-[17px] h-[10px] w-[68px] -translate-x-1/2 rounded-full"
+                    className="absolute left-1/2 top-[40px] h-[10px] w-[68px] -translate-x-1/2 rounded-full"
                     style={{
-                      background: "#003478",
-                      boxShadow:
-                        "0 0 0 3px #FFFFFF,0 8px 16px -6px rgba(0,52,120,.5)",
+                      background: meta.accent,
+                      boxShadow: `0 0 0 3px #FFFFFF,0 8px 16px -6px ${meta.glow}`,
                     }}
                   />
                 </span>
@@ -435,10 +437,9 @@ function PortfolioCarousel({
                     isActive
                       ? {
                           color: "#FFFFFF",
-                          background: "rgba(255,255,255,.14)",
-                          borderColor: "rgba(255,255,255,.22)",
-                          boxShadow:
-                            "0 0 0 3px rgba(255,255,255,.12),0 10px 20px -12px rgba(0,0,0,.5)",
+                          background: meta.accent,
+                          borderColor: meta.accent,
+                          boxShadow: `0 0 0 3px #FFFFFF,0 0 0 5px ${meta.cardEdge},0 10px 20px -12px ${meta.glow}`,
                         }
                       : {
                           color: "#93A3B8",
@@ -460,8 +461,11 @@ function PortfolioCarousel({
                     transition={{ type: "spring", stiffness: 500, damping: 20 }}
                     layout
                     layoutId="pf-viewing"
-                    className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white text-[#003478]"
-                    style={{ boxShadow: "0 6px 14px -6px rgba(0,0,0,.5)" }}
+                    className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-white"
+                    style={{
+                      background: meta.accent,
+                      boxShadow: `0 6px 14px -6px ${meta.glow}`,
+                    }}
                   >
                     <Check className="h-4 w-4" strokeWidth={3} />
                   </motion.span>
@@ -472,33 +476,20 @@ function PortfolioCarousel({
                   </span>
                 )}
               </span>
-              <span
-                className="mt-2 block text-[9.5px] font-extrabold uppercase leading-5 tracking-[0.08em] text-slate-500"
-                style={
-                  isActive ? { color: "rgba(255,255,255,.72)" } : undefined
-                }
-              >
+              <span className="mt-2 block text-[9.5px] font-extrabold uppercase leading-5 tracking-[0.08em] text-slate-500">
                 {kpi.label}
               </span>
-              <span
-                className="relative mt-2 block truncate text-[20px] font-bold tabular-nums tracking-tight text-[#26344D]"
-                style={isActive ? { color: "#FFFFFF" } : undefined}
-              >
+              <span className="relative mt-2 block truncate text-[20px] font-bold tabular-nums tracking-tight text-[#26344D]">
                 <CountUp
                   value={kpi.amount}
                   format={(v) => fmtMoney(v, kpi.currency)}
                 />
               </span>
               {!kpi.locked && (
-                <span
-                  className="relative mt-1 flex items-center gap-2 text-[10.5px] font-semibold text-slate-400"
-                  style={
-                    isActive ? { color: "rgba(255,255,255,.75)" } : undefined
-                  }
-                >
+                <span className="relative mt-1 flex items-center gap-2 text-[10.5px] font-semibold text-slate-400">
                   <span
                     className="h-1.5 w-1.5 rounded-full"
-                    style={{ background: isActive ? "#FFFFFF" : meta.accent }}
+                    style={{ background: meta.accent }}
                   />
                   {counts[id]}
                   <span
@@ -520,9 +511,9 @@ function PortfolioCarousel({
               <span className="relative mt-2.5 block">
                 <MiniBars
                   values={kpi.spark}
-                  bar={isActive ? "rgba(255,255,255,.32)" : `${meta.accent}59`}
-                  last={isActive ? "#FFFFFF" : meta.accent}
-                  dot={isActive ? "#FFFFFF" : meta.accent}
+                  bar={`${meta.accent}59`}
+                  last={meta.accent}
+                  dot={meta.accent}
                 />
               </span>
             </motion.button>
@@ -683,14 +674,6 @@ function AccountCard({
           }
         }}
       >
-        <span
-          aria-hidden
-          className="absolute left-0 top-4 h-11 w-[5px] rounded-r-full"
-          style={{
-            background: accent,
-            boxShadow: `0 4px 12px -2px ${accent}88`,
-          }}
-        />
         {selected && (
           <motion.span
             initial={{ opacity: 0, scale: 0.8 }}
@@ -705,14 +688,10 @@ function AccountCard({
             className="flex items-center justify-between"
             onClick={(e) => e.stopPropagation()}
           >
-            <p className="flex items-center gap-1.5 text-xs font-extrabold tracking-tight text-slate-900">
-              <span
-                className="h-1.5 w-1.5 rounded-full"
-                style={{ background: accent, boxShadow: `0 0 8px ${accent}` }}
-              />
+            <p className="flex items-center gap-1.5 text-[13px] font-extrabold tracking-tight text-slate-900">
               Account {account.id}
               <span
-                className="rounded-md px-1.5 py-[3px] text-[9px] font-black tracking-[0.08em]"
+                className="rounded-full px-2 py-[2px] text-[9px] font-black tracking-[0.08em]"
                 style={{ background: "#00347814", color: "#003478" }}
               >
                 {account.currency}
@@ -773,11 +752,11 @@ function AccountCard({
             className="mt-2.5 flex items-center gap-2"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="relative flex-1">
+            <div className="relative flex-none">
               <button
                 type="button"
                 onClick={() => setReportMenu((o) => !o)}
-                className="flex w-full items-center justify-center gap-1.5 rounded-full bg-[#003478] py-1.5 text-[10px] font-extrabold text-white shadow-[0_8px_18px_-8px_rgba(0,52,120,.6)] transition hover:-translate-y-px hover:bg-[#002855] hover:shadow-[0_10px_22px_-8px_rgba(0,52,120,.65)] active:translate-y-0 active:scale-[0.98]"
+                className="inline-flex w-auto items-center justify-center gap-1.5 rounded-xl bg-[#E7EEFB] px-3.5 py-[6px] text-[10px] font-extrabold text-[#003478] transition hover:bg-[#003478] hover:text-white hover:shadow-[0_10px_22px_-8px_rgba(0,52,120,.65)] active:scale-[0.98]"
               >
                 <Download className="h-3.5 w-3.5" /> Download Report
                 <ChevronDown
@@ -790,26 +769,32 @@ function AccountCard({
                     className="fixed inset-0 z-20"
                     onClick={() => setReportMenu(false)}
                   />
-                  <ul className="absolute inset-x-0 bottom-full z-30 mb-1.5 overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-xl">
-                    {["PDF statement", "Excel transactions", "CSV ledger"].map(
-                      (f) => (
-                        <li key={f}>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setReportMenu(false);
-                              pushToast(
-                                "Report preparing",
-                                `${f} · Account ${account.id}.`,
-                              );
-                            }}
-                            className="w-full rounded-lg px-3 py-2 text-left text-xs font-bold text-slate-600 hover:bg-slate-50"
-                          >
-                            {f}
-                          </button>
-                        </li>
-                      ),
-                    )}
+                  <ul className="absolute inset-x-0 bottom-full z-30 mb-1.5 overflow-hidden rounded-xl border border-slate-200/80 bg-white p-1 shadow-[0_20px_44px_-16px_rgba(15,30,70,.35)] ring-1 ring-slate-950/5">
+                    {[
+                      { label: "PDF statement", Icon: FileText },
+                      { label: "Excel transactions", Icon: FileSpreadsheet },
+                      { label: "CSV ledger", Icon: FileDown },
+                    ].map(({ label, Icon }) => (
+                      <li key={label}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setReportMenu(false);
+                            pushToast(
+                              "Report preparing",
+                              `${label} · Account ${account.id}.`,
+                            );
+                          }}
+                          className="group flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-[11px] font-bold text-slate-600 transition hover:bg-[#EAF1FE] hover:text-[#003478]"
+                        >
+                          <span className="grid h-6 w-6 shrink-0 place-items-center rounded-md bg-slate-100 text-slate-500 transition group-hover:bg-[#003478] group-hover:text-white">
+                            <Icon className="h-3.5 w-3.5" />
+                          </span>
+                          {label}
+                          <Download className="ml-auto h-3 w-3 opacity-0 transition group-hover:opacity-60" />
+                        </button>
+                      </li>
+                    ))}
                   </ul>
                 </>
               )}
@@ -821,7 +806,7 @@ function AccountCard({
                 setDraftName(account.name);
                 setDetail(true);
               }}
-              className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-slate-200 text-slate-400 transition hover:border-[#003478] hover:text-[#003478] active:scale-95"
+              className="ml-auto grid h-7 w-7 shrink-0 place-items-center rounded-full border border-slate-200 text-slate-400 transition hover:border-[#003478] hover:text-[#003478] active:scale-95"
             >
               <Info className="h-4 w-4" />
             </button>
@@ -1318,8 +1303,8 @@ function PortfolioPanel({
         className="transition-colors duration-300"
         style={{
           background: meta.soft,
-          borderColor: meta.cardEdge,
-          borderTop: `3px solid ${meta.accent}`,
+          borderColor: `${meta.accent}99`,
+          borderTop: `4px solid ${meta.accent}`,
         }}
       >
         <div className="flex flex-wrap items-center gap-2.5 px-4 pt-4 sm:px-5">
@@ -1335,7 +1320,10 @@ function PortfolioPanel({
             <PfIcon className="h-[18px] w-[18px]" />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="mb-0.5 inline-flex w-fit items-center gap-1.5 rounded-full bg-[#003478] px-2.5 py-[3px] text-[8.5px] font-black uppercase tracking-[0.16em] text-white">
+            <p
+              className="mb-0.5 inline-flex w-fit items-center gap-1.5 rounded-full px-2.5 py-[3px] text-[8.5px] font-black uppercase tracking-[0.16em] text-white transition-colors duration-300"
+              style={{ background: meta.accent }}
+            >
               <PfIcon className="h-3 w-3" />
               {kpi?.label ?? "Portfolio"}
             </p>
@@ -1382,16 +1370,13 @@ function PortfolioPanel({
                 onClick={() => setCcyOpen((o) => !o)}
                 aria-haspopup="listbox"
                 aria-expanded={ccyOpen}
-                className={`inline-flex h-9 items-center gap-2 rounded-full border bg-white pl-3 pr-2.5 text-xs font-extrabold shadow-sm transition active:scale-[0.98] ${
+                className={`inline-flex h-8 items-center gap-1.5 rounded-full border bg-white pl-2.5 pr-2 text-[11px] font-bold shadow-sm transition active:scale-[0.98] ${
                   ccyOpen || currency !== "All"
-                    ? "border-[#003478] text-[#003478]"
+                    ? "border-[#003478] bg-[#EAF1FE] text-[#003478]"
                     : "border-slate-200 text-slate-600 hover:border-[#B9CCF5] hover:text-[#003478]"
                 }`}
               >
-                <span
-                  className="h-2 w-2 rounded-full"
-                  style={{ background: "#003478" }}
-                />
+                <ListFilter className="h-3.5 w-3.5 text-[#003478]" />
                 {currency === "All" ? "All currencies" : currency}
                 <span className="rounded-full bg-slate-100 px-1.5 py-[2px] text-[10px] font-black tabular-nums text-slate-500">
                   {currency === "All"
@@ -1399,7 +1384,7 @@ function PortfolioPanel({
                     : (ccyCounts[currency] ?? 0)}
                 </span>
                 <ChevronDown
-                  className={`h-3.5 w-3.5 text-slate-400 transition-transform ${ccyOpen ? "rotate-180" : ""}`}
+                  className={`h-3 w-3 text-slate-400 transition-transform ${ccyOpen ? "rotate-180" : ""}`}
                 />
               </button>
               {ccyOpen && (
@@ -1413,7 +1398,6 @@ function PortfolioPanel({
                     className="absolute left-0 z-30 mt-1.5 w-56 overflow-hidden rounded-2xl border border-slate-200 bg-white p-1.5 shadow-xl sm:left-auto sm:right-0"
                   >
                     {accountCurrencies.map((c) => {
-                      const dot = "#003478";
                       const n =
                         c === "All" ? source.length : (ccyCounts[c] ?? 0);
                       const on = currency === c;
@@ -1427,16 +1411,12 @@ function PortfolioPanel({
                               setCurrency(c);
                               setCcyOpen(false);
                             }}
-                            className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-xs font-bold transition ${
+                            className={`flex w-full items-center gap-2 rounded-xl px-2.5 py-1.5 text-left text-[11px] font-bold transition ${
                               on
                                 ? "bg-[#EAF1FE] text-[#003478]"
                                 : "text-slate-600 hover:bg-slate-50"
                             }`}
                           >
-                            <span
-                              className="h-2 w-2 shrink-0 rounded-full"
-                              style={{ background: dot }}
-                            />
                             <span className="flex-1">
                               {c === "All" ? "All currencies" : c}
                             </span>
@@ -1464,16 +1444,7 @@ function PortfolioPanel({
           transition={{ duration: 0.35, ease: "easeOut" }}
           className="px-4 py-4 sm:px-5"
         >
-          <div
-            className="relative rounded-2xl border-[1.5px] bg-white/60 p-3 sm:p-4"
-            style={{ borderColor: `${meta.accent}66` }}
-          >
-            <span
-              className="absolute -top-3.5 left-4 grid h-7 w-7 place-items-center rounded-lg text-white shadow-md ring-2 ring-white"
-              style={{ background: meta.accent }}
-            >
-              <PfIcon className="h-4 w-4" />
-            </span>
+          <div className="relative">
             {activePf === "invest" || activePf === "secur" ? (
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {pagedHold.map((h, i) => (
